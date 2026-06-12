@@ -104,3 +104,19 @@ test('scanner allows openFAD identity and FAD Records legal disclaimers', async 
     await rm(root, { recursive: true, force: true });
   }
 });
+
+test('scanner rejects static release artifact checksums in release docs', async () => {
+  const root = await mkdtemp(path.join(os.tmpdir(), 'openfad-scan-'));
+  try {
+    await mkdir(path.join(root, 'docs', 'release'), { recursive: true });
+    await writeFile(
+      path.join(root, 'docs', 'release', 'bad.md'),
+      '| `openfad-mv-studio-0.1.0.zip` | Tested | `aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa` |'
+    );
+    const result = await scanPublicSafety(root);
+    assert.equal(result.ok, false);
+    assert.equal(result.findings.some((finding) => finding.id === 'release-doc-static-artifact-sha'), true);
+  } finally {
+    await rm(root, { recursive: true, force: true });
+  }
+});

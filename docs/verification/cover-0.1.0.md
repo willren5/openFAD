@@ -44,9 +44,9 @@ npm test
 Output summary from repository root:
 
 - Cover Machine: `tests 1`, `pass 1`, `fail 0`.
-- MV Studio: `tests 285`, `pass 285`, `fail 0`.
+- MV Studio: `tests 286`, `pass 286`, `fail 0`.
 - Motion Batch: `tests 488`, `pass 488`, `fail 0`.
-- Root scanner tests: `tests 6`, `pass 6`, `fail 0`.
+- Root scanner tests: `tests 7`, `pass 7`, `fail 0`.
 
 ```bash
 npm run package:web
@@ -54,18 +54,17 @@ npm run package:web
 
 Output summary from repository root:
 
-- `openfad-cover-machine-0.1.0.zip` - 84909 bytes, 10 files.
+- `openfad-cover-machine-0.1.0.zip` was generated with 10 files.
 - Package includes root `LICENSE`, `NOTICE`, and `TRADEMARKS.md`.
 
 ```bash
 npm run checksums
 ```
 
-Cover artifact checksum:
+Output summary:
 
-```text
-86389f542d9679135c707d6463b546ebd0646ae9f601e8d325a8fe3ccc11556c  openfad-cover-machine-0.1.0.zip
-```
+- `dist/SHA256SUMS` was written for the generated artifact set.
+- Published artifact SHA256 values must be read from the release workflow's uploaded `SHA256SUMS` and `release-manifest.json`.
 
 ```bash
 npm run release:manifest
@@ -74,7 +73,7 @@ npm run release:manifest
 Output summary:
 
 - `dist/release-manifest.json` written with 3 artifacts.
-- Cover manifest entry uses `platform: web`, `stability: Tested`, and the SHA256 above.
+- Cover manifest entry uses `platform: web` and `stability: Tested`.
 - Before upload, the release owner must verify the published manifest `commit` equals the clean release commit selected for the tag.
 
 ## Covered Behaviors
@@ -91,14 +90,13 @@ Output summary:
 
 ## Release Artifact Evidence
 
-- Web zip size: 84909 bytes.
-- Web zip SHA256: `86389f542d9679135c707d6463b546ebd0646ae9f601e8d325a8fe3ccc11556c`.
+- Web zip size and SHA256 are release-run outputs recorded in the uploaded `SHA256SUMS` and `release-manifest.json`.
 - Root release manifest records the Cover artifact as a browser web package, not an installed desktop runtime.
 - Browser test coverage verifies export dispatch paths, but does not prove the operating system saved a file after the browser download prompt.
 
 ## Remaining Publication Gates
 
-- GitHub release artifact must match this checksum.
+- GitHub release artifact must match the uploaded `SHA256SUMS` and `release-manifest.json`.
 - fadrecords.com `/openfad` must render the same checksum and manifest entry.
 - Any future visual screenshot/export-sample claims need their own dated artifacts.
 

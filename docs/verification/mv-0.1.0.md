@@ -17,9 +17,9 @@ npm run test:mv
 
 Output summary:
 
-- `tests 285`, `pass 285`, `fail 0`, `skipped 0`, `duration_ms 67529.667291`.
+- `tests 286`, `pass 286`, `fail 0`, `skipped 0`.
 - Browser smoke covered Start Mode demo, visual systems, preflight, autosave, package import/export, render retry, batch render, performance guard, accessibility, and failure recovery paths.
-- Static validation covered embedded script parsing, public output filenames, preflight copy, mobile layout, performance warning copy, and public runtime facades.
+- Static validation covered embedded script parsing, public output filenames, preflight copy, mobile layout, performance warning copy, public runtime facades, and state transition focus restore from non-editing inputs.
 
 Screenshot evidence refreshed:
 
@@ -47,11 +47,11 @@ Root release-gate summary:
 
 - `npm run scan:public`: `public safety scan passed`.
 - `git diff --check -- .`: no whitespace errors reported.
-- Root `npm test`: Cover `pass 1`, MV `pass 285`, Motion `pass 488`, root scanner `pass 6`, all `fail 0`.
-- `openfad-mv-studio-0.1.0.zip`: 101674 bytes, 11 files.
+- Root `npm test`: Cover `pass 1`, MV `pass 286`, Motion `pass 488`, root scanner `pass 7`, all `fail 0`.
+- `openfad-mv-studio-0.1.0.zip` was generated with 11 files.
 - MV web zip includes root `LICENSE`, `NOTICE`, and `TRADEMARKS.md`.
-- MV web zip SHA256: `ce3511916f0cf75503a4499a2e29cb38d3b6b4be4a50a39084b6806fff53e618`.
-- `dist/release-manifest.json` written with 3 artifacts; MV entry uses `platform: web`, `stability: Tested`, and the SHA256 above.
+- `dist/SHA256SUMS` and `dist/release-manifest.json` were written for the generated artifact set.
+- MV manifest entry uses `platform: web` and `stability: Tested`.
 - Before upload, the release owner must verify the published manifest `commit` equals the clean release commit selected for the tag.
 
 ## Covered Behaviors
@@ -67,14 +67,13 @@ Root release-gate summary:
 
 ## Release Artifact Evidence
 
-- Web zip size: 101674 bytes.
-- Web zip SHA256: `ce3511916f0cf75503a4499a2e29cb38d3b6b4be4a50a39084b6806fff53e618`.
+- Web zip size and SHA256 are release-run outputs recorded in the uploaded `SHA256SUMS` and `release-manifest.json`.
 - Screenshot evidence is stored under `docs/verification/artifacts/`.
 - Browser smoke coverage verifies recording/export dispatch and recovery paths, but browser save behavior can still vary by renderer.
 
 ## Remaining Publication Gates
 
-- GitHub release artifact must match this checksum.
+- GitHub release artifact must match the uploaded `SHA256SUMS` and `release-manifest.json`.
 - fadrecords.com `/openfad` must render the same checksum and manifest entry.
 - Do not claim CI evidence unless `dist/release-manifest.json` has a non-empty `verification.ciRunUrl` for the release commit.
 

@@ -74,6 +74,13 @@ const BRAND_LITERAL_PATTERNS = [
   /(?<!open)FAD 自定义/g
 ];
 
+const RELEASE_DOC_SHA_PATTERN = /(?:openfad-[^\n`]*\.zip[^\n]*\b[0-9a-f]{64}\b|(?:web|source)?\s*zip\s+SHA256:\s*`[0-9a-f]{64}`|SHA256 above)/gi;
+
+const isReleaseEvidenceDoc = (relativeFile) => (
+  relativeFile.startsWith('docs/release/') ||
+  relativeFile.startsWith('docs/verification/')
+);
+
 const walk = async (dir, files = []) => {
   for (const entry of await readdir(dir, { withFileTypes: true })) {
     if (entry.name.startsWith('.') && entry.name !== '.github') continue;
@@ -118,6 +125,16 @@ export const scanPublicSafety = async (scanRoot = root) => {
             index: match.index ?? 0
           });
         }
+      }
+    }
+
+    if (isReleaseEvidenceDoc(relativeFile)) {
+      for (const match of text.matchAll(RELEASE_DOC_SHA_PATTERN)) {
+        findings.push({
+          id: 'release-doc-static-artifact-sha',
+          file: relativeFile,
+          index: match.index ?? 0
+        });
       }
     }
   }
