@@ -3522,6 +3522,11 @@ test('stopping preview returns keyboard focus to visible preview action', { skip
   await page.focus('#btn-preview');
   await page.click('#btn-preview');
   await page.waitForFunction(() => window.Machine?.status === 'PREVIEWING');
+  await page.evaluate(() => {
+    document.querySelector('#btn-stop-preview')?.addEventListener('click', () => {
+      if (document.activeElement instanceof HTMLElement) document.activeElement.blur();
+    }, { capture: true, once: true });
+  });
   await page.click('#btn-stop-preview');
   await page.waitForFunction(() => window.Machine?.status === 'IDLE');
   await page.waitForFunction(() => {

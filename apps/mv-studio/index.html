@@ -1374,12 +1374,10 @@ const UI = {
   },
   moveFocusForState(state, previousState) {
     const previousFocus = this._focusBeforeStateChange || document.activeElement;
-    if (state === previousState || !previousFocus || !(previousFocus instanceof HTMLElement)) return;
+    if (state === previousState) return;
     const groups = ['start-controls', 'stop-controls', 'preview-controls']
       .map((id) => Dom[id])
       .filter(Boolean);
-    const focusWasInActionGroup = groups.some((group) => group.contains(previousFocus));
-    if (!focusWasInActionGroup) return;
     const targetId = {
       WARMING: 'btn-finish',
       RECORDING: 'btn-finish',
@@ -1388,11 +1386,15 @@ const UI = {
       IDLE: previousState === 'PREVIEWING' ? 'btn-preview' : 'btn-rec'
     }[state];
     const target = targetId ? Dom[targetId] : null;
+    if (!target) return;
     const isEditableFocus = (el) => {
       if (!(el instanceof HTMLElement)) return false;
       const tag = el.tagName.toLowerCase();
       return tag === 'input' || tag === 'textarea' || tag === 'select' || el.isContentEditable;
     };
+    const previousFocusIsElement = previousFocus instanceof HTMLElement;
+    const focusWasInActionGroup = previousFocusIsElement && groups.some((group) => group.contains(previousFocus));
+    if (previousFocusIsElement && !focusWasInActionGroup && isEditableFocus(previousFocus)) return;
     const shouldRestoreFocus = () => {
       const active = document.activeElement;
       if (!active || active === document.body || active === previousFocus || groups.some((group) => group.contains(active))) return true;
