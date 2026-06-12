@@ -54,7 +54,7 @@ npm run package:web
 
 Output summary from repository root:
 
-- `openfad-cover-machine-0.1.0.zip` - 84264 bytes, 9 files.
+- `openfad-cover-machine-0.1.0.zip` - 84909 bytes, 10 files.
 - Package includes root `LICENSE`, `NOTICE`, and `TRADEMARKS.md`.
 
 ```bash
@@ -64,7 +64,7 @@ npm run checksums
 Cover artifact checksum:
 
 ```text
-4bca4a2f7de91a9e2ec1135982222972f832c963979d1e4eb118f3c06c636bb8  openfad-cover-machine-0.1.0.zip
+86389f542d9679135c707d6463b546ebd0646ae9f601e8d325a8fe3ccc11556c  openfad-cover-machine-0.1.0.zip
 ```
 
 ```bash
@@ -91,8 +91,8 @@ Output summary:
 
 ## Release Artifact Evidence
 
-- Web zip size: 84264 bytes.
-- Web zip SHA256: `4bca4a2f7de91a9e2ec1135982222972f832c963979d1e4eb118f3c06c636bb8`.
+- Web zip size: 84909 bytes.
+- Web zip SHA256: `86389f542d9679135c707d6463b546ebd0646ae9f601e8d325a8fe3ccc11556c`.
 - Root release manifest records the Cover artifact as a browser web package, not an installed desktop runtime.
 - Browser test coverage verifies export dispatch paths, but does not prove the operating system saved a file after the browser download prompt.
 

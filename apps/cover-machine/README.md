@@ -25,7 +25,7 @@ npm run test:cover
 npm test
 ```
 
-验证记录见 `docs/verification/cover-0.1.0.md`。
+本目录验证说明见 `docs/verification.zh-CN.md`；release 级验证记录见 `../../docs/verification/cover-0.1.0.md`。
 
 ## 品牌边界
 

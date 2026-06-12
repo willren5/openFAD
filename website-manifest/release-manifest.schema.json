@@ -26,6 +26,7 @@
           "sizeBytes": { "type": "integer", "minimum": 1 },
           "sha256": { "type": "string", "pattern": "^[0-9a-f]{64}$" },
           "url": { "type": "string" },
+          "downloadVerified": { "type": "boolean" },
           "knownLimits": { "type": "array", "items": { "type": "string" } }
         }
       }
@@ -35,6 +36,7 @@
       "required": ["ciRunUrl", "localEvidence"],
       "properties": {
         "ciRunUrl": { "type": "string" },
+        "downloadsVerifiedAt": { "type": "string" },
         "localEvidence": { "type": "array", "items": { "type": "string" } }
       }
     },

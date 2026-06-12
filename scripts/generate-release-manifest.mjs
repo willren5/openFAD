@@ -11,6 +11,11 @@ const pkg = JSON.parse(await readFile(path.join(root, 'package.json'), 'utf8'));
 const version = process.env.OPENFAD_RELEASE_VERSION || pkg.version;
 const tag = process.env.GITHUB_REF_NAME || `v${version}`;
 const repository = process.env.GITHUB_REPOSITORY || 'willren5/openFAD';
+const downloadsVerifiedAt = process.env.OPENFAD_DOWNLOADS_VERIFIED_AT || '';
+const releaseDownloadsVerified = process.env.OPENFAD_RELEASE_DOWNLOADS_VERIFIED === '1';
+const ciRunUrl = process.env.OPENFAD_CI_RUN_URL || (process.env.GITHUB_RUN_ID
+  ? `https://github.com/${repository}/actions/runs/${process.env.GITHUB_RUN_ID}`
+  : '');
 
 const gitStatus = () => execFileSync('git', ['status', '--short'], { cwd: root, encoding: 'utf8' }).trim();
 const gitCommit = () => {
@@ -102,7 +107,8 @@ for (const fileName of files) {
     fileName,
     sizeBytes: info.size,
     sha256,
-    url: `https://github.com/${repository}/releases/download/${tag}/${fileName}`
+    url: `https://github.com/${repository}/releases/download/${tag}/${fileName}`,
+    downloadVerified: releaseDownloadsVerified
   });
 }
 
@@ -126,9 +132,8 @@ const manifest = {
   license: 'Apache-2.0',
   artifacts,
   verification: {
-    ciRunUrl: process.env.GITHUB_RUN_ID
-      ? `https://github.com/${repository}/actions/runs/${process.env.GITHUB_RUN_ID}`
-      : '',
+    ciRunUrl,
+    downloadsVerifiedAt,
     localEvidence: await existingEvidence([
       'docs/verification/cover-0.1.0.md',
       'docs/verification/mv-0.1.0.md',

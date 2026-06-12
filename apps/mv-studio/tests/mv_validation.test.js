@@ -923,7 +923,7 @@ test('browser downloads are reported as dispatched unless save is verified', () 
   assert.match(script, /downloadDispatched:\s*true/);
   assert.match(script, /saveVerified:\s*false/);
   assert.match(script, /PROJECT JSON DOWNLOAD DISPATCHED/);
-  assert.match(script, /PROJECT PACKAGE DOWNLOAD DISPATCHED/);
+  assert.match(script, /项目包下载已触发/);
   assert.match(script, /REPORT DOWNLOAD DISPATCHED/);
   assert.match(script, /EXPORT DOWNLOAD DISPATCHED/);
   assert.doesNotMatch(script, /PROJECT JSON SAVED/);
@@ -946,7 +946,7 @@ test('download dispatch failures surface as in-app warnings', () => {
   assert.ok(renderReportBody, 'RenderReport body should be present');
   const retryBody = renderReportBody.match(/retryExportDownload\(\) \{([\s\S]*?)\n  \},\n\n  downloadReport/)?.[1] || '';
   assert.ok(retryBody, 'RenderReport.retryExportDownload body should be present');
-  assert.match(retryBody, /try \{[\s\S]*?result = DownloadManager\.dispatchBlob\(saved\.blob, saved\.fileName\)[\s\S]*?\} catch \(err\) \{[\s\S]*?UI\.showError\(`Retry export download failed: \$\{Utils\.safeErrMsg\(err\)\}`, 'WARN'\)[\s\S]*?this\.updatePanel\(\)[\s\S]*?return/);
+  assert.match(retryBody, /try \{[\s\S]*?result = DownloadManager\.dispatchBlob\(saved\.blob, saved\.fileName\)[\s\S]*?\} catch \(err\) \{[\s\S]*?UI\.showError\(`重试导出下载失败：\$\{Utils\.safeErrMsg\(err\)\}。请保持页面打开，稍后再点“重试导出下载”。`, 'WARN'\)[\s\S]*?this\.updatePanel\(\)[\s\S]*?return/);
   const reportBody = renderReportBody.match(/downloadReport\(\) \{([\s\S]*?)\n  \},\n\n  updatePanel/)?.[1] || '';
   assert.ok(reportBody, 'RenderReport.downloadReport body should be present');
   assert.match(reportBody, /try \{[\s\S]*?DownloadManager\.dispatchBlob\(blob, fileName\)[\s\S]*?REPORT DOWNLOAD DISPATCHED[\s\S]*?\} catch \(err\) \{[\s\S]*?UI\.showError\(`Render report download failed: \$\{Utils\.safeErrMsg\(err\)\}`, 'WARN'\)/);
@@ -973,7 +973,7 @@ test('retry export download command enforces busy locks before dispatching or mu
   assert.ok(updatePanelBody, 'RenderReport.updatePanel body should be present');
   assert.match(updatePanelBody, /const retryLockReason = this\.retryExportLockReason\(\)/);
   assert.match(updatePanelBody, /UI\.setControlReason\(Dom\['btn-retry-export-download'\], !retryAvailable \|\| !!retryLockReason, retryReason, 'render-report-summary'\)/);
-  assert.match(updatePanelBody, /if \(report\.output\.retryNote\) rows\.push\(\['Recovery', report\.output\.retryNote\]\)/);
+  assert.match(updatePanelBody, /if \(report\.output\.retryNote\) rows\.push\(\['恢复建议', report\.output\.retryNote\]\)/);
 });
 
 test('unverified non-stream exports retain a retryable blob until the next render', () => {
@@ -1003,7 +1003,7 @@ test('unverified non-stream exports retain a retryable blob until the next rende
   assert.match(retainBody, /blob\.size > LIMITS\.maxExportRetryBytes/);
   assert.match(retainBody, /Store\.lastDownloadableExport = null/);
   assert.match(retainBody, /retryAvailable: false/);
-  assert.match(retainBody, /retryNote: `retry not retained - output > \$\{Utils\.formatBytes\(LIMITS\.maxExportRetryBytes\)\}`/);
+  assert.match(retainBody, /retryNote: `输出超过 \$\{Utils\.formatBytes\(LIMITS\.maxExportRetryBytes\)\}，未保留重试文件`/);
   assert.match(retainBody, /retryAvailable: true/);
 
   const saveBody = recorderBody.match(/async save\(mime, sid = this\._sessionId\) \{([\s\S]*?)\n  \}/)?.[1] || '';
@@ -1327,7 +1327,7 @@ test('abort and fatal dialog have commercial-grade keyboard safety basics', () =
   assert.match(html, /#err-msg \{[^}]*max-height: min\(36dvh, 260px\);[^}]*overflow-y: auto;[^}]*overflow-wrap: anywhere/);
   assert.match(script, /requestAbort\(\)/);
   assert.match(script, /setAbortArmed\(armed\)/);
-  assert.match(script, /if \(Machine\.status === 'EXPORTING'\) \{[\s\S]*?Export is finalizing; wait for the save or download result before starting another render\./);
+  assert.match(script, /if \(Machine\.status === 'EXPORTING'\) \{[\s\S]*?导出正在封装。请等待保存或下载结果出现后，再开始新的渲染。/);
   assert.match(script, /Finalizing cannot be cancelled safely/);
   assert.match(script, /btn\.setAttribute\('aria-pressed', armed \? 'true' : 'false'\)/);
   assert.match(script, /clearAbortConfirm\(\)/);
@@ -2444,7 +2444,7 @@ test('long-running package jobs have a visible cancel path and keep final status
 
   const downloadBody = script.match(/async downloadPackage\(\) \{([\s\S]*?)\n  \},\n\n  mimeForAsset/)?.[1] || '';
   assert.ok(downloadBody, 'downloadPackage body should be present');
-  assert.ok(downloadBody.indexOf('this.finishPackageJob(token);') < downloadBody.indexOf('PROJECT PACKAGE DOWNLOAD DISPATCHED - VERIFY FILE'));
+  assert.ok(downloadBody.indexOf('this.finishPackageJob(token);') < downloadBody.indexOf('项目包下载已触发，请检查文件 / VERIFY FILE'));
   assert.match(downloadBody, /Store\.packageDownload = \{ status: 'working'/);
   assert.ok(downloadBody.indexOf('retryRetention = this.retainPackageDownload(blob, fileName)') < downloadBody.indexOf('result = DownloadManager.dispatchBlob(blob, fileName)'));
   assert.match(downloadBody, /Store\.packageDownload = \{[\s\S]*?status: result\.saveVerified \? 'verified' : 'download-dispatched'/);
@@ -2492,8 +2492,8 @@ test('export finalize and batch render expose cancellable states', () => {
   assert.match(batchRenderBody, /const clearMain = Store\.batch\.running/);
   assert.match(batchRenderBody, /restoring \? '正在恢复原项目' : \(cancelling \? '正在取消批量' : '取消批量'\)/);
   assert.match(batchRenderBody, /const clearSub = Store\.batch\.running/);
-  assert.match(batchRenderBody, /restoring \? 'Restoring Project\.\.\.' : \(cancelling \? 'Cancelling Batch\.\.\.' : 'Cancel Batch'\)/);
-  assert.match(batchRenderBody, /clearConfirmArmed \? 'Discard Batch Outputs' : 'Clear Batch'/);
+  assert.match(batchRenderBody, /restoring \? '恢复中 \/ Restoring' : \(cancelling \? '取消中 \/ Cancelling' : '取消 \/ Cancel'\)/);
+  assert.match(batchRenderBody, /clearConfirmArmed \? '确认丢弃 \/ Discard' : '清空 \/ Clear'/);
   assert.match(batchRenderBody, /Dom\['btn-clear-batch'\]\.innerHTML = `<span class="btn-main">\$\{clearMain\}<\/span><span class="btn-sub">\$\{clearSub\}<\/span>`/);
   assert.match(batchRenderBody, /Dom\['btn-clear-batch'\]\.disabled = Store\.packageJob\.running \|\| Store\.restoreJob\.running \|\| Store\.autosaveJob\.running \|\| restoring \|\| cancelling \|\| \(!Store\.batch\.running && Machine\.status !== 'IDLE'\)/);
   assert.match(batchRenderBody, /const analysisBusy = Store\.audioAnalysis\.status === 'analyzing'/);
@@ -2536,7 +2536,7 @@ test('batch cancellation exposes a persistent cancelling state while teardown is
   assert.ok(batchBody, 'BatchQueue body should be present');
   const requestCancelBody = batchBody.match(/requestCancel\(reason = 'Batch cancelled'\) \{([\s\S]*?)\n  \},\n\n  throwIfBatchCancelled/)?.[1] || '';
   assert.ok(requestCancelBody, 'BatchQueue.requestCancel body should be present');
-  assert.match(requestCancelBody, /if \(Store\.batch\.restoring\) \{[\s\S]*?cannot be cancelled[\s\S]*?return/);
+  assert.match(requestCancelBody, /if \(Store\.batch\.restoring\) \{[\s\S]*?暂时不能取消[\s\S]*?return/);
   assert.match(requestCancelBody, /Store\.batch\.cancelRequested = true/);
   const cancelSetAt = requestCancelBody.indexOf('Store.batch.cancelRequested = true');
   const renderAfterCancelAt = requestCancelBody.indexOf('this.render()', cancelSetAt);
@@ -2548,8 +2548,8 @@ test('batch cancellation exposes a persistent cancelling state while teardown is
   assert.match(renderBody, /const cancelling = Store\.batch\.running && Store\.batch\.cancelRequested && !restoring/);
   assert.match(renderBody, /restoring \? 'RESTORING PROJECT' : \(cancelling \? 'CANCELLING' : 'RUNNING'\)/);
   assert.match(renderBody, /Store\.batch\.running/);
-  assert.match(renderBody, /restoring \? 'Restoring Project\.\.\.' : \(cancelling \? 'Cancelling Batch\.\.\.' : 'Cancel Batch'\)/);
-  assert.match(renderBody, /clearConfirmArmed \? 'Discard Batch Outputs' : 'Clear Batch'/);
+  assert.match(renderBody, /restoring \? '恢复中 \/ Restoring' : \(cancelling \? '取消中 \/ Cancelling' : '取消 \/ Cancel'\)/);
+  assert.match(renderBody, /clearConfirmArmed \? '确认丢弃 \/ Discard' : '清空 \/ Clear'/);
   assert.match(renderBody, /Store\.packageJob\.running \|\| Store\.restoreJob\.running \|\| Store\.autosaveJob\.running \|\| restoring \|\| cancelling \|\| \(!Store\.batch\.running && Machine\.status !== 'IDLE'\)/);
   assert.match(renderBody, /restoring\s*\?\s*'Restoring original project after batch'/);
   assert.match(renderBody, /cancelling\s*\?\s*'Waiting for batch render to stop'/);
@@ -2824,7 +2824,7 @@ test('batch queue surfaces rejected files and continues item failures', () => {
   assert.match(script, /Batch added \$\{added\}, rejected \$\{rejected\}/);
   assert.match(script, /\['done', 'download-dispatched', 'error', 'rejected'\]\.includes\(item\.status\)/);
   assert.match(script, /Batch item failed:/);
-  assert.match(script, /BATCH FINISHED WITH \$\{failures\} ERRORS/);
+  assert.match(script, /批量完成但有 \$\{failures\} 个错误/);
 });
 
 test('batch render distinguishes verified saves from unverified browser download dispatches', () => {
@@ -2839,8 +2839,8 @@ test('batch render distinguishes verified saves from unverified browser download
   assert.doesNotMatch(renderNextBody, /item\.status = 'done';\s*item\.outputName = result\.fileName/);
 
   assert.match(batchBody, /\['done', 'download-dispatched'\]\.includes\(item\.status\)/);
-  assert.match(batchBody, /DOWNLOADS DISPATCHED/);
-  assert.match(batchBody, /VERIFY FILES/);
+  assert.match(batchBody, /下载已触发，请检查文件/);
+  assert.match(batchBody, /请检查文件|VERIFY FILES/);
   assert.doesNotMatch(batchBody, /failures \? `BATCH COMPLETE WITH \$\{failures\} ERRORS` : 'BATCH COMPLETE'/);
 });
 
@@ -2857,7 +2857,7 @@ test('batch unverified downloads retain bounded per-item retry blobs', () => {
   assert.match(batchBody, /this\.pruneBatchRetryBlobs\(item\.id\)/);
   assert.match(batchBody, /retryDownload\(itemId\)/);
   assert.match(batchBody, /DownloadManager\.dispatchBlob\(item\.retryBlob, item\.outputName/);
-  assert.match(batchBody, /BATCH DOWNLOAD RETRY DISPATCHED - VERIFY FILE/);
+  assert.match(batchBody, /批量下载已重试，请检查文件 \/ VERIFY FILE/);
   assert.match(batchBody, /retry\.dataset\.batchRetryId = item\.id/);
   assert.match(batchBody, /UI\.setControlReason\(retry, !!retryReason, retryReason, 'batch-summary'\)/);
   assert.match(batchBody, /this\.retainRetryForItem\(item, result\)/);
@@ -2890,7 +2890,7 @@ test('batch clear requires explicit discard confirmation for unverified retryabl
   assert.ok(clearBody, 'BatchQueue.clear body should be present');
   assert.match(clearBody, /if \(this\.hasProtectedClearOutputs\(\) && !this\.isClearConfirmArmed\(\)\) \{/);
   assert.match(clearBody, /this\.armClearDiscardConfirmation\(\)/);
-  assert.match(clearBody, /Clear Batch will discard unverified downloads and retryable output blobs/);
+  assert.match(clearBody, /清空批量会丢弃尚未验证保存的下载和可重试输出/);
   assert.ok(clearBody.indexOf('this.armClearDiscardConfirmation()') < clearBody.indexOf('Store.batch.items.forEach'));
   assert.match(clearBody, /this\.clearDiscardConfirmation\(\)/);
   assert.ok(clearBody.indexOf('this.clearDiscardConfirmation()') < clearBody.indexOf('Store.batch.items.forEach'));
@@ -2899,8 +2899,8 @@ test('batch clear requires explicit discard confirmation for unverified retryabl
   assert.ok(renderBody, 'BatchQueue.render body should be present');
   assert.match(renderBody, /const clearConfirmArmed = this\.isClearConfirmArmed\(\)/);
   assert.match(renderBody, /const clearNeedsConfirmation = this\.hasProtectedClearOutputs\(\)/);
-  assert.match(renderBody, /DISCARD CONFIRMATION ARMED/);
-  assert.match(renderBody, /clearConfirmArmed \? 'Discard Batch Outputs' : 'Clear Batch'/);
+  assert.match(renderBody, /已等待确认丢弃/);
+  assert.match(renderBody, /clearConfirmArmed \? '确认丢弃 \/ Discard' : '清空 \/ Clear'/);
   assert.match(renderBody, /Clearing will discard unverified retryable outputs/);
 });
 
@@ -3183,7 +3183,7 @@ test('recording background resume failures stay paused and expose an explicit re
   assert.match(updateBody, /Dom\['btn-retry-resume'\]/);
   assert.match(updateBody, /this\._resumeRetryArmed && this\.bgPaused && Machine\.status === 'RECORDING' && !document\.hidden/);
   assert.match(updateBody, /btn\.style\.display = active \? 'block' : 'none'/);
-  assert.match(updateBody, /UI\.setControlReason\(btn, !active, active \? '' : 'Resume retry unavailable', 'status-text'\)/);
+  assert.match(updateBody, /UI\.setControlReason\(btn, !active, active \? '' : '暂时不能重试恢复', 'status-text'\)/);
 
   const scheduleBody = recorderBody.match(/scheduleBackgroundResumeRetry\(\) \{([\s\S]*?)\n  \},\n\n  async retryBackgroundResume/)?.[1] || '';
   assert.ok(scheduleBody, 'Recorder.scheduleBackgroundResumeRetry body should be present');
@@ -3214,7 +3214,7 @@ test('recording background resume failures stay paused and expose an explicit re
   assert.match(catchBody, /this\.pauseMedia\(\)/);
   assert.match(catchBody, /Engine\.stopLoop\(\)/);
   assert.match(catchBody, /this\.scheduleBackgroundResumeRetry\(\)/);
-  assert.match(catchBody, /UI\.showError\('Recording resume blocked by browser autoplay policy\. Use Retry Resume to continue\.', 'WARN'\)/);
+  assert.match(catchBody, /UI\.showError\('录制恢复被浏览器自动播放策略阻止。请点击“重试恢复”继续。', 'WARN'\)/);
   assert.doesNotMatch(catchBody, /'FATAL'/);
 
   const finishBody = recorderBody.match(/finish\(\) \{([\s\S]*?)\n  \},\n\n  abort/)?.[1] || '';
@@ -3259,7 +3259,7 @@ test('render report distinguishes dispatched downloads from verified saves', () 
   assert.match(script, /downloadDispatched: !!downloadResult\.downloadDispatched/);
   assert.match(script, /saveVerified: !!downloadResult\.saveVerified/);
   assert.match(script, /retryAvailable: !wasStreamSave && !!downloadResult\.downloadDispatched && !downloadResult\.saveVerified/);
-  assert.match(script, /Download dispatched/);
+  assert.match(script, /已触发下载/);
 });
 
 test('stream save rejects zero-byte finalized writers instead of reporting verified success', () => {
@@ -3421,7 +3421,7 @@ test('disabled commercial actions expose stable visible blocker reasons', () => 
   assert.ok(ids.has('project-json-summary'), 'project JSON summary should be registered');
   assert.ok(ids.has('brand-preset-summary'), 'brand preset summary should be registered');
   assert.match(script, /setControlReason\(el, disabled, reason = '', describedById = ''\)/);
-  assert.match(script, /el\.dataset\.disabledReason = reason/);
+  assert.match(script, /el\.dataset\.disabledReason = displayReason/);
   assert.match(script, /ProjectPresets\.updateControls\(\)/);
   assert.match(script, /BrandPresets\.updateControls\(\)/);
   assert.match(script, /UI\.setControlReason\(Dom\['btn-save-project'\], !!saveReason, saveReason, 'project-json-summary'\)/);
@@ -3444,10 +3444,10 @@ test('shared disabled summaries expose action-specific reasons and ready states'
 
   const packageBody = script.match(/updateControls\(\) \{([\s\S]*?)\n  \},\n\n  async exportPackageBlob/)?.[1] || '';
   assert.ok(packageBody, 'ProjectPackage.updateControls body should be present');
-  assert.match(packageBody, /const saveStatus = saveReason \? `EXPORT BLOCKED: \$\{saveReason\}` : `EXPORT READY: \$\{Utils\.formatBytes\(estimate\)\} estimated`/);
-  assert.match(packageBody, /const loadStatus = loadReason \? `IMPORT BLOCKED: \$\{loadReason\}` : 'IMPORT READY'/);
+  assert.match(packageBody, /const saveStatus = saveReason \? `导出已阻止：\$\{UI\.localizeBusyReason\(saveReason\)\}` : `可导出：预计 \$\{Utils\.formatBytes\(estimate\)\}`/);
+  assert.match(packageBody, /const loadStatus = loadReason \? `导入已阻止：\$\{UI\.localizeBusyReason\(loadReason\)\}` : '可导入'/);
   assert.match(packageBody, /const downloadStatus = lastDownload\.status === 'download-dispatched'/);
-  assert.match(packageBody, /LAST DOWNLOAD DISPATCHED · VERIFY FILE/);
+  assert.match(packageBody, /最近下载已触发，请检查文件/);
   assert.match(packageBody, /summary\.textContent = running[\s\S]*?`\$\{downloadStatus \? `\$\{downloadStatus\} \| ` : ''\}\$\{saveStatus\} \| \$\{loadStatus\}`/);
   assert.doesNotMatch(packageBody, /\? 'PACKAGE BLOCKED'/);
 
@@ -3571,7 +3571,7 @@ test('batch abort stops the queue instead of continuing through remaining songs'
   assert.match(script, /BATCH CANCELLED/);
   assert.match(script, /const clearMain = Store\.batch\.running/);
   assert.match(script, /Dom\['btn-clear-batch'\]\.innerHTML = `<span class="btn-main">\$\{clearMain\}<\/span><span class="btn-sub">\$\{clearSub\}<\/span>`/);
-  assert.match(script, /clearConfirmArmed \? 'Discard Batch Outputs' : 'Clear Batch'/);
+  assert.match(script, /clearConfirmArmed \? '确认丢弃 \/ Discard' : '清空 \/ Clear'/);
   assert.match(script, /Dom\['btn-clear-batch'\]\.disabled = Store\.packageJob\.running \|\| Store\.restoreJob\.running \|\| Store\.autosaveJob\.running \|\| restoring \|\| cancelling \|\| \(!Store\.batch\.running && Machine\.status !== 'IDLE'\)/);
 });
 
@@ -3643,9 +3643,9 @@ test('batch project restore failures are durable in summary, report, and public 
   assert.match(renderBody, /const restoring = Store\.batch\.running && Store\.batch\.restoring/);
   assert.match(renderBody, /const cancelling = Store\.batch\.running && Store\.batch\.cancelRequested && !restoring/);
   assert.match(renderBody, /const batchRunStatus = restoring \? 'RESTORING PROJECT' : \(cancelling \? 'CANCELLING' : 'RUNNING'\)/);
-  assert.match(renderBody, /restoring \? 'Restoring Project\.\.\.' : \(cancelling \? 'Cancelling Batch\.\.\.' : 'Cancel Batch'\)/);
+  assert.match(renderBody, /restoring \? '恢复中 \/ Restoring' : \(cancelling \? '取消中 \/ Cancelling' : '取消 \/ Cancel'\)/);
   assert.match(renderBody, /restoring\s*\?\s*'Restoring original project after batch'/);
-  assert.match(renderBody, /\$\{restoreIssue\}\$\{clearConfirmArmed \? ' · DISCARD CONFIRMATION ARMED' : ''\} \| \$\{addStatus\} \| \$\{startStatus\}/);
+  assert.match(renderBody, /\$\{restoreIssue\}\$\{clearConfirmArmed \? ' · 已等待确认丢弃' : ''\} \| \$\{addStatus\} \| \$\{startStatus\}/);
 
   const clearBody = batchBody.match(/clear\(\) \{([\s\S]*?)\n  \},\n\n  requestCancel/)?.[1] || '';
   assert.ok(clearBody, 'BatchQueue.clear body should be present');
@@ -4238,9 +4238,9 @@ test('failed render reports show failure state and root cause in the report pane
   assert.ok(updatePanelBody, 'RenderReport.updatePanel body should be present');
   assert.match(updatePanelBody, /const failed = !!report\.output\.failed/);
   assert.match(updatePanelBody, /summary\.textContent = reportStale\s*\?\s*`REPORT STALE: \$\{report\.output\.staleReason \|\| 'Previous render'\}`[\s\S]*?: failed\s*\?\s*`REPORT FAILED: \$\{report\.output\.error \|\| 'Export failed'\}`/);
-  assert.match(updatePanelBody, /\['Save', reportStale \? 'Stale previous render' : \(failed \? 'Failed' : \(report\.output\.saveVerified \? 'Verified' : \(report\.output\.downloadDispatched \? \(retryAvailable \? 'Download dispatched · retry available' : 'Download dispatched'\) : 'Unknown'\)\)\)\]/);
-  assert.match(updatePanelBody, /if \(failed\) rows\.unshift\(\['Error', report\.output\.error \|\| 'Unknown export error'\]\)/);
-  assert.match(updatePanelBody, /if \(retryAvailable\) rows\.push\(\['Recovery', 'Retry export download before starting a new render'\]\)/);
+  assert.match(updatePanelBody, /\['保存状态', reportStale \? '上一次渲染已过期' : \(failed \? '失败' : \(report\.output\.saveVerified \? '已验证' : \(report\.output\.downloadDispatched \? \(retryAvailable \? '已触发下载 · 可重试' : '已触发下载'\) : '未知'\)\)\)\]/);
+  assert.match(updatePanelBody, /if \(failed\) rows\.unshift\(\['错误', report\.output\.error \|\| '未知导出错误'\]\)/);
+  assert.match(updatePanelBody, /if \(retryAvailable\) rows\.push\(\['恢复建议', '开始新渲染前，请先重试导出下载'\]\)/);
 });
 
 test('recorder onstop save exceptions settle export failure instead of leaving batch waiters pending', () => {

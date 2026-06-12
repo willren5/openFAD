@@ -393,7 +393,7 @@ body:not(.pro-mode-open) .pro-section { display: none; }
 <body>
 <div class="dynamic-bg"></div>
 <aside class="sidebar" aria-labelledby="app-title">
-<h1 id="app-title">制作一段音乐视觉 <span class="product-mark">openFAD MV Studio</span><span class="ver">v9.8</span></h1>
+<h1 id="app-title">制作一段音乐视觉 <span class="product-mark">openFAD MV Studio</span><span class="ver">v0.1.0</span></h1>
 <p id="app-subtitle" class="app-subtitle">本地优先的中文 MV Studio。先打开示例，或上传音频后按预检补齐素材。</p>
 
 <div id="start-mode-actions" class="start-mode-actions" role="group" aria-label="开始">
@@ -1326,11 +1326,11 @@ const UI = {
     if (typeof VisualSystems !== 'undefined') VisualSystems.updateControls();
 
     const msgs = {
-      IDLE: ['READY: VISUALIZER MODE', 'norm'],
-      PREVIEWING: ['PREVIEW MODE — FILE INPUTS LOCKED', 'ok'],
-      WARMING: ['INITIALIZING...', 'warn'],
-      RECORDING: ['● RECORDING...', 'err'],
-      EXPORTING: ['FINALIZING...', 'ok']
+      IDLE: ['系统就绪：可以开始制作 / READY', 'norm'],
+      PREVIEWING: ['预览中：文件输入已锁定 / PREVIEW', 'ok'],
+      WARMING: ['正在准备渲染 / INITIALIZING', 'warn'],
+      RECORDING: ['正在录制 / RECORDING', 'err'],
+      EXPORTING: ['正在封装导出 / FINALIZING', 'ok']
     };
     if (!opts.silent && msgs[state]) this.log(...msgs[state]);
     if (typeof AudioAnalysis !== 'undefined') AudioAnalysis.updatePanel();
@@ -1592,11 +1592,12 @@ const UI = {
   },
   setControlReason(el, disabled, reason = '', describedById = '') {
     if (!el) return;
+    const displayReason = this.localizeBusyReason(reason);
     el.disabled = !!disabled;
-    el.title = reason || '';
+    el.title = displayReason || '';
     el.setAttribute('aria-disabled', disabled ? 'true' : 'false');
     if (describedById) el.setAttribute('aria-describedby', describedById);
-    if (reason) el.dataset.disabledReason = reason;
+    if (displayReason) el.dataset.disabledReason = displayReason;
     else delete el.dataset.disabledReason;
   },
   rangeValueText(id, rawValue = Dom[id]?.value) {
@@ -3711,13 +3712,13 @@ const ProjectPackage = {
   retainPackageDownload(blob, fileName) {
     if (!blob || !blob.size) {
       Store.packageDownloadable = null;
-      return { retryAvailable: false, retryNote: 'retry unavailable' };
+      return { retryAvailable: false, retryNote: '无法重试下载' };
     }
     if (blob.size > LIMITS.maxPackageRetryBytes) {
       Store.packageDownloadable = null;
       return {
         retryAvailable: false,
-        retryNote: `retry not retained - package > ${Utils.formatBytes(LIMITS.maxPackageRetryBytes)}`
+        retryNote: `项目包超过 ${Utils.formatBytes(LIMITS.maxPackageRetryBytes)}，未保留重试文件`
       };
     }
     Store.packageDownloadable = {
@@ -3726,7 +3727,7 @@ const ProjectPackage = {
       bytes: blob.size,
       createdAt: new Date().toISOString()
     };
-    return { retryAvailable: true, retryNote: 'retry available' };
+    return { retryAvailable: true, retryNote: '可重试下载' };
   },
 
   invalidatePackageDownload(reason = 'Project changed') {
@@ -3784,7 +3785,7 @@ const ProjectPackage = {
         status: 'error',
         error: Utils.safeErrMsg(err),
         retryAvailable: true,
-        retryNote: 'retry available - package download retry failed'
+        retryNote: '可重试下载：上次项目包重试失败'
       };
       UI.showError(`Package download retry failed: ${Utils.safeErrMsg(err)}`, 'WARN');
       this.updateControls();
@@ -3797,10 +3798,10 @@ const ProjectPackage = {
       verifyRequired: !result.saveVerified,
       error: '',
       retryAvailable: !result.saveVerified,
-      retryNote: !result.saveVerified ? 'retry available' : ''
+      retryNote: !result.saveVerified ? '可重试下载' : ''
     };
     this.updateControls();
-    UI.log(result.saveVerified ? 'PROJECT PACKAGE DOWNLOAD VERIFIED' : 'PROJECT PACKAGE DOWNLOAD RETRIED - VERIFY FILE', result.saveVerified ? 'ok' : 'warn');
+    UI.log(result.saveVerified ? '项目包下载已验证 / PACKAGE VERIFIED' : '项目包下载已重试，请检查文件 / VERIFY FILE', result.saveVerified ? 'ok' : 'warn');
   },
 
   updateControls() {
@@ -3887,30 +3888,30 @@ const ProjectPackage = {
       UI.setControlReason(Dom['in-package-file'], Dom['in-package-file'].disabled, loadReason, 'package-summary');
     }
     if (summary) {
-      const saveStatus = saveReason ? `EXPORT BLOCKED: ${saveReason}` : `EXPORT READY: ${Utils.formatBytes(estimate)} estimated`;
-      const loadStatus = loadReason ? `IMPORT BLOCKED: ${loadReason}` : 'IMPORT READY';
+      const saveStatus = saveReason ? `导出已阻止：${UI.localizeBusyReason(saveReason)}` : `可导出：预计 ${Utils.formatBytes(estimate)}`;
+      const loadStatus = loadReason ? `导入已阻止：${UI.localizeBusyReason(loadReason)}` : '可导入';
       const packageHasCaution = ['download-dispatched', 'error'].includes(lastDownload.status);
       const downloadStatus = lastDownload.status === 'download-dispatched'
-        ? `LAST DOWNLOAD DISPATCHED · VERIFY FILE: ${lastDownload.fileName || 'package'}`
+        ? `最近下载已触发，请检查文件：${lastDownload.fileName || 'package'}`
         : lastDownload.status === 'error'
-          ? `LAST DOWNLOAD ERROR: ${lastDownload.error || 'unknown'}`
+          ? `最近下载失败：${lastDownload.error || 'unknown'}`
           : '';
       summary.textContent = running
-        ? (Store.packageJob.cancelling ? 'PACKAGE CANCELLING' : 'PACKAGE WORKING')
+        ? (Store.packageJob.cancelling ? '正在取消项目包任务' : '项目包处理中')
         : `${downloadStatus ? `${downloadStatus} | ` : ''}${saveStatus} | ${loadStatus}`;
       summary.classList.toggle('ready', !saveReason && !loadReason && !running && !packageHasCaution);
     }
     const rows = [
-      ['Export', saveReason || `Ready · ${Utils.formatBytes(estimate)} estimated`],
-      ['Import', loadReason || 'Ready'],
-      ['Assets', invalidAssets.length ? `Invalid: ${invalidAssets.join(', ')}` : `${this.getRawAssetEntries().length} portable assets`]
+      ['导出', saveReason ? UI.localizeBusyReason(saveReason) : `就绪 · 预计 ${Utils.formatBytes(estimate)}`],
+      ['导入', loadReason ? UI.localizeBusyReason(loadReason) : '就绪'],
+      ['素材', invalidAssets.length ? `无效：${invalidAssets.join(', ')}` : `${this.getRawAssetEntries().length} 个可打包素材`]
     ];
     if (lastDownload.status === 'download-dispatched') {
-      rows.push(['Last package', `${lastDownload.fileName || 'package'} · download dispatched · verify file`]);
+      rows.push(['最近项目包', `${lastDownload.fileName || 'package'} · 已触发下载，请检查文件`]);
     } else if (lastDownload.status === 'error') {
-      rows.push(['Last package', `Download failed · ${lastDownload.error || 'unknown'}`]);
+      rows.push(['最近项目包', `下载失败 · ${lastDownload.error || 'unknown'}`]);
     }
-    if (retryAvailable) rows.push(['Recovery', lastDownload.retryNote || 'Retry package download before changing the project']);
+    if (retryAvailable) rows.push(['恢复建议', lastDownload.retryNote || '修改项目之前，请先重试项目包下载']);
     UI.renderKeyValueList(list, rows);
   },
 
@@ -3989,13 +3990,13 @@ const ProjectPackage = {
         verifyRequired: false,
         error: Utils.safeErrMsg(err),
         retryAvailable: !!retryRetention.retryAvailable,
-        retryNote: retryRetention.retryAvailable ? 'retry available - first package download dispatch failed' : retryRetention.retryNote
+        retryNote: retryRetention.retryAvailable ? '可重试下载：首次项目包下载触发失败' : retryRetention.retryNote
       };
       throw err;
     } finally {
       this.finishPackageJob(token);
     }
-    if (result?.downloadDispatched) UI.log(result.saveVerified ? 'PROJECT PACKAGE DOWNLOAD VERIFIED' : 'PROJECT PACKAGE DOWNLOAD DISPATCHED - VERIFY FILE', result.saveVerified ? 'ok' : 'warn');
+    if (result?.downloadDispatched) UI.log(result.saveVerified ? '项目包下载已验证 / PACKAGE VERIFIED' : '项目包下载已触发，请检查文件 / VERIFY FILE', result.saveVerified ? 'ok' : 'warn');
   },
 
   mimeForAsset(type, name) {
@@ -5083,7 +5084,7 @@ const RenderReport = {
     try {
       result = DownloadManager.dispatchBlob(saved.blob, saved.fileName);
     } catch (err) {
-      UI.showError(`Retry export download failed: ${Utils.safeErrMsg(err)}`, 'WARN');
+      UI.showError(`重试导出下载失败：${Utils.safeErrMsg(err)}。请保持页面打开，稍后再点“重试导出下载”。`, 'WARN');
       this.updatePanel();
       return;
     }
@@ -5098,7 +5099,7 @@ const RenderReport = {
       output.downloadDispatched = !!result.downloadDispatched;
       output.saveVerified = !!result.saveVerified;
       output.retryAvailable = !result.saveVerified;
-      output.retryNote = !result.saveVerified ? 'retry available' : '';
+      output.retryNote = !result.saveVerified ? '可重试下载' : '';
       output.lastDownloadAttemptAt = new Date().toISOString();
       AutoSave.schedule('render-report');
     }
@@ -5162,12 +5163,12 @@ const RenderReport = {
       ['Duration', Utils.formatSeconds(report.output.audioSec || report.output.recordSec || 0)],
       ['Size', Utils.formatBytes(report.output.bytes || 0)],
       ['Frames', `${report.output.renderedFrames || 0} drawn · ${report.output.droppedFrames || 0} dropped`],
-      ['Save', reportStale ? 'Stale previous render' : (failed ? 'Failed' : (report.output.saveVerified ? 'Verified' : (report.output.downloadDispatched ? (retryAvailable ? 'Download dispatched · retry available' : 'Download dispatched') : 'Unknown')))]
+      ['保存状态', reportStale ? '上一次渲染已过期' : (failed ? '失败' : (report.output.saveVerified ? '已验证' : (report.output.downloadDispatched ? (retryAvailable ? '已触发下载 · 可重试' : '已触发下载') : '未知')))]
     ];
-    if (reportStale) rows.unshift(['Status', report.output.staleReason || 'Previous render']);
-    if (failed) rows.unshift(['Error', report.output.error || 'Unknown export error']);
-    if (retryAvailable) rows.push(['Recovery', 'Retry export download before starting a new render']);
-    if (report.output.retryNote) rows.push(['Recovery', report.output.retryNote]);
+    if (reportStale) rows.unshift(['状态', report.output.staleReason || '上一次渲染']);
+    if (failed) rows.unshift(['错误', report.output.error || '未知导出错误']);
+    if (retryAvailable) rows.push(['恢复建议', '开始新渲染前，请先重试导出下载']);
+    if (report.output.retryNote) rows.push(['恢复建议', report.output.retryNote]);
     if (report.audioAnalysis) {
       rows.push(
         ['LUFS', `${Utils.formatLufs(report.audioAnalysis.integratedLufs)} est.`],
@@ -5476,11 +5477,11 @@ const BatchQueue = {
     this.releaseRetryForItem(item);
     const saved = Store.lastDownloadableExport;
     if (!item || !result?.retryAvailable || !saved?.blob || saved.fileName !== result.fileName) {
-      if (item?.status === 'download-dispatched') item.retryNote = 'retry unavailable';
+      if (item?.status === 'download-dispatched') item.retryNote = '无法重试下载';
       return;
     }
     if ((saved.bytes || saved.blob.size || 0) > LIMITS.maxBatchRetryBytes) {
-      item.retryNote = `retry not retained - output > ${Utils.formatBytes(LIMITS.maxBatchRetryBytes)}`;
+      item.retryNote = `输出超过 ${Utils.formatBytes(LIMITS.maxBatchRetryBytes)}，未保留重试文件`;
       return;
     }
     item.retryBlob = saved.blob;
@@ -5488,7 +5489,7 @@ const BatchQueue = {
     item.retryBytes = saved.bytes || saved.blob.size || 0;
     item.retryCreatedAt = Date.now();
     item.retryAvailable = true;
-    item.retryNote = 'retry available';
+    item.retryNote = '可重试下载';
     this.pruneBatchRetryBlobs(item.id);
   },
 
@@ -5520,8 +5521,8 @@ const BatchQueue = {
       item.saveVerified = !!result.saveVerified;
       item.status = result.saveVerified ? 'done' : 'download-dispatched';
       item.retryAvailable = !!item.retryBlob && !!result.downloadDispatched && !result.saveVerified;
-      item.retryNote = item.retryAvailable ? 'retry available' : 'retry unavailable';
-      UI.log(result.saveVerified ? 'BATCH DOWNLOAD VERIFIED' : 'BATCH DOWNLOAD RETRY DISPATCHED - VERIFY FILE', result.saveVerified ? 'ok' : 'warn');
+      item.retryNote = item.retryAvailable ? '可重试下载' : '无法重试下载';
+      UI.log(result.saveVerified ? '批量下载已验证 / BATCH VERIFIED' : '批量下载已重试，请检查文件 / VERIFY FILE', result.saveVerified ? 'ok' : 'warn');
       this.render();
       return result;
     } catch (err) {
@@ -5666,7 +5667,7 @@ const BatchQueue = {
     }
     if (this.hasProtectedClearOutputs() && !this.isClearConfirmArmed()) {
       this.armClearDiscardConfirmation();
-      UI.showError('Clear Batch will discard unverified downloads and retryable output blobs. Click Discard Batch Outputs to confirm.', 'WARN');
+      UI.showError('清空批量会丢弃尚未验证保存的下载和可重试输出。请再次点击“确认丢弃批量输出”确认。', 'WARN');
       this.render();
       return false;
     }
@@ -5685,7 +5686,7 @@ const BatchQueue = {
   requestCancel(reason = 'Batch cancelled') {
     if (!Store.batch.running) return;
     if (Store.batch.restoring) {
-      UI.showError('Batch is restoring the original project and cannot be cancelled. Wait for restore to finish.', 'WARN');
+      UI.showError('批量渲染正在恢复原项目，暂时不能取消。请等待恢复完成。', 'WARN');
       this.render();
       return;
     }
@@ -5839,8 +5840,8 @@ const BatchQueue = {
       }
       if (Store.batch.cancelRequested) cancelled = true;
       const hasUnverifiedDownloads = Store.batch.items.some((item) => item.status === 'download-dispatched');
-      const verifySuffix = hasUnverifiedDownloads ? ' - VERIFY FILES' : '';
-      UI.log(cancelled ? 'BATCH CANCELLED' : (failures ? `BATCH FINISHED WITH ${failures} ERRORS${verifySuffix}` : (hasUnverifiedDownloads ? 'BATCH DOWNLOADS DISPATCHED - VERIFY FILES' : 'BATCH COMPLETE')), (cancelled || failures || hasUnverifiedDownloads) ? 'warn' : 'ok');
+      const verifySuffix = hasUnverifiedDownloads ? '，请检查文件' : '';
+      UI.log(cancelled ? '批量渲染已取消 / BATCH CANCELLED' : (failures ? `批量完成但有 ${failures} 个错误${verifySuffix}` : (hasUnverifiedDownloads ? '批量下载已触发，请检查文件 / VERIFY FILES' : '批量完成 / BATCH COMPLETE')), (cancelled || failures || hasUnverifiedDownloads) ? 'warn' : 'ok');
     } catch (err) {
       const item = Store.batch.items[Store.batch.activeIndex];
       if (item) {
@@ -5942,8 +5943,8 @@ const BatchQueue = {
     const batchRunStatus = restoring ? 'RESTORING PROJECT' : (cancelling ? 'CANCELLING' : 'RUNNING');
     summary.textContent = items.length
       ? (Store.batch.running
-        ? `${done}/${runnable.length} ${dispatched ? 'DOWNLOADS DISPATCHED · VERIFY FILES' : 'RENDERED'} · ${batchRunStatus}${errors ? ` · ${errors} ISSUE${errors > 1 ? 'S' : ''}` : ''}${restoreIssue}`
-        : `${done}/${runnable.length} ${dispatched ? 'DOWNLOADS DISPATCHED · VERIFY FILES' : 'RENDERED'}${errors ? ` · ${errors} ISSUE${errors > 1 ? 'S' : ''}` : ''}${restoreIssue}${clearConfirmArmed ? ' · DISCARD CONFIRMATION ARMED' : ''} | ${addStatus} | ${startStatus}`)
+        ? `${done}/${runnable.length} ${dispatched ? '下载已触发，请检查文件' : '已渲染'} · ${batchRunStatus}${errors ? ` · ${errors} 个问题` : ''}${restoreIssue}`
+        : `${done}/${runnable.length} ${dispatched ? '下载已触发，请检查文件' : '已渲染'}${errors ? ` · ${errors} 个问题` : ''}${restoreIssue}${clearConfirmArmed ? ' · 已等待确认丢弃' : ''} | ${addStatus} | ${startStatus}`)
       : `${addStatus} | ${startStatus}${restoreIssue}`;
     summary.classList.toggle('ready', !batchStartBlocked);
     if (Dom['btn-add-batch-audio']) {
@@ -5960,8 +5961,8 @@ const BatchQueue = {
 	      ? (restoring ? '正在恢复原项目' : (cancelling ? '正在取消批量' : '取消批量'))
 	      : (clearConfirmArmed ? '确认丢弃批量输出' : '清空批量');
 	    const clearSub = Store.batch.running
-	      ? (restoring ? 'Restoring Project...' : (cancelling ? 'Cancelling Batch...' : 'Cancel Batch'))
-	      : (clearConfirmArmed ? 'Discard Batch Outputs' : 'Clear Batch');
+	      ? (restoring ? '恢复中 / Restoring' : (cancelling ? '取消中 / Cancelling' : '取消 / Cancel'))
+	      : (clearConfirmArmed ? '确认丢弃 / Discard' : '清空 / Clear');
 	    Dom['btn-clear-batch'].innerHTML = `<span class="btn-main">${clearMain}</span><span class="btn-sub">${clearSub}</span>`;
     Dom['btn-clear-batch'].disabled = Store.packageJob.running || Store.restoreJob.running || Store.autosaveJob.running || restoring || cancelling || (!Store.batch.running && Machine.status !== 'IDLE');
     UI.setControlReason(
@@ -5989,19 +5990,19 @@ const BatchQueue = {
       const v = document.createElement('b');
       l.textContent = item.file.name || 'audio';
       const statusLabel = item.status === 'done'
-        ? 'verified'
+        ? '已验证'
         : item.status === 'download-dispatched'
-          ? 'download dispatched · verify file'
+          ? '下载已触发 · 请检查文件'
           : item.status;
-      v.textContent = statusLabel + (item.outputName ? ` · ${item.outputName}` : '') + (item.retryAvailable ? ' · retry available' : (item.retryNote ? ` · ${item.retryNote}` : '')) + (item.error ? ` · ${item.error}` : '');
+      v.textContent = statusLabel + (item.outputName ? ` · ${item.outputName}` : '') + (item.retryAvailable ? ' · 可重试下载' : (item.retryNote ? ` · ${item.retryNote}` : '')) + (item.error ? ` · ${item.error}` : '');
       li.append(l, v);
       if (item.retryAvailable) {
         const retry = document.createElement('button');
         retry.type = 'button';
         retry.className = 'secondary inline-retry';
-        retry.textContent = 'Retry';
+        retry.textContent = '重试';
         retry.dataset.batchRetryId = item.id;
-        retry.setAttribute('aria-label', `Retry download for ${item.file.name || 'batch item'}`);
+        retry.setAttribute('aria-label', `重试下载：${item.file.name || '批量项目'}`);
         const retryReason = this.batchRetryLockReason();
         UI.setControlReason(retry, !!retryReason, retryReason, 'batch-summary');
         retry.addEventListener('click', () => this.retryDownload(item.id));
@@ -8849,13 +8850,13 @@ const Recorder = {
   retainDownloadableExport(blob, fileName, mime) {
     if (!blob || !blob.size) {
       Store.lastDownloadableExport = null;
-      return { retryAvailable: false, retryNote: 'retry unavailable' };
+      return { retryAvailable: false, retryNote: '无法重试下载' };
     }
     if (blob.size > LIMITS.maxExportRetryBytes) {
       Store.lastDownloadableExport = null;
       return {
         retryAvailable: false,
-        retryNote: `retry not retained - output > ${Utils.formatBytes(LIMITS.maxExportRetryBytes)}`
+        retryNote: `输出超过 ${Utils.formatBytes(LIMITS.maxExportRetryBytes)}，未保留重试文件`
       };
     }
     Store.lastDownloadableExport = {
@@ -8866,7 +8867,7 @@ const Recorder = {
       createdAt: new Date().toISOString()
     };
     if (typeof RenderReport !== 'undefined') RenderReport.updatePanel();
-    return { retryAvailable: true, retryNote: 'retry available' };
+    return { retryAvailable: true, retryNote: '可重试下载' };
   },
 
   enqueueWrite(blob, sid) {
@@ -9042,7 +9043,7 @@ const Recorder = {
     if (!btn) return;
     const active = this._resumeRetryArmed && this.bgPaused && Machine.status === 'RECORDING' && !document.hidden;
     btn.style.display = active ? 'block' : 'none';
-    UI.setControlReason(btn, !active, active ? '' : 'Resume retry unavailable', 'status-text');
+    UI.setControlReason(btn, !active, active ? '' : '暂时不能重试恢复', 'status-text');
   },
 
   scheduleBackgroundResumeRetry() {
@@ -9098,7 +9099,7 @@ const Recorder = {
       this.pauseMedia();
       Engine.stopLoop();
       this.scheduleBackgroundResumeRetry();
-      UI.showError('Recording resume blocked by browser autoplay policy. Use Retry Resume to continue.', 'WARN');
+      UI.showError('录制恢复被浏览器自动播放策略阻止。请点击“重试恢复”继续。', 'WARN');
     }
   },
 
@@ -9418,7 +9419,7 @@ const Recorder = {
   requestAbort() {
     if (Machine.status === 'EXPORTING') {
       this.clearAbortConfirm();
-      UI.showError('Export is finalizing; wait for the save or download result before starting another render.', 'WARN');
+      UI.showError('导出正在封装。请等待保存或下载结果出现后，再开始新的渲染。', 'WARN');
       return;
     }
     if (!['WARMING', 'RECORDING', 'EXPORTING'].includes(Machine.status)) {
@@ -9529,7 +9530,7 @@ const Recorder = {
           downloadDispatched: false,
           saveVerified: false,
           retryAvailable: !!retryRetention.retryAvailable,
-          retryNote: retryRetention.retryAvailable ? 'retry available - first download dispatch failed' : retryRetention.retryNote,
+          retryNote: retryRetention.retryAvailable ? '可重试下载：首次下载触发失败' : retryRetention.retryNote,
           failurePhase: 'download-dispatch'
         });
         return;
