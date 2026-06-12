@@ -135,9 +135,9 @@ const manifest = {
     ciRunUrl,
     downloadsVerifiedAt,
     localEvidence: await existingEvidence([
-      'docs/verification/cover-0.1.0.md',
-      'docs/verification/mv-0.1.0.md',
-      'docs/verification/motion-batch-0.1.0.md'
+      `docs/verification/cover-${version}.md`,
+      `docs/verification/mv-${version}.md`,
+      `docs/verification/motion-batch-${version}.md`
     ])
   },
   knownLimits: [

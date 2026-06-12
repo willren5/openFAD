@@ -126,7 +126,7 @@ async function gotoApp(page, options = {}) {
 async function setBrowserFile(page, selector, { name, mimeType, buffer, lastModified }) {
   await page.evaluate(({ selector: inputSelector, name: fileName, mimeType: type, bytes, lastModified: mtime }) => {
     const input = document.querySelector(inputSelector);
-    if (!input) throw new Error(`Missing input ${inputSelector}`);
+    if (!input) throw new Error(`缺失 input ${inputSelector}`);
     const file = new File([new Uint8Array(bytes)], fileName, { type, lastModified: mtime });
     const transfer = new DataTransfer();
     transfer.items.add(file);
@@ -172,7 +172,7 @@ async function saveSnapshotViaUi(page, expectedSong = '') {
     const recent = Array.from(document.querySelector('#recent-projects')?.options || []).map((option) => option.textContent || '').join(' | ');
     const saving = !!window.AutoSave?.status?.saving;
     const hasExpectedRecent = !song || recent.includes(song);
-    const statusConfirmed = /SNAPSHOT SAVED|AUTOSAVED/.test(status);
+    const statusConfirmed = /快照已保存|已自动保存/.test(status);
     return !saving && hasExpectedRecent && (statusConfirmed || !!song);
   }, expectedSong);
 }
@@ -181,7 +181,7 @@ async function restoreLatestViaUi(page, expectedSong = '') {
   await page.click('#btn-restore-latest');
   await page.waitForFunction((song) => {
     const status = document.querySelector('#status-text')?.textContent || '';
-    return /SNAPSHOT RESTORED/.test(status) && (!song || window.Store?.snapshot?.meta?.song === song);
+    return /快照已恢复/.test(status) && (!song || window.Store?.snapshot?.meta?.song === song);
   }, expectedSong);
 }
 
@@ -515,15 +515,15 @@ test('browser boot smoke loads index.html and exposes only safe public runtime f
   assert.equal(smoke.canvas.height, 1920);
   assert.ok(smoke.canvas.clientWidth > 0);
   assert.ok(smoke.canvas.clientHeight > 0);
-  assert.match(smoke.canvas.ariaLabel, /openFAD 视觉预览：未命名曲目 \/ Untitled track \/ 未知艺人 \/ Unknown artist/);
+  assert.match(smoke.canvas.ariaLabel, /openFAD 视觉预览：未命名曲目 \/ 未知艺人/);
   assert.equal(smoke.canvas.describedBy, 'canvas-summary');
-  assert.match(smoke.canvas.summary, /cover missing/);
-  assert.match(smoke.canvas.summary, /状态：IDLE/);
+  assert.match(smoke.canvas.summary, /背景图缺失/);
+  assert.match(smoke.canvas.summary, /状态：准备就绪/);
   assert.deepEqual(smoke.landmarks, { sidebar: true, preview: true });
-  assert.match(smoke.summaries.preflight, /需要检查|预检通过/);
-  assert.match(smoke.summaries.custom, /Choose a preset/);
-  assert.match(smoke.summaries.package, /可导出|导出已阻止|EXPORT READY|EXPORT BLOCKED|PACKAGE/);
-  assert.match(smoke.summaries.batch, /ADD READY|ADD BLOCKED/);
+  assert.match(smoke.summaries.preflight, /需要检查|素材齐了，可以导出/);
+  assert.match(smoke.summaries.custom, /选择预设|自定义预设/);
+  assert.match(smoke.summaries.package, /可导出|导出已阻止|项目文件/);
+  assert.match(smoke.summaries.batch, /可以添加音频|添加音频暂不可用/);
   assert.deepEqual(smoke.controls, { preview: true, record: true, abort: true });
 
   assert.equal(smoke.publicApi.machine.type, 'object');
@@ -633,7 +633,7 @@ test('Start Mode demo loads a public-safe project and visual systems update the 
   await page.waitForFunction(() => {
     const status = window.AssetManager?.status || {};
     return ['cover', 'video', 'audio', 'logo'].every((type) => status[type]?.valid === true)
-      && /预检通过/.test(document.querySelector('#preflight-summary')?.textContent || '');
+      && /素材齐了，可以导出/.test(document.querySelector('#preflight-summary')?.textContent || '');
   });
 
   const demoState = await page.evaluate(() => ({
@@ -660,7 +660,7 @@ test('Start Mode demo loads a public-safe project and visual systems update the 
 
   assert.match(startMode.title, /制作一段音乐视觉/);
   assert.match(startMode.title, /openFAD MV Studio/);
-  assert.match(startMode.subtitle, /本地优先的中文 MV Studio/);
+  assert.match(startMode.subtitle, /纯浏览器处理的中文 MV 制作工具/);
   assert.match(startMode.demoText, /打开示例/);
   assert.match(startMode.uploadText, /上传音频/);
   assert.match(startMode.previewText, /预览/);
@@ -684,7 +684,7 @@ test('Start Mode demo loads a public-safe project and visual systems update the 
   assert.match(demoState.assets.audio.name, /openfad-demo-audio\.wav/);
   assert.equal(demoState.snapshot.meta.song, 'OPENFAD DEMO LOOP');
   assert.equal(demoState.snapshot.meta.artist, 'openFAD');
-  assert.match(demoState.preflight, /预检通过/);
+  assert.match(demoState.preflight, /素材齐了，可以导出/);
   assert.match(demoState.assetSummary, /素材就绪/);
   assert.equal(demoState.previewDisabled, false);
   assert.equal(demoState.exportDisabled, false);
@@ -883,7 +883,7 @@ test('fatal dialog keeps long mobile errors and reset action reachable', { skip:
   assert.match(geometry.box.overflowY, /auto|scroll/);
   assert.match(geometry.msg.overflowY, /auto|scroll/);
   assert.deepEqual(pageErrors, []);
-  assert.ok(consoleErrors.some((message) => message.includes('[openFAD][FATAL] Boot failed: Canvas bootstrap failed with long diagnostics')));
+  assert.ok(consoleErrors.some((message) => message.includes('[openFAD][FATAL] 启动失败：Canvas bootstrap failed with long diagnostics')));
   await page.close();
 });
 
@@ -933,7 +933,7 @@ test('fatal dialog long diagnostics are keyboard-scrollable', { skip: !playwrigh
   assert.equal(focusedId, 'err-msg');
   assert.ok(after.msgScrollTop > before.msgScrollTop, `PageDown should scroll fatal diagnostics: before=${JSON.stringify(before)} after=${JSON.stringify(after)}`);
   assert.deepEqual(pageErrors, []);
-  assert.ok(consoleErrors.some((message) => message.includes('[openFAD][FATAL] Boot failed: Canvas bootstrap failed with long diagnostics')));
+  assert.ok(consoleErrors.some((message) => message.includes('[openFAD][FATAL] 启动失败：Canvas bootstrap failed with long diagnostics')));
   await page.close();
 });
 
@@ -1033,12 +1033,12 @@ test('missing AudioContext blocks ready state before preview or render start', {
   }));
 
   assert.match(blocked.preflight, /需要检查/);
-  assert.match(blocked.preflight, /AudioContext unsupported|Audio engine unavailable/);
+  assert.match(blocked.preflight, /当前浏览器无法处理音频|Audio engine unavailable/);
   assert.equal(blocked.readiness.recordReady, false);
   assert.equal(blocked.recordDisabled, true);
   assert.equal(blocked.previewDisabled, true);
-  assert.match(blocked.recordReason, /AudioContext unsupported|Audio engine unavailable/);
-  assert.match(blocked.previewReason, /AudioContext unsupported|Audio engine unavailable/);
+  assert.match(blocked.recordReason, /当前浏览器无法处理音频|Audio engine unavailable/);
+  assert.match(blocked.previewReason, /当前浏览器无法处理音频|Audio engine unavailable/);
   assert.equal(blocked.fatalOpen, false);
   assert.notEqual(blocked.statusText, 'READY: VISUALIZER MODE');
   assert.deepEqual(pageErrors, []);
@@ -1092,9 +1092,9 @@ test('pending asset loads announce loading state before decode completes', { ski
   }));
 
   assert.deepEqual(pending.videoStatus, { name: 'slow-center.png', valid: false, error: '' });
-  assert.match(pending.assetInputSummary, /素材载入中 \/ ASSETS LOADING: .*Center/);
+  assert.match(pending.assetInputSummary, /素材载入中：.*中心视觉\/Center/);
   assert.match(pending.preflight, /请先选择背景图/);
-  assert.match(pending.statusLive, /Loading center visual: slow-center\.png/);
+  assert.match(pending.statusLive, /正在载入中心视觉素材：slow-center\.png/);
 
   await page.waitForFunction(() => window.AssetManager?.status?.video?.valid === true);
   assert.deepEqual(pageErrors, []);
@@ -1145,25 +1145,25 @@ test('range controls update aria-valuetext as values change', { skip: !playwrigh
     };
   });
 
-  assert.deepEqual(state.logoSize, { aria: 'Logo 尺寸 321px / 321 px logo size', visible: '321 px', title: 'Logo 尺寸 321px / 321 px logo size' });
-  assert.deepEqual(state.logoPos, { aria: 'Logo 底部距离 77px / 77 px bottom margin', visible: '77 px', title: 'Logo 底部距离 77px / 77 px bottom margin' });
-  assert.deepEqual(state.sensitivity, { aria: '音频响应灵敏度 137% / 137% audio response sensitivity', visible: '137%', title: '音频响应灵敏度 137% / 137% audio response sensitivity' });
-  assert.deepEqual(state.fx, { aria: 'FX 强度 42% / 42% FX intensity', visible: '42%', title: 'FX 强度 42% / 42% FX intensity' });
-  assert.deepEqual(state.glow, { aria: '辉光强度 37% / 37% glow strength', visible: '37%', title: '辉光强度 37% / 37% glow strength' });
+  assert.deepEqual(state.logoSize, { aria: 'Logo 尺寸 321px', visible: '321 px', title: 'Logo 尺寸 321px' });
+  assert.deepEqual(state.logoPos, { aria: 'Logo 底部距离 77px', visible: '77 px', title: 'Logo 底部距离 77px' });
+  assert.deepEqual(state.sensitivity, { aria: '音频响应灵敏度 137%', visible: '137%', title: '音频响应灵敏度 137%' });
+  assert.deepEqual(state.fx, { aria: '特效强度 42%', visible: '42%', title: '特效强度 42%' });
+  assert.deepEqual(state.glow, { aria: '辉光强度 37%', visible: '37%', title: '辉光强度 37%' });
   assert.ok(state.groups.length >= 12);
   for (const group of state.groups) {
     assert.equal(group.role, 'group');
     assert.ok(group.labelId, `${group.label} should have generated label id`);
     assert.equal(group.labelledBy, group.labelId);
   }
-  assert.ok(state.groups.some((group) => /版式控制\s*Layout Controls/.test(group.label)));
-  assert.ok(state.groups.some((group) => /高级视觉\s*Advanced Visual Controls/.test(group.label)));
-  const layoutAx = await page.locator('.sidebar > .section').filter({ hasText: 'Layout Controls' }).ariaSnapshot();
-  const advancedAx = await page.locator('.sidebar > .section').filter({ hasText: 'Advanced Visual Controls' }).ariaSnapshot();
-  assert.match(layoutAx, /group ".*Layout Controls"/);
+  assert.ok(state.groups.some((group) => /版式控制\s*位置和尺寸/.test(group.label)));
+  assert.ok(state.groups.some((group) => /高级视觉\s*反应、特效和辉光/.test(group.label)));
+  const layoutAx = await page.locator('.sidebar > .section').filter({ hasText: '位置和尺寸' }).ariaSnapshot();
+  const advancedAx = await page.locator('.sidebar > .section').filter({ hasText: '反应、特效和辉光' }).ariaSnapshot();
+  assert.match(layoutAx, /group ".*位置和尺寸"/);
   assert.match(layoutAx, /slider ".*Logo 尺寸"/);
   assert.match(layoutAx, /321 px/);
-  assert.match(advancedAx, /group ".*Advanced Visual Controls"/);
+  assert.match(advancedAx, /group ".*反应、特效和辉光"/);
   assert.match(advancedAx, /slider ".*音频响应灵敏度/);
   assert.match(advancedAx, /137%/);
   assert.equal(state.snapshot.layout.logoWidth, 321);
@@ -1214,7 +1214,7 @@ test('asset file selections update visible labels, readiness summaries, and disa
   }
 
   await page.setInputFiles('#in-cover', filePayload('not-cover.txt', 'text/plain', Buffer.from('not an image')));
-  await page.waitForFunction(() => window.AssetManager?.status?.cover?.error === 'Unsupported cover file');
+  await page.waitForFunction(() => window.AssetManager?.status?.cover?.error === '不支持的cover文件');
   const rejected = await page.evaluate(() => ({
     label: document.querySelector('#lbl-cover')?.textContent?.trim() || '',
     inputValue: document.querySelector('#in-cover')?.value || '',
@@ -1229,21 +1229,21 @@ test('asset file selections update visible labels, readiness summaries, and disa
 
   assert.equal(rejected.label, '选择背景图');
   assert.equal(rejected.inputValue, '');
-  assert.deepEqual(rejected.coverStatus, { name: '', valid: false, error: 'Unsupported cover file' });
-  assert.match(rejected.assetInputSummary, /背景图\/Cover Unsupported cover file/);
-  assert.match(rejected.preflight, /背景图不可用：Unsupported cover file/);
+  assert.deepEqual(rejected.coverStatus, { name: '', valid: false, error: '不支持的cover文件' });
+  assert.match(rejected.assetInputSummary, /背景图\/Cover 不支持的cover文件/);
+  assert.match(rejected.preflight, /背景图不可用：不支持的cover文件/);
   assert.equal(rejected.previewDisabled, true);
   assert.equal(rejected.recordDisabled, true);
-  assert.match(rejected.previewReason, /背景图不可用：Unsupported cover file/);
-  assert.match(rejected.recordReason, /背景图不可用：Unsupported cover file/);
+  assert.match(rejected.previewReason, /背景图不可用：不支持的cover文件/);
+  assert.match(rejected.recordReason, /背景图不可用：不支持的cover文件/);
   const rejectedA11y = await coverInputAccessibility();
   assert.equal(rejectedA11y.focused, 'in-cover');
   assert.match(rejectedA11y.describedBy, /lbl-cover asset-input-summary/);
   assert.match(rejectedA11y.describedText, /选择背景图/);
-  assert.match(rejectedA11y.describedText, /Cover Unsupported cover file/);
+  assert.match(rejectedA11y.describedText, /Cover 不支持的cover文件/);
   if (rejectedA11y.axDescription) {
     assert.match(rejectedA11y.axDescription, /选择背景图/);
-    assert.match(rejectedA11y.axDescription, /Cover Unsupported cover file/);
+    assert.match(rejectedA11y.axDescription, /Cover 不支持的cover文件/);
   }
 
   await page.setInputFiles('#in-cover', filePayload('cover.png', 'image/png', tinyPng));
@@ -1291,8 +1291,8 @@ test('asset file selections update visible labels, readiness summaries, and disa
   assert.equal(ready.assets.video.valid, true);
   assert.equal(ready.assets.audio.valid, true);
 	  assert.match(ready.assetInputSummary, /素材就绪/);
-	  assert.match(ready.preflight, /预检通过/);
-	  assert.match(ready.statusLive, /预检通过/);
+	  assert.match(ready.preflight, /素材齐了，可以导出/);
+	  assert.match(ready.statusLive, /素材齐了，可以导出/);
 	  assert.equal(ready.assetSummaryRole, 'status');
 	  assert.equal(ready.preflightRole, 'status');
 	  assert.equal(ready.preflightLive, 'polite');
@@ -1347,7 +1347,7 @@ test('plain project JSON import preserves listed asset refs as reload guidance',
     }
   };
   await page.setInputFiles('#in-project-file', filePayload('with-assets.fad-mv.json', 'application/json', Buffer.from(JSON.stringify(projectWithAssets))));
-  await page.waitForFunction(() => document.querySelector('#status-text')?.textContent?.includes('RELOAD LISTED ASSETS'));
+  await page.waitForFunction(() => document.querySelector('#status-text')?.textContent?.includes('重新选择其中列出的素材'));
 
   const listed = await page.evaluate(() => ({
     status: document.querySelector('#status-text')?.textContent?.trim() || '',
@@ -1362,17 +1362,17 @@ test('plain project JSON import preserves listed asset refs as reload guidance',
     readiness: window.Preflight.getRenderReadiness()
   }));
 
-  assert.equal(listed.status, '工程 JSON 已载入 — 重新载入列出的素材 / PROJECT JSON LOADED — RELOAD LISTED ASSETS');
-  assert.match(listed.assetSummary, /ASSET RELOAD REQUIRED/);
+  assert.equal(listed.status, '项目文件已载入，请重新选择其中列出的素材。');
+  assert.match(listed.assetSummary, /需要重新选择素材/);
   assert.match(listed.assetSummary, /Cover cover-art\.png/);
   assert.match(listed.assetSummary, /Center center-loop\.mp4/);
   assert.match(listed.assetSummary, /Audio master\.wav/);
   assert.match(listed.assetSummary, /Logo fad-logo\.png/);
   assert.deepEqual(listed.labels, {
-    cover: 'Reload cover-art.png',
-    video: 'Reload center-loop.mp4',
-    audio: 'Reload master.wav',
-    logo: 'Reload fad-logo.png'
+    cover: '重新选择 cover-art.png',
+    video: '重新选择 center-loop.mp4',
+    audio: '重新选择 master.wav',
+    logo: '重新选择 fad-logo.png'
   });
   assert.equal(listed.assets.cover.name, 'cover-art.png');
   assert.equal(listed.assets.cover.valid, false);
@@ -1381,12 +1381,12 @@ test('plain project JSON import preserves listed asset refs as reload guidance',
 
   const stateOnlyProject = {
     schemaVersion: 1,
-    meta: { song: 'STATE ONLY', artist: 'openFAD Fixture Artist' },
+    meta: { song: '仅保存设置', artist: 'openFAD Fixture Artist' },
     config: {},
     layout: {}
   };
   await page.setInputFiles('#in-project-file', filePayload('state-only.fad-mv.json', 'application/json', Buffer.from(JSON.stringify(stateOnlyProject))));
-  await page.waitForFunction(() => document.querySelector('#status-text')?.textContent?.includes('ADD ASSETS'));
+  await page.waitForFunction(() => document.querySelector('#status-text')?.textContent?.includes('项目设置已载入，请补齐素材。'));
 
   const stateOnly = await page.evaluate(() => ({
     status: document.querySelector('#status-text')?.textContent?.trim() || '',
@@ -1400,8 +1400,8 @@ test('plain project JSON import preserves listed asset refs as reload guidance',
     assets: window.AssetManager.status
   }));
 
-  assert.equal(stateOnly.status, '工程设置已载入 — 请补齐素材 / PROJECT SETTINGS LOADED — ADD ASSETS');
-  assert.equal(stateOnly.assetSummary, '等待素材：请先选择背景图、中心视觉、主音频和透明 Logo / ASSETS WAITING');
+  assert.equal(stateOnly.status, '项目设置已载入，请补齐素材。');
+  assert.equal(stateOnly.assetSummary, '等待素材：请先选择背景图、中心视觉、主音频和透明 Logo');
 	  assert.deepEqual(stateOnly.labels, {
 	    cover: '选择背景图',
 	    video: '选择视频或图片',
@@ -1436,7 +1436,7 @@ test('state-only autosave restore in a fresh session shows asset reload guidance
 
   const projectWithAssets = {
     schemaVersion: 1,
-    meta: { song: 'FRESH STATE ONLY RESTORE', artist: 'openFAD Fixture Artist' },
+    meta: { song: 'FRESH 仅保存设置 RESTORE', artist: 'openFAD Fixture Artist' },
     config: {},
     layout: {},
     assets: {
@@ -1447,22 +1447,22 @@ test('state-only autosave restore in a fresh session shows asset reload guidance
     }
   };
   await page.setInputFiles('#in-project-file', filePayload('fresh-state-only.fad-mv.json', 'application/json', Buffer.from(JSON.stringify(projectWithAssets))));
-  await page.waitForFunction(() => document.querySelector('#asset-input-summary')?.textContent?.includes('ASSET RELOAD REQUIRED'));
-  await page.waitForFunction(() => Array.from(document.querySelector('#recent-projects')?.options || []).some((option) => /FRESH STATE ONLY RESTORE/.test(option.textContent || '')));
+  await page.waitForFunction(() => document.querySelector('#asset-input-summary')?.textContent?.includes('需要重新选择素材'));
+  await page.waitForFunction(() => Array.from(document.querySelector('#recent-projects')?.options || []).some((option) => /FRESH 仅保存设置 RESTORE/.test(option.textContent || '')));
 
   await page.reload({ waitUntil: 'load' });
   await page.waitForFunction(() => document.readyState === 'complete');
   await page.waitForFunction(() => window.AutoSave?.status?.available === true);
-  await page.waitForFunction(() => Array.from(document.querySelector('#recent-projects')?.options || []).some((option) => /FRESH STATE ONLY RESTORE/.test(option.textContent || '')));
+  await page.waitForFunction(() => Array.from(document.querySelector('#recent-projects')?.options || []).some((option) => /FRESH 仅保存设置 RESTORE/.test(option.textContent || '')));
   await page.evaluate(() => {
     const select = document.querySelector('#recent-projects');
-    const option = Array.from(select?.options || []).find((item) => /FRESH STATE ONLY RESTORE/.test(item.textContent || ''));
-    if (!select || !option) throw new Error('Missing fresh state-only recent snapshot');
+    const option = Array.from(select?.options || []).find((item) => /FRESH 仅保存设置 RESTORE/.test(item.textContent || ''));
+    if (!select || !option) throw new Error('缺失 fresh state-only recent snapshot');
     select.value = option.value;
     select.dispatchEvent(new Event('change', { bubbles: true }));
   });
   await page.click('#btn-restore-selected');
-  await page.waitForFunction(() => document.querySelector('#asset-input-summary')?.textContent?.includes('ASSET RELOAD REQUIRED'));
+  await page.waitForFunction(() => document.querySelector('#asset-input-summary')?.textContent?.includes('需要重新选择素材'));
 
   const restored = await page.evaluate(() => ({
     status: document.querySelector('#status-text')?.textContent?.trim() || '',
@@ -1477,17 +1477,17 @@ test('state-only autosave restore in a fresh session shows asset reload guidance
     readiness: window.Preflight.getRenderReadiness()
   }));
 
-  assert.doesNotMatch(restored.status, /Restore failed|Autosave failed/i);
-  assert.match(restored.assetSummary, /ASSET RELOAD REQUIRED/);
+  assert.doesNotMatch(restored.status, /恢复失败|自动保存失败/i);
+  assert.match(restored.assetSummary, /需要重新选择素材/);
   assert.match(restored.assetSummary, /Cover fresh-cover\.png/);
   assert.match(restored.assetSummary, /Center fresh-center\.mp4/);
   assert.match(restored.assetSummary, /Audio fresh-master\.wav/);
   assert.match(restored.assetSummary, /Logo fresh-logo\.png/);
   assert.deepEqual(restored.labels, {
-    cover: 'Reload fresh-cover.png',
-    video: 'Reload fresh-center.mp4',
-    audio: 'Reload fresh-master.wav',
-    logo: 'Reload fresh-logo.png'
+    cover: '重新选择 fresh-cover.png',
+    video: '重新选择 fresh-center.mp4',
+    audio: '重新选择 fresh-master.wav',
+    logo: '重新选择 fresh-logo.png'
   });
   assert.equal(restored.assets.cover.name, 'fresh-cover.png');
   assert.equal(restored.assets.cover.valid, false);
@@ -1608,7 +1608,7 @@ test('plain JSON import with asset refs does not replace a full autosave latest 
     }
   };
   await page.setInputFiles('#in-project-file', filePayload('needs-assets.fad-mv.json', 'application/json', Buffer.from(JSON.stringify(jsonImport))));
-  await page.waitForFunction(() => document.querySelector('#asset-input-summary')?.textContent?.includes('ASSET RELOAD REQUIRED'));
+  await page.waitForFunction(() => document.querySelector('#asset-input-summary')?.textContent?.includes('需要重新选择素材'));
   await page.waitForFunction(() => Array.from(document.querySelector('#recent-projects')?.options || []).some((option) => /JSON IMPORT NEEDS ASSETS/.test(option.textContent || '')));
 
   await setProjectFields(page, { song: 'PLACEHOLDER BEFORE RESTORE', artist: 'openFAD Fixture Artist' });
@@ -1626,7 +1626,7 @@ test('plain JSON import with asset refs does not replace a full autosave latest 
   assert.equal(restored.assets.audio.valid, true);
   assert.equal(restored.assets.logo.valid, true);
   assert.match(restored.recentText, /JSON IMPORT NEEDS ASSETS/);
-  assert.match(restored.recentText, /STATE ONLY/);
+  assert.match(restored.recentText, /仅保存设置/);
   assert.deepEqual(pageErrors, []);
   assert.deepEqual(consoleErrors, []);
 });
@@ -1676,7 +1676,7 @@ test('recent autosave selection does not restore until Restore Selected is click
   assert.match(selectedOnly.selectedText, /RECENT SELECT A/);
   assert.equal(selectedOnly.restoreSelectedDisabled, false);
   assert.equal(selectedOnly.restoreSelectedReason, '');
-  assert.match(selectedOnly.autosaveList, /SelectedRECENT SELECT A|Selected RECENT SELECT A/);
+  assert.match(selectedOnly.autosaveList, /已选择RECENT SELECT A|已选择 RECENT SELECT A/);
 
   await page.click('#btn-restore-selected');
   try {
@@ -1768,9 +1768,9 @@ test('autosave save and restore are blocked while audio analysis is running', { 
   assert.equal(blocked.safeToSave, false);
   assert.equal(blocked.saveDisabled, true);
   assert.equal(blocked.restoreDisabled, true);
-  assert.match(blocked.autosaveSummary, /AUTOSAVE LOCKED/);
-  assert.match(blocked.saveReason, /Audio analysis in progress/);
-  assert.match(blocked.restoreReason, /Audio analysis in progress/);
+  assert.match(blocked.autosaveSummary, /自动保存暂时等待中/);
+  assert.match(blocked.saveReason, /音频分析中/);
+  assert.match(blocked.restoreReason, /音频分析中/);
   assert.deepEqual(pageErrors, []);
   assert.deepEqual(consoleErrors, []);
 });
@@ -1813,17 +1813,17 @@ test('state-only autosave restore rehydrates matching analysis against kept curr
   await page.waitForFunction(() => window.AssetManager?.status?.video?.valid === true);
   await page.setInputFiles('#in-audio', filePayload('analysis-state-only.wav', 'audio/wav', audioBytes));
   await page.waitForFunction(() => window.AssetManager?.status?.audio?.valid === true);
-  await setProjectFields(page, { song: 'STATE ONLY ANALYZED', artist: 'openFAD Fixture Artist' });
+  await setProjectFields(page, { song: '仅保存设置 ANALYZED', artist: 'openFAD Fixture Artist' });
 
   await page.click('#btn-analyze-audio');
   await page.waitForFunction(() => window.AudioAnalysis?.status?.status === 'done');
-  await saveSnapshotViaUi(page, 'STATE ONLY ANALYZED');
+  await saveSnapshotViaUi(page, '仅保存设置 ANALYZED');
   const saved = await page.evaluate(() => ({
     assetSaveSkippedReason: window.AutoSave.status.assetSaveSkippedReason,
     recentText: Array.from(document.querySelector('#recent-projects')?.options || []).map((option) => option.textContent || '').join(' | ')
   }));
-  assert.match(saved.assetSaveSkippedReason, /browser storage|autosave budget/i);
-  assert.match(saved.recentText, /STATE ONLY/);
+  assert.match(saved.assetSaveSkippedReason, /浏览器空间不足|browser storage|autosave budget/i);
+  assert.match(saved.recentText, /仅保存设置/);
 
   await page.evaluate(() => {
     document.querySelector('#in-autosave').checked = false;
@@ -1831,7 +1831,7 @@ test('state-only autosave restore rehydrates matching analysis against kept curr
   await page.setInputFiles('#in-audio', filePayload('analysis-state-only.wav', 'audio/wav', audioBytes));
   await page.waitForFunction(() => window.AssetManager?.status?.audio?.valid === true && window.AudioAnalysis?.status?.status === 'idle');
 
-  await restoreLatestViaUi(page, 'STATE ONLY ANALYZED');
+  await restoreLatestViaUi(page, '仅保存设置 ANALYZED');
   const restored = await page.evaluate(async () => {
     const result = window.AudioAnalysis.status.result;
     return {
@@ -1843,7 +1843,7 @@ test('state-only autosave restore rehydrates matching analysis against kept curr
     };
   });
 
-  assert.equal(restored.song, 'STATE ONLY ANALYZED');
+  assert.equal(restored.song, '仅保存设置 ANALYZED');
   assert.equal(restored.status, 'done');
   assert.equal(restored.sourceName, 'analysis-state-only.wav');
   assert.ok(Math.abs(restored.durationSec - 0.5) <= 0.2);
@@ -1925,7 +1925,7 @@ test('autosave reclaims old storage before using state-only fallback', { skip: !
   assert.equal(saved.status.assetSaveSkippedReason, '');
   assert.equal(saved.assetsStored, true);
   assert.deepEqual(saved.assetKeys.sort(), ['audio', 'cover', 'logo', 'video']);
-  assert.doesNotMatch(saved.recentText, /STATE ONLY/);
+  assert.doesNotMatch(saved.recentText, /仅保存设置/);
   assert.deepEqual(pageErrors, []);
   assert.deepEqual(consoleErrors, []);
 });
@@ -2002,7 +2002,7 @@ test('autosave retries asset writes after quota failures before state-only fallb
   assert.equal(saved.status.assetSaveSkippedReason, '');
   assert.equal(saved.assetsStored, true);
   assert.deepEqual(saved.assetKeys.sort(), ['audio', 'cover', 'logo', 'video']);
-  assert.doesNotMatch(saved.recentText, /STATE ONLY/);
+  assert.doesNotMatch(saved.recentText, /仅保存设置/);
   assert.doesNotMatch(saved.warnings, /ASSETS NOT INCLUDED/);
   assert.deepEqual(pageErrors, []);
   assert.deepEqual(consoleErrors, []);
@@ -2053,7 +2053,7 @@ test('plain JSON import rolls back partial mutations after late project import f
   };
   await page.evaluate(() => { window.__failNextJsonFontDispatch = true; });
   await page.setInputFiles('#in-project-file', filePayload('broken.fad-mv.json', 'application/json', Buffer.from(JSON.stringify(failingProject))));
-  await page.waitForFunction(() => document.querySelector('#status-text')?.textContent?.includes('Project load failed'));
+  await page.waitForFunction(() => document.querySelector('#status-text')?.textContent?.includes('项目文件载入失败'));
 
   const restored = await page.evaluate(() => ({
     status: document.querySelector('#status-text')?.textContent?.trim() || '',
@@ -2063,7 +2063,7 @@ test('plain JSON import rolls back partial mutations after late project import f
     readiness: window.Preflight.getRenderReadiness()
   }));
 
-  assert.match(restored.status, /Project load failed/);
+  assert.match(restored.status, /项目文件载入失败/);
   assert.equal(restored.song, 'ROLLBACK BASELINE');
   assert.equal(restored.fontName, 'Orbitron');
   assert.equal(restored.assets.cover.valid, true);
@@ -2208,7 +2208,7 @@ test('fadmv import cancellation interrupts packaged asset preflight before apply
   assert.ok(result.audioPreflightLoadCalls >= 1);
   assert.equal(result.song, 'BASELINE PACKAGE PROJECT');
   assert.equal(result.packageStatus.running, false);
-  assert.match(result.warnings, /Package operation cancelled/);
+  assert.match(result.warnings, /项目文件操作已取消/);
   assert.deepEqual(pageErrors, []);
   assert.deepEqual(consoleErrors, []);
 });
@@ -2319,7 +2319,7 @@ test('fadmv import cancellation interrupts packaged asset load and rolls back ap
   assert.equal(result.song, 'BASELINE PACKAGE PROJECT');
   assert.equal(result.audio.valid, false);
   assert.equal(result.packageStatus.running, false);
-  assert.match(result.warnings, /Package operation cancelled/);
+  assert.match(result.warnings, /项目文件操作已取消/);
   assert.deepEqual(pageErrors, []);
   assert.deepEqual(consoleErrors, []);
 });
@@ -2392,7 +2392,7 @@ test('large package import remains responsive and cancellable during CRC work', 
       probe.lastTickAt = now;
       probe.tickCount += 1;
       const status = window.ProjectPackage?.status;
-      const appImporting = status?.running && status.progress?.stage === 'PACKAGE IMPORTING' && status.progress.total > 1;
+      const appImporting = status?.running && status.progress?.stage === '正在载入完整项目' && status.progress.total > 1;
       if (appImporting && !probe.monitoringAt) {
         probe.monitoringAt = now;
         probe.monitoredLastTickAt = now;
@@ -2400,7 +2400,7 @@ test('large package import remains responsive and cancellable during CRC work', 
         probe.maxGapMs = Math.max(probe.maxGapMs, now - probe.monitoredLastTickAt);
         probe.monitoredLastTickAt = now;
       }
-      if (status?.running && status.progress?.stage === 'PACKAGE IMPORTING' && status.progress.loaded > 0 && !probe.firstProgressAt) {
+      if (status?.running && status.progress?.stage === '正在载入完整项目' && status.progress.loaded > 0 && !probe.firstProgressAt) {
         probe.firstProgressAt = now;
       }
       if (status?.running && probe.largeChunkReads > 0 && !status.cancelling && !probe.cancelRequestedAt) {
@@ -2441,7 +2441,7 @@ test('large package import remains responsive and cancellable during CRC work', 
   assert.ok(result.finishedAt - result.cancelRequestedAt < 1200, `cancelled import should unlock promptly, took ${result.finishedAt - result.cancelRequestedAt}ms`);
   assert.equal(result.status.running, false);
   assert.equal(result.song, 'BASELINE IMPORT RESPONSIVE');
-  assert.match(`${result.finalStatusText}\n${result.warnings}`, /Package operation cancelled/i);
+  assert.match(`${result.finalStatusText}\n${result.warnings}`, /项目文件操作已取消/i);
   assert.deepEqual(pageErrors, []);
   assert.deepEqual(consoleErrors, []);
 });
@@ -2482,14 +2482,14 @@ test('fadmv import rejects project-declared assets missing from packageAssets be
   await setProjectFields(page, { song: 'BASELINE PACKAGE PROJECT', artist: 'openFAD Fixture Artist' });
 
   await page.setInputFiles('#in-package-file', filePayload('incomplete.fadmv', 'application/zip', packageBytes));
-  await page.waitForFunction(() => window.UI?.warnings?.some((warning) => /Package missing declared audio asset/.test(warning.text || '')));
+  await page.waitForFunction(() => window.UI?.warnings?.some((warning) => /完整项目缺少声明的 audio 素材/.test(warning.text || '')));
   const result = await page.evaluate(() => ({
     message: window.UI.warnings.map((warning) => warning.text).join('\n'),
     song: window.Store.snapshot.meta.song,
     assets: window.AssetManager.status
   }));
 
-  assert.match(result.message, /Package missing declared audio asset/);
+  assert.match(result.message, /完整项目缺少声明的 audio 素材/);
   assert.equal(result.song, 'BASELINE PACKAGE PROJECT');
   assert.equal(result.assets.audio.valid, true);
   assert.equal(result.assets.audio.name, 'baseline.wav');
@@ -2623,8 +2623,8 @@ test('autosave writes already in flight block restore until save settles', { ski
   assert.equal(blockedRestore.song, 'STALE_A');
   assert.equal(blockedRestore.saving, true);
   assert.equal(blockedRestore.restoreDisabled, true);
-  assert.match(blockedRestore.restoreReason, /SNAPSHOT SAVING|Autosave in progress/);
-  assert.match(blockedRestore.autosaveSummary, /SNAPSHOT SAVING|AUTOSAVE LOCKED/);
+  assert.match(blockedRestore.restoreReason, /正在保存快照|自动保存中/);
+  assert.match(blockedRestore.autosaveSummary, /正在保存快照|自动保存暂时等待中/);
 
   await page.evaluate(() => {
     window.__autosaveGate.enabled = false;
@@ -2706,7 +2706,7 @@ test('manual autosave already in flight blocks JSON import until save settles', 
   assert.equal(blockedImport.saving, true);
   assert.equal(blockedImport.inputDisabled, true);
   assert.equal(blockedImport.loadDisabled, true);
-  assert.match(blockedImport.loadReason, /Autosave in progress|Locked while autosave is saving|SNAPSHOT SAVING/);
+  assert.match(blockedImport.loadReason, /自动保存中|Locked while autosave is saving|正在保存快照/);
 
   await page.evaluate(() => {
     window.__autosaveGate.enabled = false;
@@ -2803,8 +2803,8 @@ test('manual autosave in flight blocks unload duplicate saves and package import
   assert.equal(locked.saveDisabled, true);
   assert.equal(locked.packageButtonDisabled, true);
   assert.equal(locked.packageFileDisabled, true);
-  assert.match(locked.autosaveSummary, /AUTOSAVE SAVING|AUTOSAVE LOCKED/);
-  assert.match(locked.packageSummary, /SNAPSHOT SAVING|AUTOSAVE/i);
+  assert.match(locked.autosaveSummary, /正在自动保存|自动保存暂时等待中/);
+  assert.match(locked.packageSummary, /正在保存快照|AUTOSAVE/i);
 
   await page.evaluate(() => {
     window.__manualSaveGate.enabled = false;
@@ -2859,9 +2859,9 @@ test('autosave recent read failures disable autosave instead of rendering empty 
   }));
 
   assert.equal(state.available, false);
-  assert.equal(state.summary, 'AUTOSAVE UNAVAILABLE');
-  assert.match(state.list, /Autosave read failed/);
-  assert.match(state.recentText, /Autosave read failed/);
+  assert.equal(state.summary, '当前浏览器无法自动保存');
+  assert.match(state.list, /读取自动保存失败/);
+  assert.match(state.recentText, /读取自动保存失败/);
   assert.equal(state.saveDisabled, true);
   assert.equal(state.restoreDisabled, true);
   assert.equal(state.recentDisabled, true);
@@ -2940,7 +2940,7 @@ test('autosave asset pruning uses key cursor fallback without reading stored ass
   assert.equal(result.probe.getAllAssetCalls, 0);
   assert.ok(result.probe.openKeyCursorCalls >= 1 || result.probe.openCursorCalls >= 1);
   assert.match(result.recentText, /KEY CURSOR AUTOSAVE/);
-  assert.match(result.statusText, /SNAPSHOT SAVED/);
+  assert.match(result.statusText, /快照已保存/);
   assert.deepEqual(pageErrors, []);
   assert.deepEqual(consoleErrors, []);
 });
@@ -3087,7 +3087,7 @@ test('autosave removes asset blobs when snapshot record write aborts', { skip: !
   await page.click('#btn-save-snapshot');
   await page.waitForFunction(() => {
     const status = document.querySelector('#status-text')?.textContent || '';
-    return window.__snapshotAbortProbe?.putCalls > 0 && /Autosave failed/.test(status);
+    return window.__snapshotAbortProbe?.putCalls > 0 && /保存快照失败|自动保存失败/.test(status);
   });
 
   const result = await page.evaluate(async () => {
@@ -3117,7 +3117,7 @@ test('autosave removes asset blobs when snapshot record write aborts', { skip: !
   assert.deepEqual(result.probe.abortErrors, []);
   assert.doesNotMatch(result.snapshots.join(' | '), /ORPHAN SNAPSHOT FAIL/);
   assert.deepEqual(result.assetKeys, [], 'asset blobs written before an aborted snapshot save should be removed');
-  assert.match(result.statusText, /Autosave failed/);
+  assert.match(result.statusText, /保存快照失败|自动保存失败/);
   assert.deepEqual(pageErrors, []);
   assert.deepEqual(consoleErrors, []);
 });
@@ -3803,7 +3803,7 @@ test('performance throttle reduces effective visual workload after long tasks', 
   assert.equal(throttled.diagnostics.effectiveVisualConfig.visSensitivity, 0.35);
   assert.equal(throttled.diagnostics.effectiveVisualConfig.visFxIntensity, 0.35);
   assert.equal(throttled.diagnostics.effectiveVisualConfig.visGlowAmount, 0.35);
-  assert.match(`${throttled.status} ${throttled.warning}`, /性能预算未达标|reducing visual effects/i);
+  assert.match(`${throttled.status} ${throttled.warning}`, /当前设备性能吃紧|临时降低.*视觉效果|reducing visual effects/i);
   assert.deepEqual(pageErrors, []);
   assert.deepEqual(consoleErrors, []);
   await page.close();
@@ -4016,7 +4016,7 @@ test('long non-fatal warnings remain readable after later status updates', { ski
   }, before);
 
   assert.ok(metrics.before.statusScrollWidth > metrics.before.statusClientWidth, 'mobile status line should reproduce warning truncation pressure');
-  assert.equal(metrics.before.statusTitle, `WARN: Project JSON download failed: ${longMsg}`);
+  assert.equal(metrics.before.statusTitle, `提醒：项目文件下载失败：${longMsg}`);
 	  assert.equal(metrics.panelHidden, false);
 	  assert.equal(metrics.panelRole, 'document');
 	  assert.equal(metrics.panelLive, '');
@@ -4025,9 +4025,9 @@ test('long non-fatal warnings remain readable after later status updates', { ski
 	  assert.equal(metrics.liveRole, 'status');
 	  assert.equal(metrics.liveLive, 'polite');
 	  assert.equal(metrics.liveAtomic, 'true');
-	  assert.equal(metrics.clearButtonLabel, '清空警告历史 / Clear warning history');
-	  assert.doesNotMatch(metrics.liveRegionText, /Clear warning history|×|&times;/);
-	  assert.equal(metrics.liveRegionText, `警告 / Warning: Project JSON download failed: ${followUpMsg}`);
+	  assert.equal(metrics.clearButtonLabel, '清空提醒历史');
+	  assert.doesNotMatch(metrics.liveRegionText, /清空提醒历史|Clear warning history|×|&times;/);
+	  assert.equal(metrics.liveRegionText, `提醒：项目文件下载失败：${followUpMsg}`);
 	  assert.ok(metrics.listLiveRegionText.includes(longMsg), 'visible ledger should still contain the first warning');
 	  assert.ok(metrics.panelText.includes(longMsg), 'warning ledger should retain the full long warning');
 	  assert.ok(metrics.panelText.includes(followUpMsg), 'warning ledger should include later warnings too');
@@ -4035,9 +4035,9 @@ test('long non-fatal warnings remain readable after later status updates', { ski
   assert.match(metrics.panelText, /continue\.\s+\d{2}:\d{2}:\d{2}/, 'warning entries should keep a text separator between adjacent rows');
   assert.doesNotMatch(metrics.panelText, /continue\.\d{2}:\d{2}:\d{2}/, 'warning entries should not concatenate adjacent rows');
   assert.equal(metrics.warningCount, 2);
-  assert.match(metrics.statusText, /Project JSON download failed/);
+  assert.match(metrics.statusText, /项目文件下载失败/);
   assert.match(metrics.statusText, /Audio analysis skipped/);
-  assert.equal(metrics.statusTitle, `WARN: Project JSON download failed: ${followUpMsg}`);
+  assert.equal(metrics.statusTitle, `提醒：项目文件下载失败：${followUpMsg}`);
   assert.ok(metrics.panelScrollWidth <= metrics.panelClientWidth + 2, `warning panel should wrap instead of horizontal overflow: ${metrics.panelScrollWidth} > ${metrics.panelClientWidth}`);
   assert.equal(metrics.itemWhiteSpace, 'normal');
   assert.deepEqual(pageErrors, []);
@@ -4136,7 +4136,7 @@ test('warning ledger can be cleared without refreshing the page', { skip: !playw
   await page.evaluate(() => {
     window.__downloadFailureMessages = [
       'Recovered corrupt preset storage; previous raw data was backed up before saving new presets',
-      'Preset saved without thumbnail: browser storage is full'
+      '预设已保存，但浏览器空间不足，未保存缩略图: browser storage is full'
     ];
   });
   await page.click('#btn-save-project');
@@ -4156,11 +4156,11 @@ test('warning ledger can be cleared without refreshing the page', { skip: !playw
 
 	  assert.equal(before.warningCount, 2);
 	  assert.equal(before.panelHidden, false);
-	  assert.match(before.liveRegionText, /警告 \/ Warning: Project JSON download failed: Preset saved without thumbnail/);
+	  assert.match(before.liveRegionText, /提醒：项目文件下载失败：预设已保存，但浏览器空间不足，未保存缩略图/);
 	  assert.equal(before.buttonExists, true);
 	  assert.equal(before.buttonText.trim(), '×');
-  assert.equal(before.buttonTitle, '清空警告历史 / Clear warning history');
-  assert.equal(before.buttonAriaLabel, '清空警告历史 / Clear warning history');
+  assert.equal(before.buttonTitle, '清空提醒历史');
+  assert.equal(before.buttonAriaLabel, '清空提醒历史');
 
   await page.click('#btn-clear-warnings');
   const after = await page.evaluate(() => ({
@@ -4174,8 +4174,8 @@ test('warning ledger can be cleared without refreshing the page', { skip: !playw
 	  assert.equal(after.warningCount, 0);
 	  assert.equal(after.panelHidden, true);
 	  assert.equal(after.panelText, '');
-	  assert.equal(after.liveRegionText, '警告历史已清空 / Warning history cleared.');
-	  assert.match(after.statusText, /WARN: Project JSON download failed: Preset saved without thumbnail/);
+	  assert.equal(after.liveRegionText, '提醒历史已清空。');
+	  assert.match(after.statusText, /提醒：项目文件下载失败：预设已保存，但浏览器空间不足，未保存缩略图/);
   assert.deepEqual(pageErrors, []);
   assert.deepEqual(consoleErrors, []);
   await page.close();
@@ -4225,8 +4225,8 @@ test('legacy oversized custom preset storage is trimmed before rendering options
   assert.equal(metrics.storedCount, 40);
   assert.equal(metrics.firstPreset, 'Legacy 0');
   assert.equal(metrics.lastPreset, 'Legacy 39');
-  assert.match(metrics.warningText, /Custom preset storage trimmed to 40 items/);
-  assert.match(metrics.liveWarning, /Custom preset storage trimmed to 40 items/);
+  assert.match(metrics.warningText, /自定义预设数量已裁剪到 40 个/);
+  assert.match(metrics.liveWarning, /自定义预设数量已裁剪到 40 个/);
   assert.deepEqual(pageErrors, []);
   assert.deepEqual(consoleErrors, []);
   await page.close();
@@ -4312,9 +4312,9 @@ test('custom preset apply clamps oversized restored audio analysis arrays', { sk
   assert.equal(metrics.sectionCount, 64);
   assert.equal(metrics.firstSectionLabel.length, 24);
   assert.equal(metrics.firstSectionEnergy, 1);
-  assert.match(metrics.panelText, /4096 markers/);
-  assert.match(metrics.panelText, /64 mapped/);
-  assert.match(metrics.statusText, /CUSTOM PRESET: Oversized Analysis/);
+  assert.match(metrics.panelText, /4096 个/);
+  assert.match(metrics.panelText, /64 段/);
+  assert.match(metrics.statusText, /已应用自定义预设：Oversized Analysis/);
   assert.deepEqual(pageErrors, []);
   assert.deepEqual(consoleErrors, []);
   await page.close();
@@ -4359,7 +4359,7 @@ test('runtime safeguards expose package focus, live progress, preset state, and 
     label: document.querySelector('#cvs')?.getAttribute('aria-label') || '',
     summary: document.querySelector('#canvas-summary')?.textContent?.trim() || ''
   }));
-  assert.match(canvasA11y.label, /openFAD 视觉预览：未命名曲目 \/ Untitled track \/ 未知艺人 \/ Unknown artist/);
+  assert.match(canvasA11y.label, /openFAD 视觉预览：未命名曲目 \/ 未知艺人/);
   assert.match(canvasA11y.summary, /cover-large\.png/);
   assert.match(canvasA11y.summary, /center\.png/);
   assert.match(canvasA11y.summary, /logo\.png/);
@@ -4384,7 +4384,7 @@ test('runtime safeguards expose package focus, live progress, preset state, and 
       reasons: readiness.reasons
     };
   });
-  assert.ok(longRender.blockers.some((item) => /recording cap/.test(item)));
+  assert.ok(longRender.blockers.some((item) => /导出上限/.test(item)));
   assert.ok(longRender.reasons.includes('render-duration'));
 
   const nonStreamLiveMemoryGate = await page.evaluate(() => {
@@ -4413,7 +4413,7 @@ test('runtime safeguards expose package focus, live progress, preset state, and 
   assert.ok(nonStreamLiveMemoryGate.reasons.includes('output-size'));
   assert.ok(nonStreamLiveMemoryGate.estimatedSizeBytes < nonStreamLiveMemoryGate.maxRecordingBytes);
   assert.ok(nonStreamLiveMemoryGate.estimatedLiveMemoryBytes > nonStreamLiveMemoryGate.maxNonStreamLiveMemoryBytes);
-  assert.match(nonStreamLiveMemoryGate.recordReason, /Streaming Save|live memory/);
+  assert.match(nonStreamLiveMemoryGate.recordReason, /边生成边保存|实时内存/);
   assert.equal(nonStreamLiveMemoryGate.recordDisabled, true);
   assert.equal(nonStreamLiveMemoryGate.machine, 'IDLE');
 
@@ -4428,8 +4428,8 @@ test('runtime safeguards expose package focus, live progress, preset state, and 
   }));
   assert.equal(packageState.activeId, 'btn-cancel-package');
   assert.equal(packageState.cancelDisabled, false);
-  assert.match(packageState.statusLive, /PACKAGE EXPORTING: \d+\.\d%/);
-  assert.match(packageState.packageSummary, /项目包处理中|PACKAGE WORKING/);
+  assert.match(packageState.statusLive, /正在保存完整项目：\d+\.\d%/);
+  assert.match(packageState.packageSummary, /项目包处理中/);
 
   const brandPresetWhilePackage = await page.evaluate(() => ({
     sampleDisabled: document.querySelector('#btn-preset-sample')?.disabled,
@@ -4440,10 +4440,10 @@ test('runtime safeguards expose package focus, live progress, preset state, and 
     summary: document.querySelector('#brand-preset-summary')?.textContent?.trim() || ''
   }));
   assert.equal(brandPresetWhilePackage.sampleDisabled, true);
-  assert.match(brandPresetWhilePackage.sampleReason, /Package operation in progress/);
+  assert.match(brandPresetWhilePackage.sampleReason, /项目文件操作进行中/);
   assert.equal(brandPresetWhilePackage.recordsPressed, 'true');
   assert.equal(brandPresetWhilePackage.samplePressed, 'false');
-  assert.match(brandPresetWhilePackage.summary, /Package operation in progress\. Wait for it to finish before applying brand preset\./);
+  assert.match(brandPresetWhilePackage.summary, /项目文件操作进行中，请完成后再应用品牌预设。/);
 
   await page.click('#btn-cancel-package');
   const cancellingPackage = await page.evaluate(() => ({
@@ -4456,14 +4456,14 @@ test('runtime safeguards expose package focus, live progress, preset state, and 
     cancelText: document.querySelector('#btn-cancel-package')?.textContent?.trim() || ''
   }));
   assert.equal(cancellingPackage.packageStatus.cancelling, true);
-  assert.equal(cancellingPackage.packageStatus.progress.stage, 'PACKAGE CANCELLING');
+  assert.equal(cancellingPackage.packageStatus.progress.stage, '正在取消项目文件操作');
   assert.equal(cancellingPackage.packageStatus.progress.loaded, 0);
   assert.equal(cancellingPackage.packageStatus.progress.total, 0);
   assert.equal(cancellingPackage.cancelDisabled, true);
-  assert.match(cancellingPackage.cancelText, /Cancelling Package/);
-  assert.match(cancellingPackage.statusText, /PACKAGE CANCELLING: pending/);
-  assert.match(cancellingPackage.statusLive, /PACKAGE CANCELLING: pending/);
-  assert.match(cancellingPackage.ariaValueText, /PACKAGE CANCELLING pending/);
+  assert.match(cancellingPackage.cancelText, /正在取消项目文件操作/);
+  assert.match(cancellingPackage.statusText, /正在取消项目文件操作：进度待定/);
+  assert.match(cancellingPackage.statusLive, /正在取消项目文件操作：进度待定/);
+  assert.match(cancellingPackage.ariaValueText, /进度待定 \/ 正在取消项目文件操作/);
   assert.notEqual(cancellingPackage.ariaNow, '100.0');
   assert.doesNotMatch(cancellingPackage.statusText, /100\.0%/);
   assert.doesNotMatch(cancellingPackage.statusLive, /100\.0%/);
@@ -4665,7 +4665,7 @@ test('invalid asset replacement clears stale package retry state', { skip: !play
   await page.waitForFunction(() => !window.ProjectPackage?.status?.running && document.querySelector('#btn-retry-package-download')?.style.display === 'block', null, { timeout: 8000 });
 
   await page.setInputFiles('#in-cover', filePayload('not-cover.txt', 'text/plain', Buffer.from('not an image')));
-  await page.waitForFunction(() => window.AssetManager?.status?.cover?.valid === false && window.UI?.warnings?.some((warning) => /UNSUPPORTED FILE TYPE: COVER/.test(warning.text || '')));
+  await page.waitForFunction(() => window.AssetManager?.status?.cover?.valid === false && window.UI?.warnings?.some((warning) => /不支持的文件类型：COVER/.test(warning.text || '')));
 
   const afterInvalid = await page.evaluate(() => ({
     asset: window.AssetManager.status.cover,
@@ -4773,7 +4773,7 @@ test('large package export remains responsive and cancellable during CRC work', 
   assert.ok(result.cancellingSeenAt - result.cancelRequestedAt < 120, `cancel UI should react quickly, took ${result.cancellingSeenAt - result.cancelRequestedAt}ms`);
   assert.ok(result.finishedAt - result.cancelRequestedAt < 1200, `cancelled package should unlock promptly, took ${result.finishedAt - result.cancelRequestedAt}ms`);
   assert.equal(result.status.running, false);
-  assert.match(`${result.finalStatusText}\n${result.warnings}`, /Package operation cancelled/i);
+  assert.match(`${result.finalStatusText}\n${result.warnings}`, /项目文件操作已取消/i);
   assert.deepEqual(pageErrors, []);
   assert.deepEqual(consoleErrors, []);
 });
@@ -4826,10 +4826,10 @@ test('audio analysis cancellation closes the active decode context', { skip: !pl
 
   assert.deepEqual(cancelled.probe, { decodeCalls: 1, closes: 1 });
   assert.equal(cancelled.analysisLock, 'cancelled');
-  assert.match(cancelled.buttonText, /分析音轨\s*Analyze Track/);
+  assert.match(cancelled.buttonText, /分析音轨\s*读取节奏/);
   assert.equal(cancelled.buttonMain, '分析音轨');
-  assert.equal(cancelled.buttonSub, 'Analyze Track');
-  assert.equal(cancelled.summary, '分析已取消 / ANALYSIS CANCELLED');
+  assert.equal(cancelled.buttonSub, '读取节奏');
+  assert.equal(cancelled.summary, '分析已取消');
   assert.deepEqual(pageErrors, []);
   assert.deepEqual(consoleErrors, []);
 });
@@ -4910,7 +4910,7 @@ test('audio analysis skips header-declared unsafe PCM before decodeAudioData is 
 
   assert.deepEqual(skipped.probe, { decodeCalls: 0, closes: 0 });
   assert.equal(skipped.lock, 'skipped');
-  assert.equal(skipped.summary, '已跳过分析 / ANALYSIS SKIPPED');
+  assert.equal(skipped.summary, '已跳过分析');
   assert.match(skipped.details, /safe analysis window/i);
   assert.deepEqual(pageErrors, []);
   assert.deepEqual(consoleErrors, []);
@@ -4992,7 +4992,7 @@ test('audio analysis skips header-declared unsafe extensible WAV before decodeAu
 
   assert.deepEqual(skipped.probe, { decodeCalls: 0, closes: 0 });
   assert.equal(skipped.lock, 'skipped');
-  assert.equal(skipped.summary, '已跳过分析 / ANALYSIS SKIPPED');
+  assert.equal(skipped.summary, '已跳过分析');
   assert.match(skipped.details, /safe analysis window/i);
   assert.deepEqual(pageErrors, []);
   assert.deepEqual(consoleErrors, []);
@@ -5166,7 +5166,7 @@ test('audio analysis skips compressed unknown-layout containers before decodeAud
 
   assert.deepEqual(analyzed.probe, { decodeCalls: 0, closes: 0 });
   assert.equal(analyzed.lock, 'skipped');
-  assert.equal(analyzed.summary, '已跳过分析 / ANALYSIS SKIPPED');
+  assert.equal(analyzed.summary, '已跳过分析');
   assert.match(analyzed.details, /unknown compressed audio layout/i);
   assert.deepEqual(pageErrors, []);
   assert.deepEqual(consoleErrors, []);
@@ -5429,7 +5429,7 @@ test('audio analysis keeps invalid MP3 headers on the unknown compressed skip pa
 
   assert.deepEqual(analyzed.probe, { decodeCalls: 0, closes: 0 });
   assert.equal(analyzed.lock, 'skipped');
-  assert.equal(analyzed.summary, '已跳过分析 / ANALYSIS SKIPPED');
+  assert.equal(analyzed.summary, '已跳过分析');
   assert.match(analyzed.details, /unknown compressed audio layout/i);
   assert.deepEqual(pageErrors, []);
   assert.deepEqual(consoleErrors, []);
@@ -5515,7 +5515,7 @@ test('audio analysis rejects single false-positive MP3 frame syncs before decode
 
   assert.deepEqual(analyzed.probe, { decodeCalls: 0, closes: 0 });
   assert.equal(analyzed.lock, 'skipped');
-  assert.equal(analyzed.summary, '已跳过分析 / ANALYSIS SKIPPED');
+  assert.equal(analyzed.summary, '已跳过分析');
   assert.match(analyzed.details, /unknown compressed audio layout/i);
   assert.deepEqual(pageErrors, []);
   assert.deepEqual(consoleErrors, []);
@@ -5688,7 +5688,7 @@ test('audio analysis skips FLAC STREAMINFO tracks whose decoded Float32 size is 
 
   assert.deepEqual(analyzed.probe, { decodeCalls: 0, closes: 0 });
   assert.equal(analyzed.lock, 'skipped');
-  assert.equal(analyzed.summary, '已跳过分析 / ANALYSIS SKIPPED');
+  assert.equal(analyzed.summary, '已跳过分析');
   assert.match(analyzed.details, /decoded audio exceeds safe analysis window/i);
   assert.deepEqual(pageErrors, []);
   assert.deepEqual(consoleErrors, []);
@@ -5779,8 +5779,8 @@ test('audio analysis skips combined compressed and decoded working sets before d
 
   assert.deepEqual(skipped.probe, { decodeCalls: 0, closes: 0 });
   assert.equal(skipped.lock, 'skipped');
-  assert.equal(skipped.summary, '已跳过分析 / ANALYSIS SKIPPED');
-  assert.match(skipped.details, /working set exceeds safe memory budget/i);
+  assert.equal(skipped.summary, '已跳过分析');
+  assert.match(skipped.details, /音频分析需要的内存超过安全预算/);
   assert.deepEqual(pageErrors, []);
   assert.deepEqual(consoleErrors, []);
 });
@@ -5869,7 +5869,7 @@ test('audio analysis keeps malformed FLAC metadata on the unknown compressed ski
 
   assert.deepEqual(analyzed.probe, { decodeCalls: 0, closes: 0 });
   assert.equal(analyzed.lock, 'skipped');
-  assert.equal(analyzed.summary, '已跳过分析 / ANALYSIS SKIPPED');
+  assert.equal(analyzed.summary, '已跳过分析');
   assert.match(analyzed.details, /unknown compressed audio layout/i);
   assert.deepEqual(pageErrors, []);
   assert.deepEqual(consoleErrors, []);
@@ -5928,9 +5928,9 @@ test('audio asset load rejects FLAC when browser metadata never provides a usabl
     events: window.__durationProbe.events
   }));
 
-  assert.deepEqual(result.status, { name: '', valid: false, error: 'AUDIO DURATION UNAVAILABLE' });
+  assert.deepEqual(result.status, { name: '', valid: false, error: '音频时长不可用' });
   assert.equal(result.label, '选择音频');
-  assert.match(result.assetInputSummary, /Audio AUDIO DURATION UNAVAILABLE/);
+  assert.match(result.assetInputSummary, /Audio 音频时长不可用/);
   assert.equal(result.previewDisabled, true);
   assert.equal(result.recordDisabled, true);
   assert.deepEqual(pageErrors, []);
@@ -6095,7 +6095,7 @@ test('preview draw-frame exceptions stop preview without page errors', { skip: !
   assert.equal(state.probe.thrown, 1);
   assert.equal(state.machine, 'IDLE');
   assert.notEqual(state.overlayDisplay, 'flex');
-  assert.match(`${state.status} ${state.warning}`, /Preview stopped: Render frame failed: forced preview draw fault/i);
+  assert.match(`${state.status} ${state.warning}`, /预览已停止：画面渲染失败：forced preview draw fault/);
 });
 
 test('aborting during WARMING playback resume does not continue stale media reset work', { skip: !playwright && 'Bundled Playwright unavailable' }, async (t) => {
@@ -6188,7 +6188,7 @@ test('aborting during WARMING playback resume does not continue stale media rese
   assert.equal(state.probe.playCalls, 1);
   assert.equal(state.probe.playResolved, 1);
   assert.deepEqual(state.probe.postAbortSeeks, []);
-  assert.match(state.status, /ABORTED|READY|IDLE/i);
+  assert.match(state.status, /导出已取消|准备就绪/);
   assert.notEqual(state.report?.output?.failed, true);
 });
 
@@ -6315,15 +6315,15 @@ test('streaming save slow writer trips the runtime backlog guard and resets rend
   }));
 
   assert.deepEqual(pageErrors, []);
-  assert.ok(consoleErrors.some((message) => message.includes('Streaming Save disk write backlog')));
+  assert.ok(consoleErrors.some((message) => message.includes('边生成边保存的磁盘写入积压超过')));
   assert.equal(failed.probe.pickerCalls, 1);
   assert.equal(failed.probe.writeCalls, 1);
-  assert.equal(failed.title, '渲染失败 / RENDER FAILURE');
-  assert.match(failed.message, /Streaming Save disk write backlog > 64\.0 MB/);
+  assert.equal(failed.title, '视频生成失败');
+  assert.match(failed.message, /边生成边保存的磁盘写入积压超过 64\.0 MB/);
   assert.equal(failed.machine, 'IDLE');
   assert.equal(failed.progressWidth, '0%');
   assert.equal(failed.report?.output?.failed, true);
-  assert.match(failed.report?.output?.error || '', /Streaming Save disk write backlog/);
+  assert.match(failed.report?.output?.error || '', /边生成边保存的磁盘写入积压超过/);
 
   await page.evaluate(() => window.__streamProbeReleaseWrite?.());
   await page.waitForFunction(() => {
@@ -6457,18 +6457,18 @@ test('manual export download dispatch failure keeps a retryable rendered blob', 
   }));
 
   assert.deepEqual(pageErrors, []);
-  assert.ok(consoleErrors.some((message) => message.includes('Export download failed: forced first export download click failure')));
+  assert.ok(consoleErrors.some((message) => message.includes('成片下载失败: forced first export download click failure')));
   assert.equal(failed.probe.failedClicks, 1);
   assert.equal(failed.probe.clicks, 1);
-  assert.equal(failed.title, '导出失败 / EXPORT FAILURE');
-  assert.match(failed.message, /Export download failed: forced first export download click failure/);
+  assert.equal(failed.title, '保存失败');
+  assert.match(failed.message, /成片下载失败: forced first export download click failure/);
   assert.equal(failed.report?.output?.failed, true);
   assert.equal(failed.report?.output?.failurePhase, 'download-dispatch');
   assert.equal(failed.report?.output?.fileName, 'DISPATCH_FAIL_openfad.webm');
   assert.equal(failed.report?.output?.downloadDispatched, false);
   assert.equal(failed.report?.output?.saveVerified, false);
   assert.equal(failed.report?.output?.retryAvailable, true);
-  assert.match(failed.summary, /REPORT FAILED/);
+  assert.match(failed.summary, /导出记录显示失败/);
   assert.match(failed.listText, /可重试下载：首次下载触发失败/);
   assert.equal(failed.retryDisplay, 'block');
   assert.equal(failed.retryDisabled, false);
@@ -6490,7 +6490,7 @@ test('manual export download dispatch failure keeps a retryable rendered blob', 
   assert.equal(recovered.report?.output?.saveVerified, false);
   assert.equal(recovered.report?.output?.retryAvailable, true);
   assert.match(recovered.report?.output?.recoveredFrom || '', /forced first export download click failure/);
-  assert.match(recovered.summary, /REPORT READY/);
+  assert.match(recovered.summary, /导出记录已生成/);
 });
 
 test('streaming save close failure propagates root cause into fatal report', { skip: !playwright && 'Bundled Playwright unavailable' }, async (t) => {
@@ -6618,17 +6618,17 @@ test('streaming save close failure propagates root cause into fatal report', { s
   }));
 
   assert.deepEqual(pageErrors, []);
-  assert.ok(consoleErrors.some((message) => message.includes('Stream save failed: forced stream close permission failure')));
+  assert.ok(consoleErrors.some((message) => message.includes('边生成边保存失败：forced stream close permission failure')));
   assert.equal(failed.probe.pickerCalls, 1);
   assert.equal(failed.probe.writeCalls, 1);
   assert.equal(failed.probe.closeCalls, 1);
   assert.equal(failed.probe.abortCalls, 1);
-  assert.equal(failed.title, '导出失败 / EXPORT FAILURE');
-  assert.match(failed.message, /Stream save failed: forced stream close permission failure/);
+  assert.equal(failed.title, '保存失败');
+  assert.match(failed.message, /边生成边保存失败：forced stream close permission failure/);
   assert.equal(failed.report?.output?.failed, true);
   assert.equal(failed.report?.output?.failurePhase, 'stream-finalize');
   assert.equal(failed.report?.output?.fileName, 'STREAM_CLOSE_FAIL_openfad.webm');
-  assert.match(failed.report?.output?.error || '', /Stream save failed: forced stream close permission failure/);
+  assert.match(failed.report?.output?.error || '', /边生成边保存失败：forced stream close permission failure/);
   assert.equal(failed.report?.output?.retryAvailable, false);
   assert.equal(failed.retryDisplay, 'none');
 });
@@ -6823,7 +6823,7 @@ test('batch render waits through delayed audio canplay instead of failing at met
     retryButtons: document.querySelectorAll('[data-batch-retry-id]').length
   }));
   assert.equal(secondClear.status.count, 0);
-  assert.match(secondClear.clearText, /清空批量.*清空|清空批量.*Clear/);
+  assert.match(secondClear.clearText, /清空批量.*移除列表/);
   assert.equal(secondClear.retryButtons, 0);
 });
 
@@ -6914,7 +6914,7 @@ test('batch cancel interrupts stalled batch audio load and restores idle control
   }));
   assert.equal(loadingState.status.running, true);
   assert.equal(loadingState.status.items[0].status, 'loading');
-  assert.match(loadingState.clearText, /取消批量.*取消|取消批量.*Cancel/);
+  assert.match(loadingState.clearText, /取消批量.*停止队列/);
   assert.equal(loadingState.clearDisabled, false);
 
   await page.click('#btn-clear-batch');
@@ -6936,13 +6936,13 @@ test('batch cancel interrupts stalled batch audio load and restores idle control
   assert.equal(cancelled.status.running, false);
   assert.equal(cancelled.status.cancelRequested, false);
   assert.equal(cancelled.status.items[0].status, 'error');
-  assert.match(cancelled.status.items[0].error, /Batch cancelled by user|Batch cancelled/);
+  assert.match(cancelled.status.items[0].error, /用户已取消批量导出|批量导出已取消/);
   assert.equal(cancelled.audio.valid, false);
   assert.deepEqual(cancelled.meta, { song: 'ORIGINAL BEFORE BATCH', artist: 'openFAD Fixture Artist', label: 'Original Label' });
-  assert.match(`${cancelled.statusText} ${cancelled.warnings}`, /BATCH CANCELLED|Batch cancelled by user/);
+  assert.match(`${cancelled.statusText} ${cancelled.warnings}`, /用户已取消批量导出|批量导出已取消/);
   assert.match(cancelled.listText, /batch-stall\.wav/);
-  assert.match(cancelled.listText, /Batch cancelled/);
-  assert.match(cancelled.clearText, /清空批量.*清空|清空批量.*Clear/);
+  assert.match(cancelled.listText, /用户已取消批量导出|批量导出已取消/);
+  assert.match(cancelled.clearText, /清空批量.*移除列表/);
   assert.equal(cancelled.clearDisabled, false);
   assert.deepEqual(pageErrors, []);
   assert.deepEqual(consoleErrors, []);
@@ -7083,8 +7083,8 @@ test('batch render fires a browser download for each item while keeping save ver
   assert.match(batchState.summary, /2\/2 下载已触发，请检查文件/);
   assert.match(batchState.listText, /下载已触发 .* 请检查文件/);
   assert.equal(batchState.renderReport?.output?.stale, true);
-  assert.match(batchState.renderReport?.output?.staleReason || '', /Batch render restored original project/);
-  assert.match(batchState.renderReportSummary, /REPORT STALE/);
+  assert.match(batchState.renderReport?.output?.staleReason || '', /批量导出后已恢复原项目/);
+  assert.match(batchState.renderReportSummary, /导出记录已过期/);
   assert.equal(batchState.globalRetryDisplay, 'none');
   assert.equal(await page.locator('[data-batch-retry-id]').count(), 2);
 
@@ -7273,10 +7273,10 @@ test('batch render exposes durable restore failure when original project audio c
   assert.equal(restoringState.status.restoring, true);
   assert.equal(restoringState.status.cancelRequested, false);
   assert.equal(restoringState.probe.restoreStallLoads, 1);
-  assert.match(restoringState.summary, /RESTORING PROJECT/);
-  assert.match(restoringState.clearText, /正在恢复原项目.*恢复中|正在恢复原项目.*Restoring/);
+  assert.match(restoringState.summary, /正在恢复原项目/);
+  assert.match(restoringState.clearText, /正在恢复原项目.*请稍候/);
   assert.equal(restoringState.clearDisabled, true);
-  assert.equal(restoringState.clearReason, 'Restoring original project after batch');
+  assert.equal(restoringState.clearReason, '正在恢复原项目');
   await page.waitForFunction(() => {
     const status = window.BatchQueue?.status;
     return status && !status.running && status.items[0]?.status === 'download-dispatched';
@@ -7309,13 +7309,13 @@ test('batch render exposes durable restore failure when original project audio c
   assert.equal(batchState.status.items[0].status, 'download-dispatched');
   assert.equal(batchState.status.items[0].retryAvailable, true);
   assert.equal(batchState.status.restoreFailed, true);
-  assert.match(batchState.status.restoreError, /audio load failed: AUDIO DURATION UNAVAILABLE/);
-  assert.match(batchState.summary, /RESTORE FAILED/);
+  assert.match(batchState.status.restoreError, /audio载入失败：音频时长不可用/);
+  assert.match(batchState.summary, /原项目恢复失败/);
   assert.equal(batchState.renderReport?.output?.stale, true);
-  assert.match(batchState.renderReport?.output?.staleReason || '', /Batch render restore failed/);
-  assert.doesNotMatch(batchState.renderReport?.output?.staleReason || '', /restored original project/);
-  assert.match(batchState.renderReportSummary, /REPORT STALE/);
-  assert.match(batchState.listText, /下载已触发 .* 请检查文件|download dispatched .* verify file/);
+  assert.match(batchState.renderReport?.output?.staleReason || '', /批量导出后原项目恢复失败/);
+  assert.doesNotMatch(batchState.renderReport?.output?.staleReason || '', /已恢复原项目/);
+  assert.match(batchState.renderReportSummary, /导出记录已过期/);
+  assert.match(batchState.listText, /下载已触发 .* 请检查文件/);
   assert.equal(batchState.audioStatus.valid, false);
   assert.deepEqual(batchState.meta, { song: 'ORIGINAL TRACK', artist: 'Original Artist', label: 'Original Label' });
   assert.deepEqual(batchState.fields, { song: 'ORIGINAL TRACK', artist: 'Original Artist', label: 'Original Label' });

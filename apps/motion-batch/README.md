@@ -121,7 +121,7 @@ npm run package:web
 npm run checksums
 ```
 
-验证记录见 `../../docs/verification/motion-batch-0.1.0.md`。
+验证记录见 `../../docs/verification/motion-batch-0.1.1.md`。
 
 ## 品牌边界
 

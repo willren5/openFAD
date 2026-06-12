@@ -105,7 +105,7 @@ test('streaming save disabled state exposes browser support reason', () => {
   assert.match(html, /id="stream-save-reason" class="control-hint"/);
   assert.match(html, /\.control-hint:empty \{ display: none; \}/);
   assert.match(script, /updateStreamSaveControl\(/);
-  assert.match(script, /Streaming Save requires Chrome or Edge File System Access support/);
+  assert.match(script, /边生成边保存需要 Chrome 或 Edge 支持文件保存权限/);
   assert.match(script, /this\.setControlReason\(el, unsupported \|\| hardLock, reason, 'stream-save-reason'\)/);
   assert.match(script, /UI\.updateStreamSaveControl\(\{ state: Machine\.status \}\)/);
   assert.doesNotMatch(script, /Dom\['in-stream-save'\]\.disabled = true/);
@@ -123,7 +123,7 @@ test('duration display rounds total seconds instead of producing impossible 0:60
 test('preview canvas exposes an accessible name and fallback text', () => {
   assert.ok(domMapIds().has('canvas-summary'), 'canvas summary should be in Dom lookup map');
   assert.match(html, /<main class="viewport" aria-labelledby="preview-title">/);
-  assert.match(html, /<canvas id="cvs"[^>]*role="img"[^>]*aria-label="[^"]*openFAD 视觉预览画布[^"]*openFAD visual preview canvas[^"]*"[^>]*aria-describedby="canvas-summary"[^>]*>当前浏览器无法显示画布预览 \/ Canvas preview is unavailable in this browser\.<\/canvas>/);
+  assert.match(html, /<canvas id="cvs"[^>]*role="img"[^>]*aria-label="[^"]*openFAD 视觉预览画布[^"]*"[^>]*aria-describedby="canvas-summary"[^>]*>当前浏览器无法显示画布预览。<\/canvas>/);
   assert.match(html, /id="canvas-summary" class="sr-only"/);
   assert.match(script, /updateCanvasSummary\(\)/);
   assert.match(script, /canvas\.setAttribute\('aria-label', `openFAD 视觉预览：\$\{title\} \/ \$\{artist\}`\)/);
@@ -132,10 +132,10 @@ test('preview canvas exposes an accessible name and fallback text', () => {
 test('first-run guide is Chinese-first and explains the render workflow', () => {
   assert.match(html, /<h1 id="app-title">制作一段音乐视觉/);
   assert.match(html, /openFAD MV Studio/);
-  assert.match(html, /id="app-subtitle"[^>]*>本地优先的中文 MV Studio/);
+  assert.match(html, /id="app-subtitle"[^>]*>纯浏览器处理的中文 MV 制作工具/);
   assert.match(html, /id="start-mode-actions"[^>]*aria-label="开始"/);
-  assert.match(html, /id="btn-load-demo"[^>]*>[\s\S]*打开示例[\s\S]*Demo Project/);
-  assert.match(html, /id="btn-upload-audio"[^>]*>[\s\S]*上传音频[\s\S]*Upload Audio/);
+  assert.match(html, /id="btn-load-demo"[^>]*>[\s\S]*打开示例[\s\S]*立即预览/);
+  assert.match(html, /id="btn-upload-audio"[^>]*>[\s\S]*上传音频[\s\S]*开始制作/);
   assert.match(html, /id="btn-visual-cover"[^>]*>唱片封面视觉/);
   assert.match(html, /id="btn-visual-spectrum"[^>]*>频谱视觉/);
   assert.match(html, /id="btn-visual-logo"[^>]*>极简 Logo 视觉/);
@@ -147,14 +147,14 @@ test('first-run guide is Chinese-first and explains the render workflow', () => 
   assert.match(script, /document\.body\.classList\.toggle\('pro-mode-open', this\.open\)/);
   assert.match(html, /<title>openFAD MV Studio — 制作一段音乐视觉<\/title>/);
   assert.match(html, /\.quick-guide/);
-  assert.match(html, /id="quick-guide-title"[^>]*>快速开始[\s\S]*Quick Start/);
+  assert.match(html, /id="quick-guide-title"[^>]*>快速开始[\s\S]*三步出片/);
   assert.match(html, /最快路径是打开示例/);
-  assert.match(html, /按预检补齐素材/);
-  assert.match(html, /预检会告诉你还缺背景图、中心视频\/图片或透明 Logo/);
+  assert.match(html, /按素材检查补齐画面/);
+  assert.match(html, /素材检查会告诉你还缺背景图、中心视频\/图片或透明 Logo/);
   assert.match(html, /预览/);
   assert.match(html, /导出视频/);
   assert.match(html, /完成并保存/);
-  assert.match(html, /高级时间线、工程包、批量渲染和报告恢复/);
+  assert.match(html, /高级时间线、项目文件、批量导出和中断恢复/);
   assert.match(script, /const DemoProject = \{/);
   assert.match(script, /const VisualSystems = \{/);
   assert.match(script, /visualSystem: 'cover'/);
@@ -216,11 +216,11 @@ test('project JSON export direct command honors busy locks before capturing stat
 
   const lockBody = presetsBody.match(/projectExportLockReason\(\) \{([\s\S]*?)\n  \},\n\n  downloadProject/)?.[1] || '';
   assert.ok(lockBody, 'ProjectPresets.projectExportLockReason body should be present');
-  assert.match(lockBody, /if \(Store\.packageJob\.running\) return 'Package operation in progress\. Wait for it to finish before saving JSON\.'/);
-  assert.match(lockBody, /if \(Store\.restoreJob\.running\) return 'Project restore in progress\. Wait for it to finish before saving JSON\.'/);
-  assert.match(lockBody, /if \(Store\.autosaveJob\.running\) return 'Autosave in progress\. Wait for it to finish before saving JSON\.'/);
-  assert.match(lockBody, /if \(Store\.batch\.running\) return 'Batch render in progress\. Wait or cancel it before saving JSON\.'/);
-  assert.match(lockBody, /if \(Machine\.status !== 'IDLE'\) return `Wait for \$\{Machine\.status\.toLowerCase\(\)\} to finish before saving JSON\.`/);
+  assert.match(lockBody, /if \(Store\.packageJob\.running\) return '项目文件操作进行中，请完成后再保存项目文件。'/);
+  assert.match(lockBody, /if \(Store\.restoreJob\.running\) return '项目恢复中，请完成后再保存项目文件。'/);
+  assert.match(lockBody, /if \(Store\.autosaveJob\.running\) return '自动保存中，请完成后再保存项目文件。'/);
+  assert.match(lockBody, /if \(Store\.batch\.running\) return '批量导出中，请等待或取消后再保存项目文件。'/);
+  assert.match(lockBody, /if \(Machine\.status !== 'IDLE'\) return `请等待\$\{UI\.stateVerb\(Machine\.status\)\}完成后再保存项目文件。`/);
 
   const downloadBody = presetsBody.match(/downloadProject\(\) \{([\s\S]*?)\n  \},\n\n  async loadProjectFile/)?.[1] || '';
   assert.ok(downloadBody, 'ProjectPresets.downloadProject body should be present');
@@ -238,7 +238,7 @@ test('preflight panel reports readiness before export', () => {
   assert.match(script, /updatePreflight/);
   assert.match(script, /recordReady/);
   assert.match(script, /estimatedSizeBytes/);
-  assert.match(script, /const summaryText = status\.recordReady \? '预检通过 \/ READY TO RENDER' : `需要检查：\$\{status\.blockers\[0\] \|\| '等待素材 \/ Waiting'\}`/);
+  assert.match(script, /const summaryText = status\.recordReady \? '素材齐了，可以导出' : `需要检查：\$\{status\.blockers\[0\] \|\| '等待素材'\}`/);
   assert.match(script, /Dom\['preflight-summary'\]\.textContent = summaryText/);
 });
 
@@ -308,7 +308,7 @@ test('offline audio analysis estimates loudness peak bpm and beat markers', () =
   assert.match(script, /dynamicRangeDb/);
   assert.match(script, /AudioAnalysis\.updatePanel/);
   assert.match(script, /analyzeCurrentFile/);
-  assert.match(script, /Audio Analysis/);
+  assert.match(script, /音频分析/);
 });
 
 test('audio analysis exposes mastering metrics and arrangement sections', () => {
@@ -321,8 +321,8 @@ test('audio analysis exposes mastering metrics and arrangement sections', () => 
   assert.match(script, /getSectionAt/);
   assert.match(script, /sectionIntensity/);
   assert.match(script, /LUFS/);
-  assert.match(script, /True Peak/);
-  assert.match(script, /Sections/);
+  assert.match(script, /真峰值/);
+  assert.match(script, /段落/);
 });
 
 test('audio analysis normalizes legacy saved analysis before rendering panels', () => {
@@ -434,9 +434,9 @@ test('fadmv project packages include JSON and portable asset controls', () => {
   for (const id of ['btn-save-package', 'btn-load-package', 'btn-cancel-package', 'btn-retry-package-download', 'in-package-file', 'package-summary', 'package-list']) {
     assert.ok(ids.has(id), `${id} should be in Dom lookup map`);
   }
-  assert.match(html, /保存 \.fadmv[\s\S]*Save Package/);
-  assert.match(html, /取消包任务[\s\S]*Cancel Package/);
-  assert.match(html, /重试项目包下载[\s\S]*Retry Package Download/);
+  assert.match(html, /保存完整项目[\s\S]*含素材/);
+  assert.match(html, /取消项目文件操作[\s\S]*保持当前编辑/);
+  assert.match(html, /重试下载完整项目[\s\S]*再次保存/);
   assert.match(html, /id="btn-save-package"[^>]*aria-describedby="package-summary"/);
   assert.match(html, /id="btn-retry-package-download"[^>]*aria-describedby="package-summary"/);
   assert.match(html, /id="package-summary"/);
@@ -461,8 +461,8 @@ test('fadmv package import validates portable zip integrity and paths', () => {
   assert.match(script, /isSafePackagePath/);
   assert.match(script, /typeof name !== 'string'/);
   assert.match(script, /validatePackageAssets/);
-  assert.match(script, /CRC mismatch/);
-  assert.match(script, /Unsafe package path/);
+  assert.match(script, /完整项目文件校验失败/);
+  assert.match(script, /不安全的素材路径/);
   assert.match(script, /Duplicate package entry/);
   assert.match(script, /maxPackageBytes/);
   assert.match(script, /maxPackageExportBytes/);
@@ -478,7 +478,7 @@ test('fadmv import validates asset manifest before mutating project state', () =
   assert.ok(validateAt >= 0, 'package asset manifest should be validated during import');
   assert.ok(mutateAt >= 0, 'project state import should still happen');
   assert.ok(validateAt < mutateAt, 'package validation should happen before project state mutation');
-  assert.match(script, /Package missing asset/);
+  assert.match(script, /完整项目缺少素材/);
   assert.match(script, /Invalid package asset manifest/);
 });
 
@@ -506,7 +506,7 @@ test('fadmv package imports reject project-declared assets missing from packageA
   const completenessBody = script.match(/validatePackageCompleteness\(project, assets\) \{([\s\S]*?)\n  \},\n\n  async parseZip/)?.[1] || '';
   assert.ok(completenessBody, 'validatePackageCompleteness body should be present');
   assert.match(completenessBody, /ProjectPresets\.listedAssetRefs\(project\)/);
-  assert.match(completenessBody, /if \(!assets\[type\]\?\.path\) throw new Error\(`Package missing declared \$\{type\} asset: \$\{name\}`\)/);
+  assert.match(completenessBody, /if \(!assets\[type\]\?\.path\) throw new Error\(`完整项目缺少声明的 \$\{type\} 素材：\$\{name\}`\)/);
 
   const importBody = script.match(/async importPackageFile\(file\) \{([\s\S]*?)\n  \},\n\n  init\(\)/)?.[1] || '';
   assert.ok(importBody, 'importPackageFile body should be present');
@@ -551,17 +551,17 @@ test('autosave controls expose visible disabled reasons', () => {
   assert.match(lockReasonBody, /Store\.audioAnalysis\.status === 'analyzing'/);
   assert.match(lockReasonBody, /Machine\.status !== 'IDLE'/);
   assert.match(controlsBody, /const lockReason = this\.autosaveLockReason\('using autosave'\)/);
-  assert.match(controlsBody, /const unavailableReason = available \? '' : \(summary \|\| 'Autosave unavailable'\)/);
+  assert.match(controlsBody, /const unavailableReason = available \? '' : \(summary \|\| '当前浏览器无法自动保存'\)/);
   assert.match(controlsBody, /UI\.setControlReason\(Dom\['in-autosave'\], !available, unavailableReason, 'autosave-summary'\)/);
   assert.match(controlsBody, /UI\.setControlReason\(Dom\['btn-save-snapshot'\], !available \|\| !!lockReason, snapshotReason, 'autosave-summary'\)/);
   assert.match(controlsBody, /UI\.setControlReason\(Dom\['btn-restore-latest'\], !available \|\| !!lockReason, snapshotReason, 'autosave-summary'\)/);
   assert.match(controlsBody, /UI\.setControlReason\(Dom\['recent-projects'\], !available \|\| !!lockReason, snapshotReason, 'autosave-summary'\)/);
   assert.match(controlsBody, /const selectedRecentId = Dom\['recent-projects'\]\?\.value \|\| ''/);
   assert.match(controlsBody, /UI\.setControlReason\(Dom\['btn-restore-selected'\], !available \|\| !!lockReason \|\| !selectedRecentId, selectedRestoreReason, 'autosave-summary'\)/);
-  assert.match(controlsBody, /Choose a recent snapshot first/);
-  assert.match(controlsBody, /AUTOSAVE UNAVAILABLE/);
-  assert.match(controlsBody, /AUTOSAVE LOCKED/);
-  assert.match(controlsBody, /AUTOSAVE READY/);
+  assert.match(controlsBody, /请先选择一个最近保存状态。/);
+  assert.match(controlsBody, /当前浏览器无法自动保存/);
+  assert.match(controlsBody, /自动保存暂时等待中/);
+  assert.match(controlsBody, /自动保存已开启/);
   assert.match(controlsBody, /UI\.renderKeyValueList\(Dom\['autosave-list'\]/);
 
   const audioRefreshBody = script.match(/refreshReadiness\(\) \{([\s\S]*?)\n  \},\n\n  reset/)?.[1] || '';
@@ -571,7 +571,7 @@ test('autosave controls expose visible disabled reasons', () => {
 });
 
 test('autosave recent snapshot restore requires an explicit selected restore action', () => {
-  assert.match(html, /id="btn-restore-selected"[\s\S]*?>[\s\S]*恢复所选[\s\S]*Restore Selected/);
+  assert.match(html, /id="btn-restore-selected"[\s\S]*?>[\s\S]*恢复所选[\s\S]*回到这次保存/);
   const autoSaveBody = script.match(/const AutoSave = \{([\s\S]*?)\n\};\n\nconst RenderReport/)?.[1] || '';
   assert.ok(autoSaveBody, 'AutoSave body should be present');
   const initBody = autoSaveBody.match(/init\(\) \{([\s\S]*?)\n  \},\n\n  openDb/)?.[1] || '';
@@ -582,7 +582,7 @@ test('autosave recent snapshot restore requires an explicit selected restore act
   const restoreSelectedBody = autoSaveBody.match(/async restoreSelectedRecent\(\) \{([\s\S]*?)\n  \},\n\n  async refreshRecent/)?.[1] || '';
   assert.ok(restoreSelectedBody, 'AutoSave.restoreSelectedRecent body should be present');
   assert.match(restoreSelectedBody, /const id = Dom\['recent-projects'\]\?\.value \|\| ''/);
-  assert.match(restoreSelectedBody, /UI\.showError\('Choose a recent snapshot to restore', 'WARN'\)/);
+  assert.match(restoreSelectedBody, /UI\.showError\('请先选择一个最近保存状态。', 'WARN'\)/);
   assert.match(restoreSelectedBody, /await this\.restoreSnapshot\(id\)/);
 });
 
@@ -591,7 +591,7 @@ test('autosave recent-list read failures are reported as unavailable instead of 
   assert.ok(refreshBody, 'AutoSave.refreshRecent body should be present');
   assert.doesNotMatch(refreshBody, /this\.getAll\(\)\.catch\(\(\) => \[\]\)/);
   assert.match(refreshBody, /catch \(err\) \{/);
-  assert.match(refreshBody, /const readReason = `Autosave read failed: \$\{Utils\.safeErrMsg\(err\)\}`/);
+  assert.match(refreshBody, /const readReason = `读取自动保存失败：\$\{Utils\.safeErrMsg\(err\)\}`/);
   assert.match(refreshBody, /this\.markDbUnavailable\(err, readReason\)/);
   assert.match(refreshBody, /return;/);
 });
@@ -623,8 +623,8 @@ test('custom preset manager saves thumbnails and user presets', () => {
   assert.match(script, /makeThumbnail/);
   assert.match(script, /thumb\.width = 180/);
   assert.match(script, /toDataURL/);
-  assert.match(script, /empty\.textContent = items\.length \? '选择预设\.\.\. \/ Choose preset\.\.\.' : '暂无自定义预设 \/ No custom presets'/);
-  assert.match(script, /thumb\.alt = item\?\.thumbnail \? `预设缩略图：\$\{item\.name \|\| '未命名预设 \/ Untitled preset'\} \/ \$\{item\.name \|\| 'Untitled preset'\} thumbnail preview` : ''/);
+  assert.match(script, /empty\.textContent = items\.length \? '选择预设\.\.\.' : '暂无自定义预设'/);
+  assert.match(script, /thumb\.alt = item\?\.thumbnail \? `预设缩略图：\$\{item\.name \|\| '未命名预设'\}` : ''/);
   assert.match(script, /BrowserStorage\.getLocal/);
   assert.match(script, /BrowserStorage\.setLocal/);
   assert.match(script, /customPresetLockReason\(action = 'changing custom presets'\)/);
@@ -648,7 +648,7 @@ test('custom preset quota fallback strips historical thumbnails before failing s
     'saveCurrent should clear the new thumbnail before stripping historical thumbnails'
   );
   assert.match(saveCurrentBody, /this\.saveAll\(thumbnaillessItems\)/);
-  assert.match(saveCurrentBody, /Preset saved without stored thumbnails: browser storage is full/);
+  assert.match(saveCurrentBody, /浏览器空间不足，未保存任何缩略图/);
 });
 
 test('custom preset load clamps legacy oversized storage before rendering options', () => {
@@ -660,7 +660,7 @@ test('custom preset load clamps legacy oversized storage before rendering option
   assert.match(loadBody, /const items = parsed\.slice\(0, this\.maxItems\)/);
   assert.match(loadBody, /if \(parsed\.length > this\.maxItems\)/);
   assert.match(loadBody, /BrowserStorage\.setLocal\(this\.key, JSON\.stringify\(items\)\)/);
-  assert.match(loadBody, /Custom preset storage trimmed to \$\{this\.maxItems\} items/);
+  assert.match(loadBody, /自定义预设数量已裁剪到 \$\{this\.maxItems\} 个/);
   const saveAllBody = customBody.match(/saveAll\(items\) \{([\s\S]*?)\n  \},\n\n  makeThumbnail/)?.[1] || '';
   assert.ok(saveAllBody, 'CustomPresets.saveAll body should be present');
   assert.match(saveAllBody, /items\.slice\(0, this\.maxItems\)/);
@@ -674,7 +674,7 @@ test('batch render queue accepts multiple songs and renders them sequentially', 
   }
   assert.match(script, /const BatchQueue =/);
   assert.match(script, /renderNext/);
-  assert.match(script, /Batch audio not render-ready/);
+  assert.match(script, /批量音频还不能导出/);
   assert.match(script, /baseReady/);
   assert.match(script, /Store\.batch/);
   assert.match(script, /multiple/);
@@ -698,14 +698,14 @@ test('manual render readiness requires logo consistently with batch render', () 
   assert.match(preflightBody, /const aPreviewReady = aMetadataReady \|\| aValidatedForPreview/);
   assert.match(preflightBody, /const aRecordPlayable = !!a && a\.readyState >= 2/);
   assert.match(preflightBody, /if \(!valid\.logo \|\| !lReady\) pushPreview\(this\.assetReason\('logo', Store\.assetErrors\.logo\), 'logo'\)/);
-  assert.match(preflightBody, /else if \(!vRecordReady\) \{[\s\S]*?blockers\.push\('Center visual not ready to play'\)[\s\S]*?reasons\.push\('video-canplay'\)/);
-  assert.match(preflightBody, /else if \(!aRecordPlayable\) pushRender\('Audio not ready to play', 'audio-canplay'\)/);
-  assert.match(preflightBody, /if \(analysisBusy\) pushRender\('Audio analysis in progress', 'audio-analysis'\)/);
+  assert.match(preflightBody, /else if \(!vRecordReady\) \{[\s\S]*?blockers\.push\('中心视觉素材还没准备好播放'\)[\s\S]*?reasons\.push\('video-canplay'\)/);
+  assert.match(preflightBody, /else if \(!aRecordPlayable\) pushRender\('音频还没准备好播放', 'audio-canplay'\)/);
+  assert.match(preflightBody, /if \(analysisBusy\) pushRender\('音频分析中，请稍后再导出', 'audio-analysis'\)/);
 
   const batchRenderBody = script.match(/render\(\) \{([\s\S]*?)\n  \},\n\n  init\(\)/)?.[1] || '';
   assert.ok(batchRenderBody, 'BatchQueue.render body should be present');
   assert.match(batchRenderBody, /Store\.flags\.assetValid\.logo/);
-  assert.match(batchRenderBody, /if \(!Store\.flags\.assetValid\.logo\) missing\.push\('logo'\)/);
+  assert.match(batchRenderBody, /if \(!Store\.flags\.assetValid\.logo\) missing\.push\('透明 Logo'\)/);
 });
 
 test('batch render globally locks project mutation and manual render starts', () => {
@@ -719,7 +719,7 @@ test('batch render globally locks project mutation and manual render starts', ()
 
   const mutationLockBody = script.match(/mutationLockReason\(opts = \{\}\) \{([\s\S]*?)\n  \},\n  assetInputSummary/)?.[1] || '';
   assert.ok(mutationLockBody, 'AssetManager.mutationLockReason body should be present');
-  assert.match(mutationLockBody, /if \(Store\.batch\.running\) return 'Batch render in progress\. Wait or cancel it before changing assets\.'/);
+  assert.match(mutationLockBody, /if \(Store\.batch\.running\) return '批量导出中，请等待或取消后再更换素材。'/);
 
   const checkReadyBody = script.match(/checkReady\(\) \{([\s\S]*?)\n  \},\n\n  triggerUpdate/)?.[1] || '';
   assert.ok(checkReadyBody, 'Engine.checkReady body should be present');
@@ -732,14 +732,14 @@ test('batch render globally locks project mutation and manual render starts', ()
   assert.match(preflightBody, /const autosaveLock = Store\.autosaveJob\.running/);
   assert.match(preflightBody, /const mutationLock = packageLock \|\| restoreLock \|\| autosaveLock \|\| batchLock \|\| machineLock/);
   assert.ok(preflightBody.indexOf('if (!canvasReady) pushPreview') < preflightBody.indexOf('if (autosaveLock) pushPreview'), 'hard runtime failures should outrank transient autosave locks');
-  assert.match(preflightBody, /if \(autosaveLock\) pushPreview\(Store\.autosaveJob\.label \|\| 'Autosave in progress', 'autosave'\)/);
-  assert.match(preflightBody, /if \(batchLock\) pushPreview\('Batch render running', 'batch'\)/);
+  assert.match(preflightBody, /if \(autosaveLock\) pushPreview\(Store\.autosaveJob\.label \|\| '自动保存中', 'autosave'\)/);
+  assert.match(preflightBody, /if \(batchLock\) pushPreview\('批量导出中', 'batch'\)/);
 
   const packageControlsBody = script.match(/updateControls\(\) \{([\s\S]*?)\n  \},\n\n  async exportPackageBlob/)?.[1] || '';
   assert.ok(packageControlsBody, 'ProjectPackage.updateControls body should be present');
   assert.match(packageControlsBody, /const batchRunning = Store\.batch\.running/);
   assert.match(packageControlsBody, /const autosaveRunning = Store\.autosaveJob\.running/);
-  assert.match(packageControlsBody, /Batch render running/);
+  assert.match(packageControlsBody, /批量导出中/);
   assert.match(packageControlsBody, /btn\.disabled = running \|\| restoreRunning \|\| autosaveRunning \|\| batchRunning/);
   assert.match(packageControlsBody, /loadBtn\.disabled = running \|\| restoreRunning \|\| autosaveRunning \|\| batchRunning/);
   assert.match(packageControlsBody, /Dom\['in-package-file'\]\.disabled = running \|\| restoreRunning \|\| autosaveRunning \|\| batchRunning/);
@@ -749,14 +749,14 @@ test('batch render globally locks project mutation and manual render starts', ()
   const customControlsBody = customBody.match(/updateControls\(\) \{([\s\S]*?)\n  \},\n\n  renderList/)?.[1] || '';
   assert.ok(customControlsBody, 'CustomPresets.updateControls body should be present');
   assert.match(customControlsBody, /const lockReason = this\.customPresetLockReason\(\)/);
-  assert.match(customBody, /if \(Store\.autosaveJob\.running\) return `Autosave in progress\. Wait for it to finish before \$\{action\}\.`/);
-  assert.match(customBody, /if \(Store\.batch\.running\) return `Batch render in progress\. Wait or cancel it before \$\{action\}\.`/);
+  assert.match(customBody, /if \(Store\.autosaveJob\.running\) return '自动保存中，请完成后再修改自定义预设。'/);
+  assert.match(customBody, /if \(Store\.batch\.running\) return '批量导出中，请完成或取消后再修改自定义预设。'/);
 
   const audioBody = script.match(/const AudioAnalysis = \{([\s\S]*?)\n\};\n\nconst Preflight/)?.[1] || '';
   const audioPanelBody = audioBody.match(/updatePanel\(\) \{([\s\S]*?)\n  \}/)?.[1] || '';
   assert.ok(audioPanelBody, 'AudioAnalysis.updatePanel body should be present');
   assert.match(audioPanelBody, /const lockReason = this\.audioAnalysisLockReason\(\)/);
-  assert.match(audioBody, /if \(Store\.batch\.running\) return 'Batch render running'/);
+  assert.match(audioBody, /if \(Store\.batch\.running\) return '批量导出中。'/);
 
   const beforeUnloadBody = script.match(/window\.addEventListener\('beforeunload', \(e\) => \{([\s\S]*?)\n    \}, \{ capture: true \}\)/)?.[1] || '';
   assert.ok(beforeUnloadBody, 'beforeunload handler should be present');
@@ -776,12 +776,12 @@ test('batch render is blocked before interactive Streaming Save prompts', () => 
   const batchRenderBody = batchBody.match(/render\(\) \{([\s\S]*?)\n  \},\n\n  init\(\)/)?.[1] || '';
   assert.ok(batchRenderBody, 'BatchQueue.render body should be present');
   assert.match(batchRenderBody, /const streamSaveBatchBlock = Store\.config\.streamSave/);
-  assert.match(batchRenderBody, /streamSaveBatchBlock\s*\?\s*'批量渲染前请关闭 Streaming Save \/ Disable Streaming Save before batch render'/);
+  assert.match(batchRenderBody, /streamSaveBatchBlock\s*\?\s*'批量导出前请关闭“边生成边保存”'/);
   assert.match(batchRenderBody, /const batchStartBlocked = Store\.packageJob\.running \|\| Store\.restoreJob\.running \|\| Store\.autosaveJob\.running \|\| analysisBusy \|\| streamSaveBatchBlock \|\| !runnablePending/);
 
   const batchStartBody = batchBody.match(/async start\(\) \{([\s\S]*?)\n  \},\n\n  render\(\)/)?.[1] || '';
   assert.ok(batchStartBody, 'BatchQueue.start body should be present');
-  assert.match(batchStartBody, /if \(Store\.config\.streamSave\) \{[\s\S]*?UI\.showError\('开始批量渲染前请关闭 Streaming Save；批量渲染不能使用每首歌单独弹出的保存位置选择器。\/ Disable Streaming Save before starting batch render\. Batch renders cannot use the per-render file picker\.', 'WARN'\);[\s\S]*?return;/);
+  assert.match(batchStartBody, /if \(Store\.config\.streamSave\) \{[\s\S]*?UI\.showError\('开始批量导出前请关闭“边生成边保存”；批量导出不能为每首歌单独选择保存位置。', 'WARN'\);[\s\S]*?return;/);
 
   const renderNextBody = batchBody.match(/async renderNext\(index\) \{([\s\S]*?)\n  \},\n\n  async start/)?.[1] || '';
   assert.ok(renderNextBody, 'BatchQueue.renderNext body should be present');
@@ -836,8 +836,8 @@ test('manual autosave saving state locks unload and package operations until set
 test('streaming save cancellation returns to idle without fatal overlay', () => {
   assert.match(script, /isUserCancel\(err\)/);
   assert.match(script, /err\.name = 'AbortError'/);
-  assert.match(script, /UI\.showError\('Stream save cancelled', 'WARN'\)/);
-  assert.doesNotMatch(script, /new Error\('Stream save cancelled'\);\n\s*throw err;\n\s*}\n\s*UI\.showError\(Utils\.safeErrMsg\(err, 'Start failed'\), 'FATAL'\)/);
+  assert.match(script, /UI\.showError\('已取消边生成边保存。', 'WARN'\)/);
+  assert.doesNotMatch(script, /new Error\('已取消边生成边保存'\);\n\s*throw err;\n\s*}\n\s*UI\.showError\(Utils\.safeErrMsg\(err, '导出启动失败'\), 'FATAL'\)/);
   assert.match(script, /if \(this\.mr && this\.mr\.state !== 'inactive'\)/);
 });
 
@@ -853,8 +853,8 @@ test('non-fatal UI warnings do not pollute browser error logs', () => {
 test('non-fatal warnings retain full recovery text outside the truncated status line', () => {
   assert.doesNotMatch(html, /id="warning-panel"[^>]*role="status"/);
   assert.doesNotMatch(html, /id="warning-panel"[^>]*aria-live="polite"/);
-  assert.match(html, /id="warning-panel"[^>]*tabindex="0"[^>]*role="document"[^>]*aria-label="警告历史 \/ Warning history"/);
-  assert.match(html, /id="btn-clear-warnings"[^>]*aria-label="清空警告历史 \/ Clear warning history"/);
+  assert.match(html, /id="warning-panel"[^>]*tabindex="0"[^>]*role="document"[^>]*aria-label="提醒历史"/);
+  assert.match(html, /id="btn-clear-warnings"[^>]*aria-label="清空提醒历史"/);
   assert.doesNotMatch(html, /id="warning-list"[^>]*role="status"/);
   assert.doesNotMatch(html, /id="warning-list"[^>]*aria-live="polite"/);
   assert.match(html, /id="warning-live"[^>]*class="sr-only"[^>]*role="status"[^>]*aria-live="polite"[^>]*aria-atomic="true"/);
@@ -867,7 +867,7 @@ test('non-fatal warnings retain full recovery text outside the truncated status 
   const showErrorBody = script.match(/showError\(msg, level = 'FATAL'(?:, opts = \{\})?\) \{([\s\S]*?)\n  \},\n  dismissError/)?.[1] || '';
   assert.ok(showErrorBody, 'UI.showError body should be present');
   assert.match(showErrorBody, /this\.recordWarning\(msg\)/);
-  assert.match(showErrorBody, /this\.log\(`WARN: \$\{msg\}`, 'warn', \{ live: false \}\)/);
+  assert.match(showErrorBody, /this\.log\(`提醒：\$\{msg\}`, 'warn', \{ live: false \}\)/);
   assert.match(script, /get warnings\(\) \{/);
   const publicUiBody = script.match(/window\.UI = Object\.freeze\(\{([\s\S]*?)\n\}\);/)?.[1] || '';
   assert.ok(publicUiBody, 'public UI facade should be present');
@@ -876,8 +876,8 @@ test('non-fatal warnings retain full recovery text outside the truncated status 
   assert.doesNotMatch(publicUiBody, /clearWarnings\(/);
   assert.doesNotMatch(publicUiBody, /dismissError\(/);
   assert.match(script, /Dom\['btn-clear-warnings'\]\.addEventListener\('click', \(\) => UI\.clearWarnings\(\)\)/);
-  assert.match(script, /Dom\['warning-live'\]\.textContent = `警告 \/ Warning: \$\{text\}`/);
-  assert.match(script, /Dom\['warning-live'\]\.textContent = '警告历史已清空 \/ Warning history cleared\.'/);
+  assert.match(script, /Dom\['warning-live'\]\.textContent = `提醒：\$\{text\}`/);
+  assert.match(script, /Dom\['warning-live'\]\.textContent = '提醒历史已清空。'/);
   assert.match(script, /time\.textContent = `\$\{warning\.stamp\} `/);
   assert.match(script, /row\.append\(time, text, document\.createTextNode\('\\n'\)\)/);
   const logBody = script.match(/log\(msg, type = 'norm', opts = \{\}\) \{([\s\S]*?)\n  \},\n  localizeBusyReason/)?.[1] || '';
@@ -906,8 +906,8 @@ test('early rejected asset selections invalidate stale previously loaded assets'
   assert.match(loadFileBody, /const rejectEarly = \(message, warning\) => \{/);
   assert.match(loadFileBody, /Store\.flags\.assetValid\[type\] = false/);
   assert.match(loadFileBody, /this\.resetAssetElement\(type, el\)/);
-  assert.match(loadFileBody, /if \(!this\.isAllowedFileType\(type, file\)\) \{[\s\S]*?rejectEarly\(`Unsupported \$\{type\} file`/);
-  assert.match(loadFileBody, /if \(file\.size > LIMITS\.maxFileBytes\[type\]\) \{[\s\S]*?rejectEarly\(`\$\{type\} file too large`/);
+  assert.match(loadFileBody, /if \(!this\.isAllowedFileType\(type, file\)\) \{[\s\S]*?rejectEarly\(`不支持的\$\{type\}文件`/);
+  assert.match(loadFileBody, /if \(file\.size > LIMITS\.maxFileBytes\[type\]\) \{[\s\S]*?rejectEarly\(`\$\{type\}文件太大`/);
 });
 
 test('browser storage is guarded for commercial online contexts', () => {
@@ -926,10 +926,10 @@ test('browser downloads are reported as dispatched unless save is verified', () 
   assert.match(script, /dispatchBlob\(blob, fileName\)/);
   assert.match(script, /downloadDispatched:\s*true/);
   assert.match(script, /saveVerified:\s*false/);
-  assert.match(script, /PROJECT JSON DOWNLOAD DISPATCHED/);
-  assert.match(script, /项目包下载已触发/);
-  assert.match(script, /REPORT DOWNLOAD DISPATCHED/);
-  assert.match(script, /EXPORT DOWNLOAD DISPATCHED/);
+  assert.match(script, /项目文件下载已开始/);
+  assert.match(script, /完整项目下载已触发/);
+  assert.match(script, /导出记录下载已开始/);
+  assert.match(script, /成片下载已开始/);
   assert.doesNotMatch(script, /PROJECT JSON SAVED/);
   assert.doesNotMatch(script, /PROJECT PACKAGE SAVED/);
 });
@@ -938,13 +938,13 @@ test('public output filenames use openFAD source marker instead of private brand
   assert.match(script, /_openfad\.\$\{this\.extensionForMime\(mime\)\}/);
   assert.match(script, /_openfad\.webm/);
   assert.doesNotMatch(script, new RegExp(`_${'FAD'}`));
-  assert.doesNotMatch(script, new RegExp(`Untitled ${'FAD'} MV`));
+  assert.doesNotMatch(script, new RegExp(`未命名 ${'FAD'} MV`));
 });
 
 test('download dispatch failures surface as in-app warnings', () => {
   const downloadProjectBody = script.match(/downloadProject\(\) \{([\s\S]*?)\n  \},\n\n  async loadProjectFile/)?.[1] || '';
   assert.ok(downloadProjectBody, 'ProjectPresets.downloadProject body should be present');
-  assert.match(downloadProjectBody, /try \{[\s\S]*?DownloadManager\.dispatchBlob\(blob, fileName\)[\s\S]*?PROJECT JSON DOWNLOAD DISPATCHED[\s\S]*?\} catch \(err\) \{[\s\S]*?UI\.showError\(`Project JSON download failed: \$\{Utils\.safeErrMsg\(err\)\}`, 'WARN'\)/);
+  assert.match(downloadProjectBody, /try \{[\s\S]*?DownloadManager\.dispatchBlob\(blob, fileName\)[\s\S]*?UI\.log\('项目文件下载已开始。', 'ok'\)[\s\S]*?\} catch \(err\) \{[\s\S]*?UI\.showError\(`项目文件下载失败：\$\{Utils\.safeErrMsg\(err\)\}`, 'WARN'\)/);
 
   const renderReportBody = script.match(/const RenderReport = \{([\s\S]*?)\n\};\n\nconst CustomPresets/)?.[1] || '';
   assert.ok(renderReportBody, 'RenderReport body should be present');
@@ -953,7 +953,7 @@ test('download dispatch failures surface as in-app warnings', () => {
   assert.match(retryBody, /try \{[\s\S]*?result = DownloadManager\.dispatchBlob\(saved\.blob, saved\.fileName\)[\s\S]*?\} catch \(err\) \{[\s\S]*?UI\.showError\(`重试导出下载失败：\$\{Utils\.safeErrMsg\(err\)\}。请保持页面打开，稍后再点“重试导出下载”。`, 'WARN'\)[\s\S]*?this\.updatePanel\(\)[\s\S]*?return/);
   const reportBody = renderReportBody.match(/downloadReport\(\) \{([\s\S]*?)\n  \},\n\n  updatePanel/)?.[1] || '';
   assert.ok(reportBody, 'RenderReport.downloadReport body should be present');
-  assert.match(reportBody, /try \{[\s\S]*?DownloadManager\.dispatchBlob\(blob, fileName\)[\s\S]*?REPORT DOWNLOAD DISPATCHED[\s\S]*?\} catch \(err\) \{[\s\S]*?UI\.showError\(`Render report download failed: \$\{Utils\.safeErrMsg\(err\)\}`, 'WARN'\)/);
+  assert.match(reportBody, /try \{[\s\S]*?DownloadManager\.dispatchBlob\(blob, fileName\)[\s\S]*?UI\.log\('导出记录下载已开始。', 'ok'\)[\s\S]*?\} catch \(err\) \{[\s\S]*?UI\.showError\(`导出记录下载失败：\$\{Utils\.safeErrMsg\(err\)\}`, 'WARN'\)/);
 });
 
 test('retry export download command enforces busy locks before dispatching or mutating reports', () => {
@@ -962,10 +962,10 @@ test('retry export download command enforces busy locks before dispatching or mu
   assert.match(renderReportBody, /retryExportLockReason\(\) \{/);
   const lockBody = renderReportBody.match(/retryExportLockReason\(\) \{([\s\S]*?)\n  \},\n\n  retryExportDownload/)?.[1] || '';
   assert.ok(lockBody, 'RenderReport.retryExportLockReason body should be present');
-  assert.match(lockBody, /if \(Store\.packageJob\.running\) return Store\.packageJob\.label \|\| 'Package operation running'/);
-  assert.match(lockBody, /if \(Store\.restoreJob\.running\) return Store\.restoreJob\.label \|\| 'Project restore running'/);
-  assert.match(lockBody, /if \(Store\.batch\.running\) return 'Batch render running'/);
-  assert.match(lockBody, /if \(Machine\.status !== 'IDLE'\) return `Wait for \$\{Machine\.status\.toLowerCase\(\)\} to finish before retrying export download`/);
+  assert.match(lockBody, /if \(Store\.packageJob\.running\) return Store\.packageJob\.label \|\| '项目文件操作进行中。'/);
+  assert.match(lockBody, /if \(Store\.restoreJob\.running\) return Store\.restoreJob\.label \|\| '项目恢复中。'/);
+  assert.match(lockBody, /if \(Store\.batch\.running\) return '批量导出中。'/);
+  assert.match(lockBody, /if \(Machine\.status !== 'IDLE'\) return `请等待\$\{UI\.stateVerb\(Machine\.status\)\}完成后再重试成片下载。`/);
 
   const retryBody = renderReportBody.match(/retryExportDownload\(\) \{([\s\S]*?)\n  \},\n\n  downloadReport/)?.[1] || '';
   assert.ok(retryBody, 'RenderReport.retryExportDownload body should be present');
@@ -1037,13 +1037,13 @@ test('starting a new render marks previous render reports stale before download'
 
   const downloadReportBody = renderReportBody.match(/downloadReport\(\) \{([\s\S]*?)\n  \},\n\n  updatePanel/)?.[1] || '';
   assert.ok(downloadReportBody, 'RenderReport.downloadReport body should be present');
-  assert.match(downloadReportBody, /if \(Store\.lastRenderReport\?\.output\?\.stale\) \{[\s\S]*?UI\.showError\('Render report is from a previous render and is no longer downloadable', 'WARN'\);[\s\S]*?return/);
+  assert.match(downloadReportBody, /if \(Store\.lastRenderReport\?\.output\?\.stale\) \{[\s\S]*?UI\.showError\('这份导出记录属于上一次导出，已不能下载。', 'WARN'\);[\s\S]*?return/);
 
   const updatePanelBody = renderReportBody.match(/updatePanel\(\) \{([\s\S]*?)\n  \},\n\n  init/)?.[1] || '';
   assert.ok(updatePanelBody, 'RenderReport.updatePanel body should be present');
   assert.match(updatePanelBody, /const reportStale = !!report\?\.output\?\.stale/);
   assert.match(updatePanelBody, /UI\.setControlReason\(Dom\['btn-download-report'\], !report \|\| reportStale, downloadReason, 'render-report-summary'\)/);
-  assert.match(updatePanelBody, /REPORT STALE: \$\{report\.output\.staleReason \|\| 'Previous render'\}/);
+  assert.match(updatePanelBody, /导出记录已过期：\$\{report\.output\.staleReason \|\| '上一次导出'\}/);
 
   const recorderBody = script.match(/const Recorder = \{([\s\S]*?)\n\};\n\nwindow\.LIMITS/)?.[1] || '';
   assert.ok(recorderBody, 'Recorder body should be present');
@@ -1062,24 +1062,24 @@ test('project mutations invalidate stale render retry and report state', () => {
   assert.match(renderReportBody, /invalidateProjectOutput\(reason = 'Project changed'\)/);
   assert.match(renderReportBody, /Store\.lastDownloadableExport = null/);
   assert.match(renderReportBody, /Store\.lastRenderReport = null/);
-  assert.match(renderReportBody, /Render report invalidated/);
+  assert.match(renderReportBody, /导出记录已失效/);
 
   const loadProjectBody = script.match(/async loadProjectFile\(file\) \{([\s\S]*?)\n  \},\n\n  clearLiveAssetsAfterJsonImport/)?.[1] || '';
   assert.ok(loadProjectBody, 'ProjectPresets.loadProjectFile body should be present');
-  assert.match(loadProjectBody, /RenderReport\.invalidateProjectOutput\('Project JSON loaded'\)/);
+  assert.match(loadProjectBody, /RenderReport\.invalidateProjectOutput\('项目文件已载入'\)/);
 
   const importPackageBody = script.match(/async importPackageFile\(file\) \{([\s\S]*?)\n  \},\n\n  init\(\)/)?.[1] || '';
   assert.ok(importPackageBody, 'ProjectPackage.importPackageFile body should be present');
-  assert.ok(importPackageBody.lastIndexOf("RenderReport.invalidateProjectOutput('Project package loaded')") > importPackageBody.lastIndexOf('this.finishPackageJob(token);'));
+  assert.ok(importPackageBody.lastIndexOf("RenderReport.invalidateProjectOutput('完整项目已载入')") > importPackageBody.lastIndexOf('this.finishPackageJob(token);'));
 
   const snapshotBody = autoSaveApplySnapshotBody();
-  assert.match(snapshotBody, /RenderReport\.invalidateProjectOutput\('Autosave snapshot restored'\)/);
+  assert.match(snapshotBody, /RenderReport\.invalidateProjectOutput\('已恢复自动保存快照'\)/);
 });
 
 test('plain JSON imports invalidate stale output before first project mutation', () => {
   const loadProjectBody = script.match(/async loadProjectFile\(file\) \{([\s\S]*?)\n  \},\n\n  clearLiveAssetsAfterJsonImport/)?.[1] || '';
   assert.ok(loadProjectBody, 'ProjectPresets.loadProjectFile body should be present');
-  const invalidateAt = loadProjectBody.indexOf("RenderReport.invalidateProjectOutput('Project JSON import started')");
+  const invalidateAt = loadProjectBody.indexOf("RenderReport.invalidateProjectOutput('项目文件载入已开始')");
   const importAt = loadProjectBody.indexOf('this.importState(data, { silent: true, noAutosave: true, skipAudioAnalysis: true })');
   const clearAt = loadProjectBody.indexOf('this.clearLiveAssetsAfterJsonImport(data)');
   assert.ok(invalidateAt >= 0, 'plain JSON import should invalidate stale output before applying state');
@@ -1091,7 +1091,7 @@ test('plain JSON imports bump project revision before import autosave snapshots'
   const loadProjectBody = script.match(/async loadProjectFile\(file\) \{([\s\S]*?)\n  \},\n\n  clearLiveAssetsAfterJsonImport/)?.[1] || '';
   assert.ok(loadProjectBody, 'ProjectPresets.loadProjectFile body should be present');
   const clearAt = loadProjectBody.indexOf('this.clearLiveAssetsAfterJsonImport(data)');
-  const noteAt = loadProjectBody.indexOf("AssetManager.noteProjectEdited('Project JSON loaded')");
+  const noteAt = loadProjectBody.indexOf("AssetManager.noteProjectEdited('项目文件已载入')");
   const saveAt = loadProjectBody.indexOf("AutoSave.saveSnapshot('project-json-import'");
   assert.ok(clearAt >= 0, 'plain JSON import should clear live assets after applying project state');
   assert.ok(noteAt > clearAt, 'plain JSON import should mark the project changed after the imported state is applied');
@@ -1157,9 +1157,9 @@ test('audio analysis result changes invalidate stale render outputs and persist 
 
   const skipBody = analyzeBody.match(/const skipAnalysis = \(reason\) => \{([\s\S]*?)\n    \};/)?.[1] || '';
   assert.ok(skipBody, 'AudioAnalysis skipAnalysis body should be present');
-  assert.ok(skipBody.indexOf("RenderReport.invalidateProjectOutput('Audio analysis skipped')") < skipBody.indexOf("Store.audioAnalysis.status = 'skipped'"));
+  assert.ok(skipBody.indexOf("RenderReport.invalidateProjectOutput('音频分析已跳过')") < skipBody.indexOf("Store.audioAnalysis.status = 'skipped'"));
 
-  const successInvalidateAt = analyzeBody.indexOf("RenderReport.invalidateProjectOutput('Audio analysis updated')");
+  const successInvalidateAt = analyzeBody.indexOf("RenderReport.invalidateProjectOutput('音频分析已更新')");
   const successStatusAt = analyzeBody.indexOf("Store.audioAnalysis.status = 'done'");
   const successAutosaveAt = analyzeBody.indexOf("AutoSave.schedule('audio-analysis')");
   assert.ok(successInvalidateAt >= 0, 'successful analysis should invalidate stale render outputs');
@@ -1168,7 +1168,7 @@ test('audio analysis result changes invalidate stale render outputs and persist 
 
   const catchBody = analyzeBody.match(/\} catch \(err\) \{([\s\S]*?)\n    \}/)?.[1] || '';
   assert.ok(catchBody, 'AudioAnalysis.analyzeCurrentFile catch body should be present');
-  assert.ok(catchBody.indexOf("RenderReport.invalidateProjectOutput('Audio analysis failed')") < catchBody.indexOf('Store.audioAnalysis.status = /timeout/i.test(message)'));
+  assert.ok(catchBody.indexOf("RenderReport.invalidateProjectOutput('音频分析失败')") < catchBody.indexOf('Store.audioAnalysis.status = /timeout/i.test(message)'));
 });
 
 test('imports and autosave restores preflight assets before mutating project state', () => {
@@ -1180,7 +1180,7 @@ test('imports and autosave restores preflight assets before mutating project sta
 
   const snapshotBody = autoSaveApplySnapshotBody();
   assert.ok(snapshotBody.indexOf('AssetManager.preflightFile(type, file)') < snapshotBody.indexOf('ProjectPresets.importState(snap.state, { silent: true, noAutosave: true, skipAudioAnalysis: true, allowLockedMutation: true })'));
-  assert.match(snapshotBody, /Snapshot missing \$\{type\} asset/);
+  assert.match(snapshotBody, /自动保存缺少 \$\{type\} 素材/);
   assert.match(snapshotBody, /ProjectPresets\.restoreRuntime\(previous\)/);
 });
 
@@ -1198,9 +1198,9 @@ test('rollback restore attempts every asset slot and reports incomplete rollback
 
   const packageBody = script.match(/async importPackageFile\(file\) \{([\s\S]*?)\n  \},\n\n  init\(\)/)?.[1] || '';
   assert.match(packageBody, /const rollback = await ProjectPresets\.restoreRuntime\(previous\)/);
-  assert.match(packageBody, /Package import failed and rollback was incomplete/);
-  const packageRollbackInvalidateAt = packageBody.indexOf("RenderReport.invalidateProjectOutput('Project package import failed with incomplete rollback')");
-  const packageRollbackThrowAt = packageBody.indexOf('Package import failed and rollback was incomplete');
+  assert.match(packageBody, /完整项目载入失败，且无法完整恢复到载入前状态/);
+  const packageRollbackInvalidateAt = packageBody.indexOf("RenderReport.invalidateProjectOutput('完整项目载入失败，且回滚不完整')");
+  const packageRollbackThrowAt = packageBody.indexOf('完整项目载入失败，且无法完整恢复到载入前状态');
   assert.ok(
     packageRollbackInvalidateAt >= 0 && packageRollbackInvalidateAt < packageRollbackThrowAt,
     'incomplete package rollback should clear stale render report before surfacing the failure'
@@ -1208,9 +1208,9 @@ test('rollback restore attempts every asset slot and reports incomplete rollback
 
   const snapshotBody = autoSaveApplySnapshotBody();
   assert.match(snapshotBody, /const rollback = await ProjectPresets\.restoreRuntime\(previous\)/);
-  assert.match(snapshotBody, /Snapshot restore failed and rollback was incomplete/);
-  const snapshotRollbackInvalidateAt = snapshotBody.indexOf("RenderReport.invalidateProjectOutput('Autosave restore failed with incomplete rollback')");
-  const snapshotRollbackThrowAt = snapshotBody.indexOf('Snapshot restore failed and rollback was incomplete');
+  assert.match(snapshotBody, /自动保存恢复失败，且无法完整恢复到恢复前状态/);
+  const snapshotRollbackInvalidateAt = snapshotBody.indexOf("RenderReport.invalidateProjectOutput('自动保存恢复失败，且回滚不完整')");
+  const snapshotRollbackThrowAt = snapshotBody.indexOf('自动保存恢复失败，且无法完整恢复到恢复前状态');
   assert.ok(
     snapshotRollbackInvalidateAt >= 0 && snapshotRollbackInvalidateAt < snapshotRollbackThrowAt,
     'incomplete autosave rollback should clear stale render report before surfacing the failure'
@@ -1241,7 +1241,7 @@ test('plain project JSON imports are bounded before reading into memory', () => 
   const loadProjectBody = script.match(/async loadProjectFile\(file\) \{([\s\S]*?)\n  \},\n\n  init\(\)/)?.[1] || '';
   assert.ok(loadProjectBody, 'ProjectPresets.loadProjectFile body should be present');
   assert.match(loadProjectBody, /file\.size > LIMITS\.maxProjectJsonBytes/);
-  assert.match(loadProjectBody, /Project JSON too large/);
+  assert.match(loadProjectBody, /项目文件太大，无法载入/);
 });
 
 test('plain project JSON imports are token-gated so stale file reads cannot overwrite newer selections', () => {
@@ -1250,7 +1250,7 @@ test('plain project JSON imports are token-gated so stale file reads cannot over
   assert.match(presetsBody, /projectLoadGeneration:\s*0/);
   assert.match(presetsBody, /nextProjectLoadToken\(\) \{[\s\S]*?this\.projectLoadGeneration \+= 1[\s\S]*?return this\.projectLoadGeneration/);
   assert.match(presetsBody, /isCurrentProjectLoad\(token\) \{[\s\S]*?return token === this\.projectLoadGeneration/);
-  assert.match(presetsBody, /skipStaleProjectLoad\(token\) \{[\s\S]*?Skipped stale project JSON import after a newer file selection/);
+  assert.match(presetsBody, /skipStaleProjectLoad\(token\) \{[\s\S]*?已忽略过期的项目文件载入/);
 
   const loadProjectBody = presetsBody.match(/async loadProjectFile\(file\) \{([\s\S]*?)\n  \},\n\n  listedAssetRefs/)?.[1] || '';
   assert.ok(loadProjectBody, 'ProjectPresets.loadProjectFile body should be present');
@@ -1323,20 +1323,20 @@ test('render config changes recompute readiness immediately', () => {
 });
 
 test('abort and fatal dialog have commercial-grade keyboard safety basics', () => {
-  assert.match(html, /id="btn-abort"[^>]*aria-label="中止当前渲染 \/ Abort current render"[^>]*aria-pressed="false"/);
+  assert.match(html, /id="btn-abort"[^>]*class="stop-abort"[^>]*title="停止当前导出"[^>]*aria-label="停止当前导出"[^>]*aria-pressed="false"/);
   assert.match(html, /id="error-overlay"[^>]*aria-describedby="err-msg err-recovery"/);
-  assert.match(html, /id="err-recovery"[^>]*>渲染已停止，未保存文件。回到编辑器检查预检后再重试。\/ Rendering stopped; no file was saved; return to the editor and check Preflight before trying again\./);
+  assert.match(html, /id="err-recovery"[^>]*>视频生成已停止，未保存文件。回到编辑器检查素材清单后再重试。/);
   assert.match(html, /#error-overlay \{[^}]*height: 100dvh;[^}]*padding: 24px;[^}]*box-sizing: border-box;[^}]*overflow-y: auto/);
   assert.match(html, /\.err-box \{[^}]*max-height: calc\(100dvh - 48px\);[^}]*overflow-y: auto;[^}]*display: flex;[^}]*flex-direction: column/);
   assert.match(html, /#err-msg \{[^}]*max-height: min\(36dvh, 260px\);[^}]*overflow-y: auto;[^}]*overflow-wrap: anywhere/);
   assert.match(script, /requestAbort\(\)/);
   assert.match(script, /setAbortArmed\(armed\)/);
   assert.match(script, /if \(Machine\.status === 'EXPORTING'\) \{[\s\S]*?导出正在封装。请等待保存或下载结果出现后，再开始新的渲染。/);
-  assert.match(script, /Finalizing cannot be cancelled safely/);
+  assert.match(script, /导出正在封装。请等待保存或下载结果出现后，再开始新的渲染。/);
   assert.match(script, /btn\.setAttribute\('aria-pressed', armed \? 'true' : 'false'\)/);
   assert.match(script, /clearAbortConfirm\(\)/);
   assert.match(script, /this\._abortConfirmTimer = setTimeout/);
-  assert.match(script, /Click abort again within 2\.5s to stop this render/);
+  assert.match(script, /2\.5 秒内再次点击“停止导出”即可取消本次导出。/);
   assert.match(script, /handleModalKeydown\(e\)/);
   assert.match(script, /e\.key === 'Escape'/);
   assert.match(script, /\.inert = !!open/);
@@ -1382,7 +1382,7 @@ test('audio engine creates stream destination before binding the media element s
 test('static image center visuals are bounded like video assets', () => {
   assert.match(script, /video image dimension invalid/);
   assert.match(script, /pixels > LIMITS\.maxImagePixels \|\| maxDim > LIMITS\.maxVideoDim/);
-  assert.match(script, /VIDEO-IMAGE DIMENSION INVALID/);
+  assert.match(script, /中心图片尺寸过大或无效/);
 });
 
 test('package export refuses memory-dangerous projects before reading assets', () => {
@@ -1390,7 +1390,7 @@ test('package export refuses memory-dangerous projects before reading assets', (
   assert.match(script, /maxPackageExportBytes:\s*450 \* 1024 \* 1024/);
   assert.match(script, /estimatedExportBytes/);
   assert.match(script, /estimatedBytes > LIMITS\.maxPackageExportBytes/);
-  assert.match(script, /Reduce asset sizes before saving \.fadmv/);
+  assert.match(script, /请先压缩素材再保存/);
   assert.match(script, /if \(AutoSave\.isEnabled\(\)\) AutoSave\.saveSnapshot\('package-import'\)/);
 });
 
@@ -1408,26 +1408,26 @@ test('package commands reject cheap command failures before starting package job
   assert.match(exportPreflightBody, /if \(invalidAssets\.length\) throw new Error\(`Asset still loading or invalid: \$\{invalidAssets\.join\(', '\)\}`\)/);
   assert.match(exportPreflightBody, /const estimatedBytes = this\.estimatedExportBytes\(assets\)/);
   assert.match(exportPreflightBody, /if \(estimatedBytes > LIMITS\.maxPackageExportBytes\)/);
-  assert.match(exportPreflightBody, /Reduce asset sizes before saving \.fadmv/);
+  assert.match(exportPreflightBody, /请先压缩素材再保存/);
 
   const downloadBody = script.match(/async downloadPackage\(\) \{([\s\S]*?)\n  \},\n\n  mimeForAsset/)?.[1] || '';
   assert.ok(downloadBody, 'downloadPackage body should be present');
   assert.ok(
-    downloadBody.indexOf('this.assertPackageExportPreflight();') < downloadBody.indexOf("this.startPackageJob('PACKAGE EXPORTING')"),
+    downloadBody.indexOf('this.assertPackageExportPreflight();') < downloadBody.indexOf("this.startPackageJob('正在保存完整项目')"),
     'export command preflight should run before package job state starts'
   );
 
   const importPreflightBody = script.match(/assertPackageImportFilePreflight\(file\) \{([\s\S]*?)\n  \},\n\n  updateControls/)?.[1] || '';
   assert.ok(importPreflightBody, 'assertPackageImportFilePreflight body should be present');
   assert.match(importPreflightBody, /this\.assertPackageJobReady\(\)/);
-  assert.match(importPreflightBody, /if \(!file\) throw new Error\('No package selected'\)/);
-  assert.match(importPreflightBody, /if \(file\.size > LIMITS\.maxPackageBytes\) throw new Error\('Package too large'\)/);
+  assert.match(importPreflightBody, /if \(!file\) throw new Error\('未选择完整项目文件'\)/);
+  assert.match(importPreflightBody, /if \(file\.size > LIMITS\.maxPackageBytes\) throw new Error\('完整项目文件太大'\)/);
   assert.doesNotMatch(importPreflightBody, /invalidRawAssetTypes/);
 
   const importBody = script.match(/async importPackageFile\(file\) \{([\s\S]*?)\n  \},\n\n  init\(\)/)?.[1] || '';
   assert.ok(importBody, 'importPackageFile body should be present');
   assert.ok(
-    importBody.indexOf('this.assertPackageImportFilePreflight(file);') < importBody.indexOf("this.startPackageJob('PACKAGE IMPORTING')"),
+    importBody.indexOf('this.assertPackageImportFilePreflight(file);') < importBody.indexOf("this.startPackageJob('正在载入完整项目')"),
     'import command file preflight should run before package job state starts'
   );
 });
@@ -1449,7 +1449,7 @@ test('fadmv package work yields during large CRC and zip loops', () => {
   assert.match(script, /if \(size > LIMITS\.packageYieldBytes\) await this\.yieldToBrowser\(\)/);
   assert.match(script, /updatePackageProgressPending\(stage\)/);
   assert.match(script, /UI\.progressPending\(stage\)/);
-  assert.match(script, /this\.updatePackageProgressPending\('PACKAGE FINALIZING'\)/);
+  assert.match(script, /this\.updatePackageProgressPending\('正在整理项目文件'\)/);
   assert.doesNotMatch(script, /this\.updatePackageProgress\('PACKAGE FINALIZING', totalWork, totalWork\)/);
 });
 
@@ -1477,8 +1477,8 @@ test('fadmv package jobs have busy state and timeout guards', () => {
   assert.match(script, /startPackageJob\(label\)/);
   assert.match(script, /finishPackageJob\(token\)/);
   assert.match(script, /throwIfPackageJobStopped\(token\)/);
-  assert.match(script, /Package operation already running/);
-  assert.match(script, /Package operation timeout/);
+  assert.match(script, /项目文件操作进行中/);
+  assert.match(script, /项目文件操作超时/);
 });
 
 test('fadmv package controls are locked during package jobs', () => {
@@ -1505,18 +1505,18 @@ test('fadmv package jobs report stage progress through the live progressbar', ()
   assert.match(script, /const labelChanged = label !== this\._lastProgressLabel/);
   assert.match(script, /if \(Math\.abs\(pct - this\._lastProgressPct\) < 0\.05 && !labelChanged\) return/);
   assert.match(script, /const progressLabel = this\.progressAriaLabel\(label\)/);
-  assert.match(script, /Dom\['progress-fill'\]\.setAttribute\('aria-label', `进度 \/ \$\{label\} progress`\)/);
+  assert.match(script, /Dom\['progress-fill'\]\.setAttribute\('aria-label', progressLabel\)/);
   assert.match(script, /Dom\['progress-fill'\]\.setAttribute\('aria-valuetext', `进度 \$\{pct\.toFixed\(1\)\}% \/ \$\{progressLabel\} \$\{pct\.toFixed\(1\)\}%`\)/);
-  assert.match(script, /const statusMsg = `\$\{label\}: \$\{pct\.toFixed\(1\)\}%`/);
+  assert.match(script, /const statusMsg = `\$\{progressLabel\}：\$\{pct\.toFixed\(1\)\}%`/);
   assert.match(script, /Dom\['status-text'\]\.textContent = statusMsg/);
   assert.match(script, /Dom\['status-text'\]\.title = statusMsg/);
   const progressBody = script.match(/progress\(curr, total, label = 'REC'\) \{([\s\S]*?)\n  \},\n  log/)?.[1] || '';
   assert.match(progressBody, /const liveBucket = Math\.floor\(pct \/ 5\)/);
-  assert.match(progressBody, /Dom\['status-live'\]\.textContent = `\$\{label\}: \$\{pct\.toFixed\(1\)\}%`/);
+  assert.match(progressBody, /Dom\['status-live'\]\.textContent = statusMsg/);
   assert.match(script, /progressPending\(label = 'WORKING'\)/);
-  assert.match(script, /const statusMsg = `\$\{label\}: pending`/);
+  assert.match(script, /const statusMsg = `\$\{progressLabel\}：进度待定`/);
   assert.match(script, /progressAriaLabel\(label = 'REC'\)/);
-  assert.match(script, /Dom\['progress-fill'\]\.setAttribute\('aria-valuetext', `进度待定 \/ \$\{progressLabel\} pending`\)/);
+  assert.match(script, /Dom\['progress-fill'\]\.setAttribute\('aria-valuetext', `进度待定 \/ \$\{progressLabel\}`\)/);
   assert.match(script, /Dom\['status-live'\]\.textContent = msg/);
   assert.match(script, /updatePackageProgress\(stage, loaded, total\)/);
   assert.match(script, /UI\.progress\(loaded, total, stage\)/);
@@ -1524,7 +1524,7 @@ test('fadmv package jobs report stage progress through the live progressbar', ()
 });
 
 test('fadmv package load failures avoid unverifiable restore promises', () => {
-  assert.match(script, /Package load failed:/);
+  assert.match(script, /完整项目载入失败/);
   assert.doesNotMatch(script, /Current project was left unchanged or restored/);
 });
 
@@ -1558,8 +1558,8 @@ test('fadmv package jobs globally lock project mutation and render starts', () =
   assert.ok(panelBody, 'AudioAnalysis.updatePanel body should be present');
   assert.match(panelBody, /const lockReason = this\.audioAnalysisLockReason\(\)/);
   assert.match(panelBody, /button\.innerHTML = isBusy/);
-  assert.match(panelBody, /<span class="btn-main">取消分析<\/span><span class="btn-sub">Cancel Analysis<\/span>/);
-  assert.match(panelBody, /<span class="btn-main">分析音轨<\/span><span class="btn-sub">Analyze Track<\/span>/);
+  assert.match(panelBody, /<span class="btn-main">取消分析<\/span><span class="btn-sub">停止读取<\/span>/);
+  assert.match(panelBody, /<span class="btn-main">分析音轨<\/span><span class="btn-sub">读取节奏<\/span>/);
   assert.match(panelBody, /button\.disabled = !hasAudio \|\| \(!isBusy && !!lockReason\)/);
 
   const startJobBody = script.match(/startPackageJob\(label\) \{([\s\S]*?)\n  \},\n\n  finishPackageJob/)?.[1] || '';
@@ -1585,17 +1585,17 @@ test('fadmv package jobs block late file callbacks and unload loss', () => {
   const bindFileBody = script.match(/bindFile\(inputId, type\) \{([\s\S]*?)\n  \}\n\};\n\nconst ProjectPresets/)?.[1] || '';
   assert.ok(bindFileBody, 'AssetManager.bindFile body should be present');
   assert.match(bindFileBody, /e\.preventDefault\(\)/);
-  assert.match(script, /Package operation in progress\. Wait for it to finish before changing assets\./);
+  assert.match(script, /项目文件操作进行中，请完成后再更换素材。/);
   assert.match(bindFileBody, /const lockReason = this\.mutationLockReason\(\)/);
   assert.match(bindFileBody, /if \(lockReason\) \{[\s\S]*?return;[\s\S]*?\}/);
 
   const loadProjectBody = script.match(/async loadProjectFile\(file\) \{([\s\S]*?)\n  \},\n\n  clearLiveAssetsAfterJsonImport/)?.[1] || '';
   assert.ok(loadProjectBody, 'ProjectPresets.loadProjectFile body should be present');
   assert.match(loadProjectBody, /const packageGuard = ProjectPackage\.captureMutationGuard\(\)/);
-  assert.match(loadProjectBody, /const restoreGuard = AutoSave\.captureRestoreGuard\('Project restore in progress\. Wait for it to finish before loading JSON\.'\)/);
+  assert.match(loadProjectBody, /const restoreGuard = AutoSave\.captureRestoreGuard\('项目恢复中，请完成后再载入项目文件。'\)/);
   assert.match(loadProjectBody, /await file\.text\(\)/);
   assert.match(loadProjectBody, /ProjectPackage\.assertMutationGuard\(packageGuard\)/);
-  assert.match(loadProjectBody, /AutoSave\.assertRestoreGuard\(restoreGuard, 'Project restore in progress\. Wait for it to finish before loading JSON\.'\)/);
+  assert.match(loadProjectBody, /AutoSave\.assertRestoreGuard\(restoreGuard, '项目恢复中，请完成后再载入项目文件。'\)/);
   assert.ok(loadProjectBody.indexOf('ProjectPackage.assertMutationGuard(packageGuard);') > loadProjectBody.indexOf('await file.text()'));
   assert.ok(loadProjectBody.indexOf('AutoSave.assertRestoreGuard(restoreGuard') > loadProjectBody.indexOf('await file.text()'));
 
@@ -1603,15 +1603,15 @@ test('fadmv package jobs block late file callbacks and unload loss', () => {
   assert.ok(recorderBody, 'Recorder body should be present');
   const blockerBody = recorderBody.match(/renderStartBlocker\(opts = \{\}\) \{([\s\S]*?)\n  \},\n\n  async start/)?.[1] || '';
   assert.ok(blockerBody, 'Recorder.renderStartBlocker body should be present');
-  assert.match(blockerBody, /if \(Store\.packageJob\.running\) \{[\s\S]*?return 'Package operation in progress\. Wait for it to finish before starting render\.'/);
-  assert.match(blockerBody, /if \(Store\.restoreJob\.running\) \{[\s\S]*?return 'Project restore in progress\. Wait for it to finish before starting render\.'/);
-  assert.doesNotMatch(blockerBody, /throw new Error\('Package operation in progress'\)/);
-  assert.doesNotMatch(blockerBody, /throw new Error\('Project restore in progress'\)/);
+  assert.match(blockerBody, /if \(Store\.packageJob\.running\) \{[\s\S]*?return '项目文件操作进行中，请完成后再导出。'/);
+  assert.match(blockerBody, /if \(Store\.restoreJob\.running\) \{[\s\S]*?return '项目恢复中，请完成后再导出。'/);
+  assert.doesNotMatch(blockerBody, /throw new Error\('项目文件操作进行中'\)/);
+  assert.doesNotMatch(blockerBody, /throw new Error\('项目恢复中'\)/);
 });
 
 test('autosave and custom presets block late package mutations', () => {
-  assert.match(script, /captureMutationGuard\(message = 'Package operation in progress', opts = \{\}\)/);
-  assert.match(script, /assertMutationGuard\(token, message = 'Package operation in progress', opts = \{\}\)/);
+  assert.match(script, /captureMutationGuard\(message = '项目文件操作进行中', opts = \{\}\)/);
+  assert.match(script, /assertMutationGuard\(token, message = '项目文件操作进行中', opts = \{\}\)/);
 
   const restoreLatestBody = script.match(/async restoreLatest\(\) \{([\s\S]*?)\n  \},\n\n  async restoreSnapshot/)?.[1] || '';
   assert.ok(restoreLatestBody, 'AutoSave.restoreLatest body should be present');
@@ -1656,7 +1656,7 @@ test('direct autosave snapshot apply cannot bypass an active restore lock', () =
 
   const autoSaveBody = script.match(/const AutoSave = \{([\s\S]*?)\n\};\n\nconst CustomPresets/)?.[1] || '';
   assert.ok(autoSaveBody, 'AutoSave body should be present');
-  const assertBody = autoSaveBody.match(/assertSnapshotRestoreGuard\(restoreGuard, message = 'Project restore in progress'\) \{([\s\S]*?)\n  \},\n\n  async withRestoreLock/)?.[1] || '';
+  const assertBody = autoSaveBody.match(/assertSnapshotRestoreGuard\(restoreGuard, message = '项目恢复中'\) \{([\s\S]*?)\n  \},\n\n  async withRestoreLock/)?.[1] || '';
   assert.ok(assertBody, 'AutoSave.assertSnapshotRestoreGuard body should be present');
   assert.match(assertBody, /restoreGuard\?\.internal === INTERNAL_RESTORE_APPLY_TOKEN/);
   assert.match(assertBody, /Store\.restoreJob\.token !== restoreGuard\.token/);
@@ -1673,7 +1673,7 @@ test('direct autosave snapshot apply cannot bypass an active restore lock', () =
   assert.match(restoreSnapshotBody, /await this\.applySnapshot\(snap, packageGuard, restoreGuard\)/);
 
   const snapshotBody = autoSaveApplySnapshotBody();
-  assert.match(snapshotBody, /const restoreMessage = 'Project restore in progress\. Wait for it to finish before restoring autosave\.'/);
+  assert.match(snapshotBody, /const restoreMessage = '项目恢复中，请完成后再恢复自动保存。'/);
   assert.match(snapshotBody, /restoreGuard = this\.captureRestoreGuard\(restoreMessage\)/);
   assert.match(snapshotBody, /this\.assertSnapshotRestoreGuard\(restoreGuard, restoreMessage\)/);
   assert.ok(snapshotBody.indexOf('this.assertSnapshotRestoreGuard(restoreGuard') < snapshotBody.indexOf('ProjectPresets.importState(snap.state'));
@@ -1681,13 +1681,13 @@ test('direct autosave snapshot apply cannot bypass an active restore lock', () =
 });
 
 test('project package and batch commands enforce machine-level mutation locks', () => {
-  const captureBody = script.match(/captureMutationGuard\(message = 'Package operation in progress', opts = \{\}\) \{([\s\S]*?)\n  \},\n\n  assertMutationGuard/)?.[1] || '';
+  const captureBody = script.match(/captureMutationGuard\(message = '项目文件操作进行中', opts = \{\}\) \{([\s\S]*?)\n  \},\n\n  assertMutationGuard/)?.[1] || '';
   assert.ok(captureBody, 'ProjectPackage.captureMutationGuard body should be present');
   assert.match(captureBody, /Store\.autosaveJob\.running && !opts\.allowAutosaveJob/);
   assert.match(captureBody, /Machine\.status !== 'IDLE'/);
-  assert.match(captureBody, /Wait for \$\{Machine\.status\.toLowerCase\(\)\} to finish before changing the project/);
+  assert.match(captureBody, /请等待\$\{UI\.stateVerb\(Machine\.status\)\}完成后再修改项目。/);
 
-  const assertBody = script.match(/assertMutationGuard\(token, message = 'Package operation in progress', opts = \{\}\) \{([\s\S]*?)\n  \},\n\n  currentPackageToken/)?.[1] || '';
+  const assertBody = script.match(/assertMutationGuard\(token, message = '项目文件操作进行中', opts = \{\}\) \{([\s\S]*?)\n  \},\n\n  currentPackageToken/)?.[1] || '';
   assert.ok(assertBody, 'ProjectPackage.assertMutationGuard body should be present');
   assert.match(assertBody, /Store\.autosaveJob\.running && !opts\.allowAutosaveJob/);
   assert.match(assertBody, /Machine\.status !== 'IDLE'/);
@@ -1698,19 +1698,19 @@ test('project package and batch commands enforce machine-level mutation locks', 
 
   const packageJobBlockerBody = script.match(/packageJobBlocker\(\) \{([\s\S]*?)\n  \},\n\n  assertPackageJobReady/)?.[1] || '';
   assert.ok(packageJobBlockerBody, 'ProjectPackage.packageJobBlocker body should be present');
-  assert.match(packageJobBlockerBody, /if \(Store\.restoreJob\.running\) return 'Project restore in progress'/);
-  assert.match(packageJobBlockerBody, /if \(Store\.autosaveJob\.running\) return Store\.autosaveJob\.label \|\| 'Autosave in progress'/);
-  assert.match(packageJobBlockerBody, /if \(Store\.batch\.running\) return 'Batch render in progress'/);
-  assert.match(packageJobBlockerBody, /if \(Machine\.status !== 'IDLE'\) return `Wait for \$\{Machine\.status\.toLowerCase\(\)\} to finish`/);
+  assert.match(packageJobBlockerBody, /if \(Store\.restoreJob\.running\) return '项目恢复中'/);
+  assert.match(packageJobBlockerBody, /if \(Store\.autosaveJob\.running\) return Store\.autosaveJob\.label \|\| '自动保存中'/);
+  assert.match(packageJobBlockerBody, /if \(Store\.batch\.running\) return '批量导出中'/);
+  assert.match(packageJobBlockerBody, /if \(Machine\.status !== 'IDLE'\) return `请等待\$\{UI\.stateVerb\(Machine\.status\)\}完成后再继续。`/);
 
   const batchBody = script.match(/const BatchQueue = \{([\s\S]*?)\n\};\n\nconst AudioAnalysis/)?.[1] || '';
   assert.ok(batchBody, 'BatchQueue body should be present');
   const batchRenderLockBody = batchBody.match(/batchRenderLockReason\(\) \{([\s\S]*?)\n  \},\n\n  async renderNext/)?.[1] || '';
   assert.ok(batchRenderLockBody, 'BatchQueue.batchRenderLockReason body should be present');
-  assert.match(batchRenderLockBody, /if \(Machine\.status !== 'IDLE'\) return `Wait for \$\{Machine\.status\.toLowerCase\(\)\} to finish before loading batch audio\.`/);
+  assert.match(batchRenderLockBody, /if \(Machine\.status !== 'IDLE'\) return `请等待\$\{UI\.stateVerb\(Machine\.status\)\}完成后再载入批量音频。`/);
   const batchStartBody = batchBody.match(/async start\(\) \{([\s\S]*?)\n  \},\n\n  render\(\)/)?.[1] || '';
   assert.ok(batchStartBody, 'BatchQueue.start body should be present');
-  assert.match(batchStartBody, /if \(Machine\.status !== 'IDLE'\) \{[\s\S]*?UI\.showError\(`Wait for \$\{Machine\.status\.toLowerCase\(\)\} to finish before starting batch render\.`/);
+  assert.match(batchStartBody, /if \(Machine\.status !== 'IDLE'\) \{[\s\S]*?UI\.showError\(`请等待\$\{UI\.stateVerb\(Machine\.status\)\}完成后再开始批量导出。`/);
   const renderNextBody = batchBody.match(/async renderNext\(index\) \{([\s\S]*?)\n  \},\n\n  async start/)?.[1] || '';
   assert.ok(renderNextBody, 'BatchQueue.renderNext body should be present');
   assert.ok(renderNextBody.indexOf('const lockReason = this.batchRenderLockReason()') < renderNextBody.indexOf("await AssetManager.loadFile('audio', item.file"));
@@ -1726,10 +1726,10 @@ test('project state import commands enforce direct mutation locks with internal 
   const projectLockBody = script.match(/projectMutationLockReason\(opts = \{\}\) \{([\s\S]*?)\n  \},\n\n  importState/)?.[1] || '';
   assert.ok(projectLockBody, 'ProjectPresets.projectMutationLockReason body should be present');
   assert.match(projectLockBody, /if \(opts\.allowLockedMutation\) return ''/);
-  assert.match(projectLockBody, /if \(Store\.packageJob\.running\) return 'Package operation in progress\. Wait for it to finish before changing the project\.'/);
-  assert.match(projectLockBody, /if \(Store\.restoreJob\.running\) return 'Project restore in progress\. Wait for it to finish before changing the project\.'/);
-  assert.match(projectLockBody, /if \(Store\.autosaveJob\.running\) return 'Autosave in progress\. Wait for it to finish before changing the project\.'/);
-  assert.match(projectLockBody, /if \(Store\.batch\.running\) return 'Batch render in progress\. Wait or cancel it before changing the project\.'/);
+  assert.match(projectLockBody, /if \(Store\.packageJob\.running\) return '项目文件操作进行中，请完成后再修改项目。'/);
+  assert.match(projectLockBody, /if \(Store\.restoreJob\.running\) return '项目恢复中，请完成后再修改项目。'/);
+  assert.match(projectLockBody, /if \(Store\.autosaveJob\.running\) return '自动保存中，请完成后再修改项目。'/);
+  assert.match(projectLockBody, /if \(Store\.batch\.running\) return '批量导出中，请等待或取消后再修改项目。'/);
   assert.match(projectLockBody, /if \(\['WARMING', 'RECORDING', 'EXPORTING'\]\.includes\(Machine\.status\)\)/);
   assert.doesNotMatch(projectLockBody, /Machine\.status !== 'IDLE'/);
 
@@ -1758,7 +1758,7 @@ test('project state import commands enforce direct mutation locks with internal 
   const brandBody = script.match(/applyPreset\(name\) \{([\s\S]*?)\n  \},\n\n  init/)?.[1] || '';
   assert.ok(brandBody, 'BrandPresets.applyPreset body should be present');
   assert.match(brandBody, /try \{[\s\S]*?ProjectPresets\.importState\(preset, \{ silent: true \}\)[\s\S]*?return true/);
-  assert.match(brandBody, /\} catch \(err\) \{[\s\S]*?UI\.showError\(`Brand preset apply failed: \$\{Utils\.safeErrMsg\(err\)\}`, 'WARN'\);[\s\S]*?return false/);
+  assert.match(brandBody, /\} catch \(err\) \{[\s\S]*?UI\.showError\(`品牌预设应用失败：\$\{Utils\.safeErrMsg\(err\)\}`, 'WARN'\);[\s\S]*?return false/);
 
   const restoreRuntime = restoreRuntimeBody();
   assert.match(restoreRuntime, /this\.importState\(snapshot\.state, \{ silent: true, noAutosave: true, allowLockedMutation: true \}\)/);
@@ -1847,7 +1847,7 @@ test('project setting DOM events and direct fps API cannot bypass project mutati
   assert.match(fpsBody, /allowLockedMutation: opts\.allowLockedMutation \|\| Store\.flags\.controlMutationOverrideDepth > 0/);
   assert.match(fpsBody, /if \(lockReason\) \{[\s\S]*?UI\.showError\(lockReason, 'WARN'\);[\s\S]*?return false/);
   assert.match(fpsBody, /return true/);
-  assert.match(script, /const projectSettingsReason = packageLock[\s\S]*?: hardLock[\s\S]*?Locked while renderer is \$\{state\.toLowerCase\(\)\}/);
+  assert.match(script, /const projectSettingsReason = packageLock[\s\S]*?: hardLock[\s\S]*?正在\$\{this\.stateVerb\(state\)\}，请完成后再调整设置。/);
   assert.match(script, /const hardLock = packageLock \|\| restoreLock \|\| autosaveLock \|\| batchLock \|\| state === 'WARMING' \|\| state === 'RECORDING' \|\| state === 'EXPORTING'/);
   assert.doesNotMatch(script, /state === 'PREVIEWING' \|\| state === 'WARMING' \|\| state === 'RECORDING' \|\| state === 'EXPORTING'/);
 });
@@ -1882,10 +1882,10 @@ test('batch renderNext direct path honors package and restore locks before mutat
   assert.ok(batchBody, 'BatchQueue body should be present');
   const renderLockBody = batchBody.match(/batchRenderLockReason\(\) \{([\s\S]*?)\n  \},\n\n  async renderNext/)?.[1] || '';
   assert.ok(renderLockBody, 'BatchQueue.batchRenderLockReason body should be present');
-  assert.match(renderLockBody, /if \(Store\.packageJob\.running\) return 'Package operation in progress\. Wait for it to finish before rendering batch item\.'/);
-  assert.match(renderLockBody, /if \(Store\.restoreJob\.running\) return 'Project restore in progress\. Wait for it to finish before rendering batch item\.'/);
-  assert.match(renderLockBody, /if \(Store\.autosaveJob\.running\) return 'Autosave in progress\. Wait for it to finish before rendering batch item\.'/);
-  assert.match(renderLockBody, /if \(Machine\.status !== 'IDLE'\) return `Wait for \$\{Machine\.status\.toLowerCase\(\)\} to finish before loading batch audio\.`/);
+  assert.match(renderLockBody, /if \(Store\.packageJob\.running\) return '项目文件操作进行中，请完成后再导出批量项目。'/);
+  assert.match(renderLockBody, /if \(Store\.restoreJob\.running\) return '项目恢复中，请完成后再导出批量项目。'/);
+  assert.match(renderLockBody, /if \(Store\.autosaveJob\.running\) return '自动保存中，请完成后再导出批量项目。'/);
+  assert.match(renderLockBody, /if \(Machine\.status !== 'IDLE'\) return `请等待\$\{UI\.stateVerb\(Machine\.status\)\}完成后再载入批量音频。`/);
   assert.doesNotMatch(renderLockBody, /Store\.batch\.running/, 'renderNext must allow the expected batch-running internal state');
 
   const renderNextBody = batchBody.match(/async renderNext\(index\) \{([\s\S]*?)\n  \},\n\n  async start/)?.[1] || '';
@@ -1909,9 +1909,9 @@ test('batch audio add commands expose reasons and cannot mutate while locked', (
 
   const lockReasonBody = batchBody.match(/batchMutationLockReason\(\) \{([\s\S]*?)\n  \},\n\n  addFiles/)?.[1] || '';
   assert.ok(lockReasonBody, 'BatchQueue.batchMutationLockReason body should be present');
-  assert.match(lockReasonBody, /if \(Store\.autosaveJob\.running\) return 'Autosave in progress\. Wait for it to finish before changing the batch queue\.'/);
-  assert.match(lockReasonBody, /if \(Store\.batch\.running\) return 'Batch render in progress\. Wait or cancel it before changing the batch queue\.'/);
-  assert.match(lockReasonBody, /if \(Machine\.status !== 'IDLE'\) return `Wait for \$\{Machine\.status\.toLowerCase\(\)\} to finish before changing the batch queue\.`/);
+  assert.match(lockReasonBody, /if \(Store\.autosaveJob\.running\) return '自动保存中，请完成后再修改批量列表。'/);
+  assert.match(lockReasonBody, /if \(Store\.batch\.running\) return '批量导出中，请等待或取消后再修改列表。'/);
+  assert.match(lockReasonBody, /if \(Machine\.status !== 'IDLE'\) return `请等待\$\{UI\.stateVerb\(Machine\.status\)\}完成后再修改批量列表。`/);
 
   const addFilesBody = batchBody.match(/addFiles\(fileList\) \{([\s\S]*?)\n  \},\n\n  clear/)?.[1] || '';
   assert.ok(addFilesBody, 'BatchQueue.addFiles body should be present');
@@ -1937,7 +1937,7 @@ test('custom preset apply failures are surfaced as warnings instead of uncaught 
   assert.match(customBody, /const lockReason = this\.customPresetLockReason\('applying a custom preset'\)/);
   assert.match(customBody, /if \(lockReason\) \{[\s\S]*?UI\.showError\(lockReason, 'WARN'\);[\s\S]*?return false/);
   assert.match(customBody, /try \{[\s\S]*?ProjectPackage\.assertMutationGuard\(ProjectPackage\.captureMutationGuard\(\)\)[\s\S]*?ProjectPresets\.importState\(item\.state\)[\s\S]*?return true/);
-  assert.match(customBody, /\} catch \(err\) \{[\s\S]*?UI\.showError\(`Custom preset apply failed: \$\{Utils\.safeErrMsg\(err\)\}`, 'WARN'\);[\s\S]*?return false/);
+  assert.match(customBody, /\} catch \(err\) \{[\s\S]*?UI\.showError\(`自定义预设应用失败：\$\{Utils\.safeErrMsg\(err\)\}`, 'WARN'\);[\s\S]*?return false/);
 
   const initBody = script.match(/const CustomPresets = \{[\s\S]*?init\(\) \{([\s\S]*?)\n  \}\n\};\n\nconst BatchQueue/)?.[1] || '';
   assert.ok(initBody, 'CustomPresets.init body should be present');
@@ -1948,7 +1948,7 @@ test('custom preset delete storage failures are surfaced as warnings instead of 
   const deleteBody = script.match(/deleteSelected\(\) \{([\s\S]*?)\n  \},\n\n  updateControls/)?.[1] || '';
   assert.ok(deleteBody, 'CustomPresets.deleteSelected body should be present');
   assert.match(deleteBody, /try \{[\s\S]*?this\.saveAll\(this\.load\(\)\.filter\(\(item\) => item\.id !== id\)\)[\s\S]*?this\.renderList\(\)[\s\S]*?return true/);
-  assert.match(deleteBody, /\} catch \(err\) \{[\s\S]*?UI\.showError\(`Custom preset delete failed: \$\{Utils\.safeErrMsg\(err\)\}`, 'WARN'\);[\s\S]*?return false/);
+  assert.match(deleteBody, /\} catch \(err\) \{[\s\S]*?UI\.showError\(`自定义预设删除失败：\$\{Utils\.safeErrMsg\(err\)\}`, 'WARN'\);[\s\S]*?return false/);
 
   const initBody = script.match(/const CustomPresets = \{[\s\S]*?init\(\) \{([\s\S]*?)\n  \}\n\};\n\nconst BatchQueue/)?.[1] || '';
   assert.ok(initBody, 'CustomPresets.init body should be present');
@@ -1961,11 +1961,11 @@ test('custom preset commands share busy guards and visible disabled reasons', ()
 
   const lockBody = customBody.match(/customPresetLockReason\(action = 'changing custom presets'\) \{([\s\S]*?)\n  \},\n\n  saveCurrent/)?.[1] || '';
   assert.ok(lockBody, 'CustomPresets.customPresetLockReason body should be present');
-  assert.match(lockBody, /if \(Store\.packageJob\.running\) return `Package operation in progress\. Wait for it to finish before \$\{action\}\.`/);
-  assert.match(lockBody, /if \(Store\.restoreJob\.running\) return `Project restore in progress\. Wait for it to finish before \$\{action\}\.`/);
-  assert.match(lockBody, /if \(Store\.autosaveJob\.running\) return `Autosave in progress\. Wait for it to finish before \$\{action\}\.`/);
-  assert.match(lockBody, /if \(Store\.batch\.running\) return `Batch render in progress\. Wait or cancel it before \$\{action\}\.`/);
-  assert.match(lockBody, /if \(Machine\.status !== 'IDLE'\) return `Wait for \$\{Machine\.status\.toLowerCase\(\)\} to finish before \$\{action\}\.`/);
+  assert.match(lockBody, /if \(Store\.packageJob\.running\) return '项目文件操作进行中，请完成后再修改自定义预设。'/);
+  assert.match(lockBody, /if \(Store\.restoreJob\.running\) return '项目恢复中，请完成后再修改自定义预设。'/);
+  assert.match(lockBody, /if \(Store\.autosaveJob\.running\) return '自动保存中，请完成后再修改自定义预设。'/);
+  assert.match(lockBody, /if \(Store\.batch\.running\) return '批量导出中，请完成或取消后再修改自定义预设。'/);
+  assert.match(lockBody, /if \(Machine\.status !== 'IDLE'\) return `请等待\$\{UI\.stateVerb\(Machine\.status\)\}完成后再修改自定义预设。`/);
 
   const saveBody = customBody.match(/saveCurrent\(\) \{([\s\S]*?)\n  \},\n\n  selected/)?.[1] || '';
   assert.ok(saveBody, 'CustomPresets.saveCurrent body should be present');
@@ -2005,16 +2005,16 @@ test('autosave restores expose a project restore lock across UI and file inputs'
   const bindFileBody = script.match(/bindFile\(inputId, type\) \{([\s\S]*?)\n  \}\n\};\n\nconst ProjectPresets/)?.[1] || '';
   assert.ok(bindFileBody, 'AssetManager.bindFile body should be present');
   assert.match(bindFileBody, /this\.mutationLockReason\(\)/);
-  assert.match(script, /Project restore in progress\. Wait for it to finish before changing assets\./);
+  assert.match(script, /项目恢复中，请完成后再更换素材。/);
 
   const autoSaveBody = script.match(/const AutoSave = \{([\s\S]*?)\n\};\n\nconst CustomPresets/)?.[1] || '';
   assert.ok(autoSaveBody, 'AutoSave body should be present');
   assert.match(autoSaveBody, /autosaveLockReason\(action = 'using autosave'\)/);
   const lockReasonBody = autoSaveBody.match(/autosaveLockReason\(action = 'using autosave'\) \{([\s\S]*?)\n  \},\n\n  isSafeToSave/)?.[1] || '';
   assert.ok(lockReasonBody, 'AutoSave.autosaveLockReason body should be present');
-  assert.match(lockReasonBody, /if \(Store\.audioAnalysis\.status === 'analyzing'\) return `Audio analysis in progress\. Wait or cancel it before \$\{action\}\.`/);
-  assert.match(autoSaveBody, /captureRestoreGuard\(message = 'Project restore in progress'\)/);
-  assert.match(autoSaveBody, /assertRestoreGuard\(token, message = 'Project restore in progress'\)/);
+  assert.match(lockReasonBody, /if \(Store\.audioAnalysis\.status === 'analyzing'\) return '音频分析中，请完成或取消后再继续。'/);
+  assert.match(autoSaveBody, /captureRestoreGuard\(message = '项目恢复中'\)/);
+  assert.match(autoSaveBody, /assertRestoreGuard\(token, message = '项目恢复中'\)/);
   assert.match(autoSaveBody, /withRestoreLock\(label, task\)/);
   assert.match(autoSaveBody, /const token = Store\.restoreJob\.token \+ 1/);
   assert.match(autoSaveBody, /Store\.restoreJob = \{ running: true, label: label \|\| 'SNAPSHOT RESTORING', token \}/);
@@ -2023,18 +2023,18 @@ test('autosave restores expose a project restore lock across UI and file inputs'
   const restoreLatestBody = autoSaveBody.match(/async restoreLatest\(\) \{([\s\S]*?)\n  \},\n\n  async restoreSnapshot/)?.[1] || '';
   assert.ok(restoreLatestBody, 'AutoSave.restoreLatest body should be present');
   const lockAt = restoreLatestBody.indexOf("const lockReason = this.autosaveLockReason('restoring autosave')");
-  const restoreAt = restoreLatestBody.indexOf("return this.withRestoreLock('SNAPSHOT RESTORING'");
+  const restoreAt = restoreLatestBody.indexOf("return this.withRestoreLock('正在恢复快照'");
   assert.ok(lockAt >= 0 && restoreAt > lockAt, 'restoreLatest should reject autosave lock reasons before starting restore lock');
   assert.match(restoreLatestBody, /if \(lockReason\) \{[\s\S]*?UI\.showError\(lockReason, 'WARN'\);[\s\S]*?this\.updateControls\(\);[\s\S]*?return false/);
   const restoreSnapshotBody = autoSaveBody.match(/async restoreSnapshot\(id\) \{([\s\S]*?)\n  \},\n\n  async resolveAssetFile/)?.[1] || '';
   assert.ok(restoreSnapshotBody, 'AutoSave.restoreSnapshot body should be present');
   const snapshotLockAt = restoreSnapshotBody.indexOf("const lockReason = this.autosaveLockReason('restoring autosave')");
-  const snapshotRestoreAt = restoreSnapshotBody.indexOf("return this.withRestoreLock('SNAPSHOT RESTORING'");
+  const snapshotRestoreAt = restoreSnapshotBody.indexOf("return this.withRestoreLock('正在恢复快照'");
   assert.ok(snapshotLockAt >= 0 && snapshotRestoreAt > snapshotLockAt, 'restoreSnapshot should reject autosave lock reasons before starting restore lock');
 
   const applySnapshotBody = autoSaveApplySnapshotBody();
   assert.match(applySnapshotBody, /const restored = await AssetManager\.loadFile\(type, prepared\[type\], \{ noAutosave: true, allowLockedMutation: true \}\)/);
-  assert.match(applySnapshotBody, /if \(restored == null\) throw new Error\(`\$\{type\} restore was interrupted by a new asset selection`\)/);
+  assert.match(applySnapshotBody, /if \(restored == null\) throw new Error\(`\$\{type\} 素材恢复被新的文件选择打断`\)/);
 });
 
 test('asset file input guard matches preview and render machine locks', () => {
@@ -2048,7 +2048,7 @@ test('asset file input guard matches preview and render machine locks', () => {
   assert.ok(assetBody, 'AssetManager body should be present');
   const lockReasonBody = assetBody.match(/mutationLockReason\(opts = \{\}\) \{([\s\S]*?)\n  \},\n  assetInputSummary/)?.[1] || '';
   assert.ok(lockReasonBody, 'AssetManager.mutationLockReason body should be present');
-  assert.match(lockReasonBody, /if \(Machine\.status !== 'IDLE'\) return `Wait for \$\{Machine\.status\.toLowerCase\(\)\} to finish before changing assets\.`/);
+  assert.match(lockReasonBody, /if \(Machine\.status !== 'IDLE'\) return `请等待\$\{UI\.stateVerb\(Machine\.status\)\}完成后再更换素材。`/);
 
   const bindFileBody = assetBody.match(/bindFile\(inputId, type\) \{([\s\S]*?)\n  \}/)?.[1] || '';
   assert.ok(bindFileBody, 'AssetManager.bindFile body should be present');
@@ -2078,11 +2078,11 @@ test('file picker controls expose stable disabled reasons on visible and hidden 
   const summaryBody = assetBody.match(/assetInputSummary\(\) \{([\s\S]*?)\n  \},\n  updateControls/)?.[1] || '';
   assert.ok(summaryBody, 'AssetManager.assetInputSummary body should be present');
   assert.match(summaryBody, /Store\.assetErrors\[type\]/);
-  assert.match(summaryBody, /ASSET ISSUE:/);
-  assert.match(summaryBody, /ASSETS LOADING:/);
-  assert.match(summaryBody, /ASSETS READY:/);
+  assert.match(summaryBody, /素材问题：/);
+  assert.match(summaryBody, /素材载入中：/);
+  assert.match(summaryBody, /素材就绪：/);
   assert.match(summaryBody, /素材未齐：已载入/);
-  assert.match(summaryBody, /等待素材：请先选择背景图、中心视觉、主音频和透明 Logo \/ ASSETS WAITING/);
+  assert.match(summaryBody, /等待素材：请先选择背景图、中心视觉、主音频和透明 Logo/);
 
   const controlsBody = assetBody.match(/updateControls\(\) \{([\s\S]*?)\n  \},\n  bindFile/)?.[1] || '';
   assert.ok(controlsBody, 'AssetManager.updateControls body should be present');
@@ -2103,8 +2103,8 @@ test('file picker controls expose stable disabled reasons on visible and hidden 
     pendingReadyIndex < loadFileBody.indexOf('let settled = false;'),
     'pending asset loads should refresh readiness before waiting for decode callbacks'
   );
-  assert.match(loadFileBody, /const loadingLabel = \{ cover: 'cover', video: 'center visual', audio: 'audio', logo: 'logo' \}\[type\] \|\| type/);
-  assert.match(loadFileBody, /UI\.log\(`Loading \$\{loadingLabel\}: \$\{\(file\.name \|\| type\)\.substring\(0, 48\)\}\.\.\.`, 'warn'\)/);
+  assert.match(loadFileBody, /const loadingLabel = \{ cover: '背景图', video: '中心视觉素材', audio: '音频', logo: 'Logo' \}\[type\] \|\| '素材'/);
+  assert.match(loadFileBody, /UI\.log\(`正在载入\$\{loadingLabel\}：\$\{\(file\.name \|\| type\)\.substring\(0, 48\)\}\.\.\.`, 'warn'\)/);
 
   const checkReadyBody = script.match(/checkReady\(\) \{([\s\S]*?)\n  \},\n\n  setupPerformanceObserver/)?.[1] || '';
   assert.ok(checkReadyBody, 'Engine.checkReady body should be present');
@@ -2171,10 +2171,10 @@ test('autosave falls back to state-only snapshots after real asset write failure
   assert.match(saveSnapshotBody, /const recovered = await this\.reclaimAutosaveStorageBeforeFallback\(\)/);
   assert.match(saveSnapshotBody, /retriedAfterCleanup = true/);
   assert.match(saveSnapshotBody, /assetRefs = await this\.storeCurrentAssets\(plan\.records\)/);
-  assert.match(saveSnapshotBody, /const prefix = retriedAfterCleanup \? 'Asset autosave failed after cleanup' : 'Asset autosave failed'/);
+  assert.match(saveSnapshotBody, /const prefix = retriedAfterCleanup \? '清理后素材自动保存仍失败' : '素材自动保存失败'/);
   assert.match(saveSnapshotBody, /this\.stateOnlyPlan\(plan\.records, `\$\{prefix\}: \$\{Utils\.safeErrMsg\(failure\)\}`\)/);
   assert.match(saveSnapshotBody, /Logger\.warn\(`Autosave asset persistence failed; saving state only:/);
-  assert.match(saveSnapshotBody, /ASSETS NOT INCLUDED/);
+  assert.match(saveSnapshotBody, /素材没有一起保存/);
 });
 
 test('autosave asset records are snapshot-scoped and staged blobs are cleaned after snapshot failures', () => {
@@ -2214,7 +2214,7 @@ test('autosave latest uses generation and restore guards so older saves cannot o
   assert.match(script, /projectRevision:\s*0/);
   const autoSaveBody = script.match(/const AutoSave = \{([\s\S]*?)\n\};\n\nconst RenderReport/)?.[1] || '';
   assert.ok(autoSaveBody, 'AutoSave body should be present');
-  assert.match(autoSaveBody, /saveStillCurrent\(generation, restoreToken, projectRevision\)/);
+  assert.match(autoSaveBody, /isSaveCurrent\(generation, restoreToken, projectRevision\)/);
   assert.match(autoSaveBody, /generation === this\.saveGeneration && projectRevision === this\.projectRevision && !Store\.restoreJob\.running && Store\.restoreJob\.token === restoreToken/);
   assert.match(autoSaveBody, /shouldContinueSave\(generation, restoreToken, projectRevision\)/);
   const restoreLockBody = autoSaveBody.match(/async withRestoreLock\(label, task\) \{([\s\S]*?)\n  \},\n\n  setControlsAvailable/)?.[1] || '';
@@ -2229,7 +2229,7 @@ test('autosave latest uses generation and restore guards so older saves cannot o
   assert.match(saveSnapshotBody, /const projectRevision = this\.projectRevision/);
   assert.match(saveSnapshotBody, /const capturedAt = Date\.now\(\)/);
   assert.match(saveSnapshotBody, /const assetScope = this\.snapshotAssetScope\(capturedAt, generation\)/);
-  assert.match(saveSnapshotBody, /const isLatestGeneration = \(\) => this\.saveStillCurrent\(generation, restoreToken, projectRevision\)/);
+  assert.match(saveSnapshotBody, /const isLatestGeneration = \(\) => this\.isSaveCurrent\(generation, restoreToken, projectRevision\)/);
   assert.match(saveSnapshotBody, /const records = this\.currentAssetRecords\(assetScope\)/);
   assert.match(saveSnapshotBody, /if \(!this\.shouldContinueSave\(generation, restoreToken, projectRevision\)\) return/);
   assert.match(saveSnapshotBody, /this\.snapshot\(this\.latestKey, source, assetRefs, recordsLength, plan\.reason, state, capturedAt, plan\.assetsStored\)/);
@@ -2272,10 +2272,10 @@ test('autosave saveSnapshot returns structured saved skipped and stale results',
 
   const saveSnapshotBody = script.match(/async saveSnapshot\(source = 'autosave', opts = \{\}\) \{([\s\S]*?)\n  \},\n\n  async trimRecent/)?.[1] || '';
   assert.ok(saveSnapshotBody, 'AutoSave.saveSnapshot body should be present');
-  assert.match(saveSnapshotBody, /const skipReason = !this\.hasIndexedDb\(\) \? 'Autosave unavailable' : this\.autosaveLockReason\('saving autosave'\)/);
-  assert.match(saveSnapshotBody, /return this\.snapshotSkipResult\(source, skipReason \|\| 'Autosave unavailable'\)/);
-  assert.match(saveSnapshotBody, /return this\.snapshotSkipResult\(source, 'Autosave skipped because project changed, restored, or a newer snapshot started', 'stale'\)/);
-  assert.match(saveSnapshotBody, /return this\.snapshotSkipResult\(source, 'Autosave latest was not updated because a newer snapshot or project restore won the race', 'stale'\)/);
+  assert.match(saveSnapshotBody, /const skipReason = !this\.hasIndexedDb\(\) \? '当前浏览器无法自动保存' : this\.autosaveLockReason\('saving autosave'\)/);
+  assert.match(saveSnapshotBody, /return this\.snapshotSkipResult\(source, skipReason \|\| '当前浏览器无法自动保存'\)/);
+  assert.match(saveSnapshotBody, /return this\.snapshotSkipResult\(source, '项目已变化、已恢复，或已有更新的自动保存任务，已跳过本次自动保存。', 'stale'\)/);
+  assert.match(saveSnapshotBody, /return this\.snapshotSkipResult\(source, '已有更新快照或项目恢复完成，本次自动保存没有覆盖最新状态。', 'stale'\)/);
   assert.match(saveSnapshotBody, /return this\.snapshotSavedResult\(source, snap, recent, plan\)/);
   assert.doesNotMatch(saveSnapshotBody, /return;\s*(?:\n|$)/, 'saveSnapshot should not expose ambiguous bare returns');
 
@@ -2328,7 +2328,7 @@ test('corrupt custom preset JSON is preserved instead of silently overwritten', 
   assert.match(saveCurrentBody, /const items = this\.load\(\)/);
   assert.match(saveCurrentBody, /if \(this\.lastLoadCorrupt\) \{/);
   assert.match(saveCurrentBody, /BrowserStorage\.setLocal\(this\.corruptBackupKey\(\), this\.lastCorruptRaw\)/);
-  assert.match(saveCurrentBody, /UI\.showError\('Recovered corrupt preset storage; previous raw data was backed up before saving new presets', 'WARN'\)/);
+  assert.match(saveCurrentBody, /UI\.showError\('已恢复损坏的预设存储，并在保存新预设前备份了旧数据。', 'WARN'\)/);
 });
 
 test('fadmv package import has entry count and empty-selection guards', () => {
@@ -2338,10 +2338,10 @@ test('fadmv package import has entry count and empty-selection guards', () => {
   assert.match(script, /packageEntryYieldInterval:\s*16/);
   const parseBody = script.match(/async parseZip\(file\) \{([\s\S]*?)\n  \},\n\n  getRawAssetEntries/)?.[1] || '';
   assert.ok(parseBody, 'parseZip body should be present');
-  assert.match(parseBody, /if \(!file\) throw new Error\('No package selected'\)/);
-  assert.match(parseBody, /if \(file\.size > LIMITS\.maxPackageBytes\) throw new Error\('Package too large'\)/);
-  assert.match(parseBody, /if \(count > LIMITS\.maxPackageEntries\) throw new Error\('Package has too many entries'\)/);
-  assert.match(parseBody, /if \(centralSize > LIMITS\.maxPackageDirectoryBytes\) throw new Error\('Package directory too large'\)/);
+  assert.match(parseBody, /if \(!file\) throw new Error\('未选择完整项目文件'\)/);
+  assert.match(parseBody, /if \(file\.size > LIMITS\.maxPackageBytes\) throw new Error\('完整项目文件太大'\)/);
+  assert.match(parseBody, /if \(count > LIMITS\.maxPackageEntries\) throw new Error\('完整项目里的文件太多'\)/);
+  assert.match(parseBody, /if \(centralSize > LIMITS\.maxPackageDirectoryBytes\) throw new Error\('完整项目目录信息太大'\)/);
   assert.match(parseBody, /const eocdOffset = tailStart \+ eocdInTail/);
   assert.match(parseBody, /const diskNumber = footerView\.getUint16\(eocdInTail \+ 4, true\)/);
   assert.match(parseBody, /const centralDisk = footerView\.getUint16\(eocdInTail \+ 6, true\)/);
@@ -2352,7 +2352,7 @@ test('fadmv package import has entry count and empty-selection guards', () => {
   assert.match(parseBody, /extraLen > LIMITS\.maxPackageEntryMetaBytes/);
   assert.match(parseBody, /commentLen > LIMITS\.maxPackageEntryMetaBytes/);
   assert.match(parseBody, /i > 0 && i % LIMITS\.packageEntryYieldInterval === 0/);
-  assert.match(parseBody, /if \(centralOffset !== centralSize\) throw new Error\('Corrupt package directory size'\)/);
+  assert.match(parseBody, /if \(centralOffset !== centralSize\) throw new Error\('完整项目目录大小损坏'\)/);
   assert.match(parseBody, /localFlags !== flags/);
   assert.match(parseBody, /localMethod !== method/);
   assert.match(parseBody, /localCrc !== expectedCrc/);
@@ -2376,7 +2376,7 @@ test('fadmv package jobs wait for audio analysis to finish', () => {
 
   const packageJobBlockerBody = script.match(/packageJobBlocker\(\) \{([\s\S]*?)\n  \},\n\n  assertPackageJobReady/)?.[1] || '';
   assert.ok(packageJobBlockerBody, 'ProjectPackage.packageJobBlocker body should be present');
-  assert.match(packageJobBlockerBody, /if \(this\.isAudioAnalysisBusy\(\)\) return 'Audio analysis in progress'/);
+  assert.match(packageJobBlockerBody, /if \(this\.isAudioAnalysisBusy\(\)\) return '音频分析中'/);
 
   const controlsBody = script.match(/updateControls\(\) \{([\s\S]*?)\n  \},\n\n  async exportPackageBlob/)?.[1] || '';
   assert.ok(controlsBody, 'ProjectPackage.updateControls body should be present');
@@ -2393,7 +2393,7 @@ test('render readiness and start are blocked while offline audio analysis is run
   const preflightBody = script.match(/const Preflight = \{([\s\S]*?)\n\};\n\nconst Engine/)?.[1] || '';
   assert.ok(preflightBody, 'Preflight body should be present');
   assert.match(preflightBody, /const analysisBusy = Store\.audioAnalysis\.status === 'analyzing'/);
-  assert.match(preflightBody, /if \(analysisBusy\) pushRender\('Audio analysis in progress', 'audio-analysis'\)/);
+  assert.match(preflightBody, /if \(analysisBusy\) pushRender\('音频分析中，请稍后再导出', 'audio-analysis'\)/);
   assert.match(preflightBody, /const recordReady = blockers\.length === 0 && Store\.caps\.canRecord/);
 
   const checkReadyBody = script.match(/checkReady\(\) \{([\s\S]*?)\n  \},\n\n  setupPerformanceObserver/)?.[1] || '';
@@ -2406,7 +2406,7 @@ test('render readiness and start are blocked while offline audio analysis is run
   const blockerBody = recorderBody.match(/renderStartBlocker\(opts = \{\}\) \{([\s\S]*?)\n  \},\n\n  async start/)?.[1] || '';
   assert.ok(blockerBody, 'Recorder.renderStartBlocker body should be present');
   assert.match(blockerBody, /if \(Store\.audioAnalysis\.status === 'analyzing'\) \{/);
-  assert.match(blockerBody, /Audio analysis in progress\. Wait or cancel it before starting render\./);
+  assert.match(blockerBody, /音频分析中，请完成或取消后再导出。/);
 
   const startBody = recorderBody.match(/async start\(opts = \{\}\) \{([\s\S]*?)\n  \},\n\n  finish\(\)/)?.[1] || '';
   assert.ok(startBody, 'Recorder.start body should be present');
@@ -2428,12 +2428,12 @@ test('render readiness and start are blocked while offline audio analysis is run
 test('long-running package jobs have a visible cancel path and keep final status', () => {
   const packageBody = script.match(/const ProjectPackage = \{([\s\S]*?)\n\};\n\nconst AutoSave/)?.[1] || '';
   assert.ok(packageBody, 'ProjectPackage body should be present');
-  assert.match(packageBody, /cancelPackageJob\(reason = 'Package operation cancelled'\)/);
-  assert.match(packageBody, /Store\.packageJob = \{ \.\.\.Store\.packageJob, running: true, cancelling: true, cancelledToken, label: 'PACKAGE CANCELLING' \}/);
-  assert.match(packageBody, /Store\.packageProgress = \{ stage: 'PACKAGE CANCELLING', loaded: 0, total: 0 \}/);
-  assert.match(packageBody, /UI\.progressPending\('PACKAGE CANCELLING'\)/);
-  assert.doesNotMatch(packageBody, /UI\.progress\(1, 1, 'PACKAGE CANCELLING'\)/);
-  assert.match(packageBody, /Waiting for the current package task to stop before unlocking the project/);
+  assert.match(packageBody, /cancelPackageJob\(reason = '项目文件操作已取消'\)/);
+  assert.match(packageBody, /Store\.packageJob = \{ \.\.\.Store\.packageJob, running: true, cancelling: true, cancelledToken, label: '正在取消项目文件操作' \}/);
+  assert.match(packageBody, /Store\.packageProgress = \{ stage: '正在取消项目文件操作', loaded: 0, total: 0 \}/);
+  assert.match(packageBody, /UI\.progressPending\('正在取消项目文件操作'\)/);
+  assert.doesNotMatch(packageBody, /UI\.progress\(1, 1, '正在取消项目文件操作'\)/);
+  assert.match(packageBody, /请等待当前项目文件操作停止后再继续。/);
   assert.match(packageBody, /Store\.packageJob\.cancelledToken === token/);
 
   const controlsBody = script.match(/updateControls\(\) \{([\s\S]*?)\n  \},\n\n  async exportPackageBlob/)?.[1] || '';
@@ -2448,7 +2448,7 @@ test('long-running package jobs have a visible cancel path and keep final status
 
   const downloadBody = script.match(/async downloadPackage\(\) \{([\s\S]*?)\n  \},\n\n  mimeForAsset/)?.[1] || '';
   assert.ok(downloadBody, 'downloadPackage body should be present');
-  assert.ok(downloadBody.indexOf('this.finishPackageJob(token);') < downloadBody.indexOf('项目包下载已触发，请检查文件 / VERIFY FILE'));
+  assert.ok(downloadBody.indexOf('this.finishPackageJob(token);') < downloadBody.indexOf('完整项目下载已触发，请检查文件。'));
   assert.match(downloadBody, /Store\.packageDownload = \{ status: 'working'/);
   assert.ok(downloadBody.indexOf('retryRetention = this.retainPackageDownload(blob, fileName)') < downloadBody.indexOf('result = DownloadManager.dispatchBlob(blob, fileName)'));
   assert.match(downloadBody, /Store\.packageDownload = \{[\s\S]*?status: result\.saveVerified \? 'verified' : 'download-dispatched'/);
@@ -2465,7 +2465,7 @@ test('long-running package jobs have a visible cancel path and keep final status
 
   const importBody = script.match(/async importPackageFile\(file\) \{([\s\S]*?)\n  \},\n\n  init\(\)/)?.[1] || '';
   assert.ok(importBody, 'importPackageFile body should be present');
-  assert.ok(importBody.lastIndexOf('this.finishPackageJob(token);') < importBody.lastIndexOf("UI.log('PROJECT PACKAGE LOADED', 'ok')"));
+  assert.ok(importBody.lastIndexOf('this.finishPackageJob(token);') < importBody.lastIndexOf("UI.log('完整项目已载入。', 'ok')"));
   assert.match(importBody, /this\.throwIfPackageJobStopped\(token\);[\s\S]*AutoSave\.restoreAudioAnalysisForSnapshot\(\{ state: project, assets: project\.packageAssets \|\| \{\} \}, prepared\)/);
   assert.match(importBody, /AssetManager\.preflightFile\(type, assetFile, \{\s*cancelCheck: \(\) => this\.throwIfPackageJobStopped\(token\)\s*\}\)/);
   assert.match(importBody, /cancelCheck: \(\) => this\.throwIfPackageJobStopped\(token\)/);
@@ -2488,16 +2488,16 @@ test('export finalize and batch render expose cancellable states', () => {
   assert.match(updateStateBody, /state === 'RECORDING' \|\| state === 'WARMING' \|\| state === 'EXPORTING'/);
   assert.match(updateStateBody, /Dom\['btn-finish'\]\.disabled = state === 'EXPORTING'/);
   assert.match(updateStateBody, /Dom\['btn-finish'\]\.innerHTML = state === 'EXPORTING'/);
-  assert.match(updateStateBody, /<span class="btn-main">正在封装<\/span><span class="btn-sub">Finalizing\.\.\.<\/span>/);
-  assert.match(updateStateBody, /<span class="btn-main">完成并保存<\/span><span class="btn-sub">Finish & Save<\/span>/);
+  assert.match(updateStateBody, /<span class="btn-main">正在保存<\/span><span class="btn-sub">请稍候<\/span>/);
+  assert.match(updateStateBody, /<span class="btn-main">完成并保存<\/span><span class="btn-sub">保存成片<\/span>/);
 
   const batchRenderBody = script.match(/render\(\) \{([\s\S]*?)\n  \},\n\n  init\(\)/)?.[1] || '';
   assert.ok(batchRenderBody, 'BatchQueue.render body should be present');
   assert.match(batchRenderBody, /const clearMain = Store\.batch\.running/);
   assert.match(batchRenderBody, /restoring \? '正在恢复原项目' : \(cancelling \? '正在取消批量' : '取消批量'\)/);
   assert.match(batchRenderBody, /const clearSub = Store\.batch\.running/);
-  assert.match(batchRenderBody, /restoring \? '恢复中 \/ Restoring' : \(cancelling \? '取消中 \/ Cancelling' : '取消 \/ Cancel'\)/);
-  assert.match(batchRenderBody, /clearConfirmArmed \? '确认丢弃 \/ Discard' : '清空 \/ Clear'/);
+  assert.match(batchRenderBody, /restoring \? '请稍候' : \(cancelling \? '请稍候' : '停止队列'\)/);
+  assert.match(batchRenderBody, /clearConfirmArmed \? '确认丢弃批量输出' : '清空批量'/);
   assert.match(batchRenderBody, /Dom\['btn-clear-batch'\]\.innerHTML = `<span class="btn-main">\$\{clearMain\}<\/span><span class="btn-sub">\$\{clearSub\}<\/span>`/);
   assert.match(batchRenderBody, /Dom\['btn-clear-batch'\]\.disabled = Store\.packageJob\.running \|\| Store\.restoreJob\.running \|\| Store\.autosaveJob\.running \|\| restoring \|\| cancelling \|\| \(!Store\.batch\.running && Machine\.status !== 'IDLE'\)/);
   assert.match(batchRenderBody, /const analysisBusy = Store\.audioAnalysis\.status === 'analyzing'/);
@@ -2508,9 +2508,9 @@ test('export finalize and batch render expose cancellable states', () => {
 
   const batchBody = script.match(/const BatchQueue = \{([\s\S]*?)\n\};\n\nconst AudioAnalysis/)?.[1] || '';
   assert.ok(batchBody, 'BatchQueue body should be present');
-  assert.match(batchBody, /throwIfBatchCancelled\(reason = 'Batch cancelled'\)/);
+  assert.match(batchBody, /throwIfBatchCancelled\(reason = '批量导出已取消'\)/);
   assert.match(batchBody, /Store\.audioAnalysis\.status === 'analyzing'/);
-  assert.match(batchBody, /Audio analysis in progress\. Wait or cancel it before starting batch render/);
+  assert.match(batchBody, /音频分析中，请完成或取消后再开始批量导出。/);
   const batchReadinessBody = script.match(/getBatchRenderReadiness\(\) \{([\s\S]*?)\n  \},\n\n  checkReady/)?.[1] || '';
   assert.ok(batchReadinessBody, 'Engine.getBatchRenderReadiness body should be present');
   assert.match(batchReadinessBody, /Preflight\.getRenderReadiness\(Preflight\.getAudioDuration\(\), \{ ignoreBatchLock: true \}\)/);
@@ -2532,13 +2532,13 @@ test('export finalize and batch render expose cancellable states', () => {
   assert.ok(renderNextBody.indexOf('this.throwIfBatchCancelled();') < renderNextBody.indexOf('const started = await Recorder.start({ ignoreBatchLock: true })'));
   const batchInitBody = batchBody.match(/init\(\) \{([\s\S]*?)\n    this\.render\(\);/)?.[1] || '';
   assert.ok(batchInitBody, 'BatchQueue.init body should be present');
-  assert.match(batchInitBody, /Store\.batch\.running \? this\.requestCancel\('Batch cancelled by user'\) : this\.clear\(\)/);
+  assert.match(batchInitBody, /Store\.batch\.running \? this\.requestCancel\('用户已取消批量导出'\) : this\.clear\(\)/);
 });
 
 test('batch cancellation exposes a persistent cancelling state while teardown is pending', () => {
   const batchBody = script.match(/const BatchQueue = \{([\s\S]*?)\n\};\n\nconst AudioAnalysis/)?.[1] || '';
   assert.ok(batchBody, 'BatchQueue body should be present');
-  const requestCancelBody = batchBody.match(/requestCancel\(reason = 'Batch cancelled'\) \{([\s\S]*?)\n  \},\n\n  throwIfBatchCancelled/)?.[1] || '';
+  const requestCancelBody = batchBody.match(/requestCancel\(reason = '批量导出已取消'\) \{([\s\S]*?)\n  \},\n\n  throwIfBatchCancelled/)?.[1] || '';
   assert.ok(requestCancelBody, 'BatchQueue.requestCancel body should be present');
   assert.match(requestCancelBody, /if \(Store\.batch\.restoring\) \{[\s\S]*?暂时不能取消[\s\S]*?return/);
   assert.match(requestCancelBody, /Store\.batch\.cancelRequested = true/);
@@ -2550,13 +2550,13 @@ test('batch cancellation exposes a persistent cancelling state while teardown is
   assert.ok(renderBody, 'BatchQueue.render body should be present');
   assert.match(renderBody, /const restoring = Store\.batch\.running && Store\.batch\.restoring/);
   assert.match(renderBody, /const cancelling = Store\.batch\.running && Store\.batch\.cancelRequested && !restoring/);
-  assert.match(renderBody, /restoring \? 'RESTORING PROJECT' : \(cancelling \? 'CANCELLING' : 'RUNNING'\)/);
+  assert.match(renderBody, /restoring \? '正在恢复原项目' : \(cancelling \? '正在取消' : '正在导出'\)/);
   assert.match(renderBody, /Store\.batch\.running/);
-  assert.match(renderBody, /restoring \? '恢复中 \/ Restoring' : \(cancelling \? '取消中 \/ Cancelling' : '取消 \/ Cancel'\)/);
-  assert.match(renderBody, /clearConfirmArmed \? '确认丢弃 \/ Discard' : '清空 \/ Clear'/);
+  assert.match(renderBody, /restoring \? '请稍候' : \(cancelling \? '请稍候' : '停止队列'\)/);
+  assert.match(renderBody, /clearConfirmArmed \? '确认丢弃批量输出' : '清空批量'/);
   assert.match(renderBody, /Store\.packageJob\.running \|\| Store\.restoreJob\.running \|\| Store\.autosaveJob\.running \|\| restoring \|\| cancelling \|\| \(!Store\.batch\.running && Machine\.status !== 'IDLE'\)/);
-  assert.match(renderBody, /restoring\s*\?\s*'Restoring original project after batch'/);
-  assert.match(renderBody, /cancelling\s*\?\s*'Waiting for batch render to stop'/);
+  assert.match(renderBody, /restoring\s*\?\s*'正在恢复原项目'/);
+  assert.match(renderBody, /cancelling\s*\?\s*'正在等待批量导出停止'/);
 });
 
 test('batch render save waiters are armed before start to avoid short-track save races', () => {
@@ -2565,7 +2565,7 @@ test('batch render save waiters are armed before start to avoid short-track save
   const renderNextBody = batchBody.match(/async renderNext\(index\) \{([\s\S]*?)\n  \},\n\n  async start/)?.[1] || '';
   assert.ok(renderNextBody, 'BatchQueue.renderNext body should be present');
   assert.ok(renderNextBody.indexOf('const saved = Recorder.waitForNextSave(') < renderNextBody.indexOf('const started = await Recorder.start({ ignoreBatchLock: true });'));
-  assert.match(renderNextBody, /if \(!started\) throw new Error\(`Batch render did not start:/);
+  assert.match(renderNextBody, /if \(!started\) throw new Error\(`批量导出未能开始：/);
   assert.doesNotMatch(renderNextBody, /Machine\.status !== 'RECORDING'/);
   assert.match(renderNextBody, /const saved = Recorder\.waitForNextSave\([\s\S]*?, Recorder\._sessionId \+ 1\)/);
   assert.match(renderNextBody, /saved\.catch\(\(\) => \{\}\)/);
@@ -2592,12 +2592,12 @@ test('audio analysis can be cancelled and decode is bounded by timeout', () => {
   assert.match(script, /audioAnalysisReadChunkBytes/);
   const audioBody = script.match(/const AudioAnalysis = \{([\s\S]*?)\n\};\n\nconst Preflight/)?.[1] || '';
   assert.ok(audioBody, 'AudioAnalysis body should be present');
-  assert.match(audioBody, /cancelAnalysis\(reason = 'Audio analysis cancelled'\)/);
-  const cancelBody = audioBody.match(/cancelAnalysis\(reason = 'Audio analysis cancelled'\) \{([\s\S]*?)\n  \},\n\n  analysisTimeoutMs/)?.[1] || '';
+  assert.match(audioBody, /cancelAnalysis\(reason = '音频分析已取消'\)/);
+  const cancelBody = audioBody.match(/cancelAnalysis\(reason = '音频分析已取消'\) \{([\s\S]*?)\n  \},\n\n  analysisTimeoutMs/)?.[1] || '';
   assert.ok(cancelBody, 'AudioAnalysis.cancelAnalysis body should be present');
   assert.match(cancelBody, /if \(Store\.audioAnalysis\.status !== 'analyzing'\) return false/);
   assert.ok(cancelBody.indexOf("if (Store.audioAnalysis.status !== 'analyzing') return false") < cancelBody.indexOf('Store.audioAnalysisJob.token += 1'));
-  assert.ok(cancelBody.indexOf("RenderReport.invalidateProjectOutput('Audio analysis cancelled')") < cancelBody.indexOf("Store.audioAnalysis.status = 'cancelled'"));
+  assert.ok(cancelBody.indexOf("RenderReport.invalidateProjectOutput('音频分析已取消')") < cancelBody.indexOf("Store.audioAnalysis.status = 'cancelled'"));
   assert.match(cancelBody, /const ctx = this\._decodeCtx/);
   assert.match(cancelBody, /ctx\.close\(\)\.catch\(\(\) => \{\}\)/);
   assert.match(cancelBody, /AutoSave\.schedule\('audio-analysis'\)/);
@@ -2610,8 +2610,8 @@ test('audio analysis can be cancelled and decode is bounded by timeout', () => {
   assert.match(audioBody, /this\._decodeCtx = ctx/);
   assert.match(audioBody, /this\._decodeToken = token/);
   assert.match(audioBody, /if \(this\._decodeCtx === ctx && this\._decodeToken === token\)/);
-  assert.match(audioBody, /Audio decode timeout/);
-  assert.match(audioBody, /Audio analysis timeout/);
+  assert.match(audioBody, /音频解码超时/);
+  assert.match(audioBody, /音频分析超时/);
   assert.match(audioBody, /safeDecodedAnalysisSeconds\(channels = LIMITS\.analysisAssumedChannels/);
   assert.match(audioBody, /analysisLimitLabel\(channels = LIMITS\.analysisAssumedChannels/);
 
@@ -2623,12 +2623,12 @@ test('audio analysis can be cancelled and decode is bounded by timeout', () => {
   const panelBody = script.match(/const AudioAnalysis = \{[\s\S]*?updatePanel\(\) \{([\s\S]*?)\n  \}\n\};\n\nconst Preflight/)?.[1] || '';
   assert.ok(panelBody, 'AudioAnalysis.updatePanel body should be present');
   assert.match(panelBody, /button\.innerHTML = isBusy/);
-  assert.match(panelBody, /<span class="btn-main">取消分析<\/span><span class="btn-sub">Cancel Analysis<\/span>/);
-  assert.match(panelBody, /<span class="btn-main">分析音轨<\/span><span class="btn-sub">Analyze Track<\/span>/);
+  assert.match(panelBody, /<span class="btn-main">取消分析<\/span><span class="btn-sub">停止读取<\/span>/);
+  assert.match(panelBody, /<span class="btn-main">分析音轨<\/span><span class="btn-sub">读取节奏<\/span>/);
   assert.match(panelBody, /button\.disabled = !hasAudio \|\| \(!isBusy && !!lockReason\)/);
-  assert.match(panelBody, /ANALYSIS CANCELLED/);
-  assert.match(panelBody, /ANALYSIS TIMED OUT/);
-  assert.match(panelBody, /ANALYSIS SKIPPED/);
+  assert.match(panelBody, /分析已取消/);
+  assert.match(panelBody, /分析超时/);
+  assert.match(panelBody, /已跳过分析/);
   assert.match(panelBody, /this\.analysisLimitLabel\(\)/);
   assert.doesNotMatch(panelBody, /\$\{Math\.round\(LIMITS\.audioAnalysisTimeoutMs \/ 1000\)\}s max/);
 });
@@ -2638,7 +2638,7 @@ test('batch queue has item and aggregate size limits', () => {
   assert.match(script, /maxBatchTotalBytes/);
   assert.match(script, /queuedBytes\(\)/);
   assert.match(script, /Store\.batch\.items\.length >= LIMITS\.maxBatchItems/);
-  assert.match(script, /Batch total too large/);
+  assert.match(script, /批量音频总大小过大/);
 });
 
 test('audio analysis refuses unknown or decoded-overlong duration', () => {
@@ -2647,7 +2647,7 @@ test('audio analysis refuses unknown or decoded-overlong duration', () => {
   assert.match(script, /unknown compressed audio layout exceeds safe decoded analysis window/);
   assert.match(script, /decoded audio exceeds safe analysis window/);
   assert.match(script, /track longer than \$\{Utils\.formatSeconds\(LIMITS\.maxAnalysisSeconds\)\} analysis limit/);
-  assert.match(script, /Audio analysis skipped for this file; render can continue/);
+  assert.match(script, /这首音频已跳过分析，但仍可继续导出。/);
   assert.doesNotMatch(script, /return 'decoded audio too large'/);
 });
 
@@ -2716,13 +2716,13 @@ test('audio analysis panel discloses effective safe decode limits', () => {
   assert.match(audioBody, /const bytesPerSecond = safeChannels \* safeSampleRate \* Float32Array\.BYTES_PER_ELEMENT/);
   assert.match(audioBody, /Math\.min\(LIMITS\.maxAnalysisSeconds, LIMITS\.maxAnalysisDecodedBytes \/ bytesPerSecond\)/);
   assert.match(audioBody, /analysisLimitLabel\(channels = LIMITS\.analysisAssumedChannels, sampleRate = LIMITS\.analysisAssumedSampleRate\)/);
-  assert.match(audioBody, /unknown compressed precheck/);
-  assert.match(audioBody, /working-set budget/);
-  assert.match(audioBody, /safe decode · \$\{unknownSafe\} unknown compressed precheck · \$\{Utils\.formatBytes\(LIMITS\.maxAnalysisWorkingSetBytes\)\} working-set budget · \$\{Math\.round\(LIMITS\.audioAnalysisTimeoutMs \/ 1000\)\}s timeout/);
-  assert.match(audioBody, /\['限制 \/ Limit', this\.analysisLimitLabel\(\)\]/);
+  assert.match(audioBody, /未知压缩格式预检查/);
+  assert.match(audioBody, /工作内存预算/);
+  assert.match(audioBody, /安全解码约 \$\{exactSafe\} · 未知压缩格式预检查 \$\{unknownSafe\} · 工作内存预算 \$\{Utils\.formatBytes\(LIMITS\.maxAnalysisWorkingSetBytes\)\} · 超时 \$\{Math\.round\(LIMITS\.audioAnalysisTimeoutMs \/ 1000\)\} 秒/);
+  assert.match(audioBody, /\['限制', this\.analysisLimitLabel\(\)\]/);
 });
 
-test('audio analysis working-set budget blocks combined compressed and decoded memory before decode', () => {
+test('audio analysis 工作内存预算 blocks combined compressed and decoded memory before decode', () => {
   assert.match(script, /maxAnalysisWorkingSetBytes:\s*160 \* 1024 \* 1024/);
   const audioBody = script.match(/const AudioAnalysis = \{([\s\S]*?)\n\};\n\nconst Preflight/)?.[1] || '';
   assert.ok(audioBody, 'AudioAnalysis body should be present');
@@ -2730,7 +2730,7 @@ test('audio analysis working-set budget blocks combined compressed and decoded m
   assert.match(audioBody, /analysisWorkingSetSkipReason\(file, decodedBytes\)/);
   assert.match(audioBody, /fileBytes \+ decoded/);
   assert.match(audioBody, /LIMITS\.maxAnalysisWorkingSetBytes/);
-  assert.match(audioBody, /audio analysis working set exceeds safe memory budget/);
+  assert.match(audioBody, /音频分析需要的内存超过安全预算/);
 
   const metadataSkipBody = audioBody.match(/metadataDecodedSkipReason\(metadata(?:, file = null)?\) \{([\s\S]*?)\n  \},\n\n  analysisSkipReason/)?.[1] || '';
   assert.ok(metadataSkipBody, 'AudioAnalysis.metadataDecodedSkipReason body should be present');
@@ -2786,9 +2786,9 @@ test('preflight blocks non-stream long renders before late recording failure', (
   assert.match(script, /return estimated > 0 \? Math\.ceil\(estimated \* 1\.25\) : 0/);
   assert.match(script, /!Store\.config\.streamSave && \(estimated > LIMITS\.maxRecordingBytes \|\| liveMemory > LIMITS\.maxNonStreamLiveMemoryBytes\)/);
   assert.match(script, /estimatedLiveMemoryBytes/);
-  assert.match(script, /live \$\{Utils\.formatBytes\(estimatedLiveMemoryBytes\)\}/);
+  assert.match(script, /运行时 \$\{Utils\.formatBytes\(estimatedLiveMemoryBytes\)\}/);
   assert.match(script, /output-size/);
-  assert.match(script, /enable Streaming Save/);
+  assert.match(script, /开启边生成边保存/);
 });
 
 test('preflight blocks audio longer than the recording hard cap even with Streaming Save', () => {
@@ -2800,7 +2800,7 @@ test('preflight blocks audio longer than the recording hard cap even with Stream
   assert.match(preflightBody, /const renderTooLong = aRecordDurOk && durationSec > LIMITS\.maxRecordingSeconds/);
   assert.match(preflightBody, /if \(renderTooLong\) pushRender\(this\.renderDurationCapRecovery\(\), 'render-duration'\)/);
   assert.ok(preflightBody.indexOf('if (renderTooLong)') < preflightBody.indexOf('if (outputTooLarge)'));
-  assert.match(preflightBody, /Audio exceeds \$\{Utils\.formatSeconds\(LIMITS\.maxRecordingSeconds\)\} recording cap/);
+  assert.match(preflightBody, /音频超过 \$\{Utils\.formatSeconds\(LIMITS\.maxRecordingSeconds\)\} 导出上限/);
 });
 
 test('long render recovery is actionable when Streaming Save is unavailable', () => {
@@ -2808,8 +2808,8 @@ test('long render recovery is actionable when Streaming Save is unavailable', ()
   assert.ok(preflightBody, 'Preflight body should be present');
   assert.match(preflightBody, /memoryCapRecovery\(\)/);
   assert.match(preflightBody, /Store\.caps\.canFSAccess/);
-  assert.match(preflightBody, /browser download mode needs < \$\{Utils\.formatBytes\(LIMITS\.maxNonStreamLiveMemoryBytes\)\} live memory/);
-  assert.match(preflightBody, /使用 Chrome\/Edge 开启 Streaming Save，或降低码率\/缩短音频，让实时内存低于 \$\{Utils\.formatBytes\(LIMITS\.maxNonStreamLiveMemoryBytes\)\} \/ Use Chrome or Edge for Streaming Save, or lower bitrate\/shorten audio below \$\{Utils\.formatBytes\(LIMITS\.maxNonStreamLiveMemoryBytes\)\} live memory/);
+  assert.match(preflightBody, /普通浏览器下载需要实时内存低于 \$\{Utils\.formatBytes\(LIMITS\.maxNonStreamLiveMemoryBytes\)\}/);
+  assert.match(preflightBody, /请使用 Chrome\/Edge 开启“边生成边保存”，或降低码率\/缩短音频，让实时内存低于 \$\{Utils\.formatBytes\(LIMITS\.maxNonStreamLiveMemoryBytes\)\}。/);
   assert.match(preflightBody, /if \(outputTooLarge\) pushRender\(this\.memoryCapRecovery\(\), 'output-size'\)/);
   assert.match(preflightBody, /Preflight\.memoryCapEstimateHint\(\)/);
 });
@@ -2825,10 +2825,10 @@ test('export geometry respects video max height and logo bottom margin', () => {
 
 test('batch queue surfaces rejected files and continues item failures', () => {
   assert.match(script, /status: reason \? 'rejected' : 'queued'/);
-  assert.match(script, /Batch added \$\{added\}, rejected \$\{rejected\}/);
+  assert.match(script, /已添加 \$\{added\} 首音频，另有 \$\{rejected\} 首未通过检查。/);
   assert.match(script, /\['done', 'download-dispatched', 'error', 'rejected'\]\.includes\(item\.status\)/);
-  assert.match(script, /Batch item failed:/);
-  assert.match(script, /批量完成但有 \$\{failures\} 个错误/);
+  assert.match(script, /批量导出失败：/);
+  assert.match(script, /批量完成，但有 \$\{failures\} 个错误/);
 });
 
 test('batch render distinguishes verified saves from unverified browser download dispatches', () => {
@@ -2861,7 +2861,7 @@ test('batch unverified downloads retain bounded per-item retry blobs', () => {
   assert.match(batchBody, /this\.pruneBatchRetryBlobs\(item\.id\)/);
   assert.match(batchBody, /retryDownload\(itemId\)/);
   assert.match(batchBody, /DownloadManager\.dispatchBlob\(item\.retryBlob, item\.outputName/);
-  assert.match(batchBody, /批量下载已重试，请检查文件 \/ VERIFY FILE/);
+  assert.match(batchBody, /批量下载已重试，请检查文件/);
   assert.match(batchBody, /retry\.dataset\.batchRetryId = item\.id/);
   assert.match(batchBody, /UI\.setControlReason\(retry, !!retryReason, retryReason, 'batch-summary'\)/);
   assert.match(batchBody, /this\.retainRetryForItem\(item, result\)/);
@@ -2904,8 +2904,8 @@ test('batch clear requires explicit discard confirmation for unverified retryabl
   assert.match(renderBody, /const clearConfirmArmed = this\.isClearConfirmArmed\(\)/);
   assert.match(renderBody, /const clearNeedsConfirmation = this\.hasProtectedClearOutputs\(\)/);
   assert.match(renderBody, /已等待确认丢弃/);
-  assert.match(renderBody, /clearConfirmArmed \? '确认丢弃 \/ Discard' : '清空 \/ Clear'/);
-  assert.match(renderBody, /Clearing will discard unverified retryable outputs/);
+  assert.match(renderBody, /clearConfirmArmed \? '确认丢弃' : '移除列表'/);
+  assert.match(renderBody, /清空会丢弃尚未确认保存的批量输出/);
 });
 
 test('large audio analysis is safely skipped instead of freezing the tab', () => {
@@ -2919,8 +2919,8 @@ test('large audio analysis is safely skipped instead of freezing the tab', () =>
   assert.match(script, /safeDecodedAnalysisSeconds\(channels/);
   assert.match(script, /analysisSkipReason\(file, durationSec\)/);
   assert.match(script, /safe decoded analysis window/);
-  assert.match(script, /Analysis skipped:/);
-  assert.match(script, /Audio analysis skipped for this file; render can continue/);
+  assert.match(script, /已跳过分析：/);
+  assert.match(script, /这首音频已跳过分析，但仍可继续导出/);
 });
 
 test('preflight discloses audio analysis skipped failed cancelled and timeout states', () => {
@@ -2930,11 +2930,11 @@ test('preflight discloses audio analysis skipped failed cancelled and timeout st
   const statusBody = preflightBody.match(/audioAnalysisStatusLabel\(\) \{([\s\S]*?)\n  \},\n\n  getStatus/)?.[1] || '';
   assert.ok(statusBody, 'Preflight.audioAnalysisStatusLabel body should be present');
   assert.match(statusBody, /const status = Store\.audioAnalysis\.status/);
-  assert.match(statusBody, /status === 'analyzing'[\s\S]*?Analyzing audio\.\.\./);
-  assert.match(statusBody, /status === 'skipped'[\s\S]*?Analysis skipped/);
-  assert.match(statusBody, /status === 'error'[\s\S]*?Analysis failed/);
-  assert.match(statusBody, /status === 'timeout'[\s\S]*?Analysis timed out/);
-  assert.match(statusBody, /status === 'cancelled'[\s\S]*?Analysis cancelled/);
+  assert.match(statusBody, /status === 'analyzing'[\s\S]*?正在分析音频/);
+  assert.match(statusBody, /status === 'skipped'[\s\S]*?已跳过分析/);
+  assert.match(statusBody, /status === 'error'[\s\S]*?分析失败/);
+  assert.match(statusBody, /status === 'timeout'[\s\S]*?分析超时/);
+  assert.match(statusBody, /status === 'cancelled'[\s\S]*?分析已取消/);
   assert.match(statusBody, /Store\.audioAnalysis\.error \|\| Store\.audioAnalysis\.summary/);
   const resultAt = statusBody.indexOf('const analysis = Store.audioAnalysis.result');
   assert.ok(resultAt > 0, 'Preflight should still show completed audio analysis metrics');
@@ -2943,8 +2943,8 @@ test('preflight discloses audio analysis skipped failed cancelled and timeout st
     assert.ok(statusAt >= 0, `Preflight should disclose ${status} analysis state`);
     assert.ok(statusAt < resultAt, `Preflight should show ${status} before stale metrics from a previous result`);
   }
-  assert.match(preflightBody, /\['音频分析 \/ Audio Analysis', this\.audioAnalysisStatusLabel\(\)\]/);
-  assert.doesNotMatch(preflightBody, /\['音频分析 \/ Audio Analysis', analysis \? `\$\{Utils\.formatBpm\(analysis\.bpm\)\}/);
+  assert.match(preflightBody, /\['音频分析', this\.audioAnalysisStatusLabel\(\)\]/);
+  assert.doesNotMatch(preflightBody, /\['音频分析', analysis \? `\$\{Utils\.formatBpm\(analysis\.bpm\)\}/);
 });
 
 test('render loop exposes performance budget misses and adaptive degradation', () => {
@@ -2965,7 +2965,7 @@ test('render loop exposes performance budget misses and adaptive degradation', (
   assert.match(engineBody, /Store\.debug\.fps < Store\.config\.recordFps \* LIMITS\.renderMinFpsRatio/);
   assert.match(engineBody, /Store\.debug\.dropRate > LIMITS\.renderMaxDropRate/);
   assert.match(engineBody, /Store\.timing\.performanceThrottle = true/);
-  assert.match(engineBody, /const performanceWarning = '性能预算未达标，已降低本次渲染的视觉效果 \/ Performance budget missed; reducing visual effects for this render'/);
+  assert.match(engineBody, /const performanceWarning = '当前设备性能吃紧，已临时降低本次渲染的视觉效果。'/);
   assert.match(engineBody, /UI\.showError\(performanceWarning, 'WARN'\)/);
   assert.match(engineBody, /timing\.skipHeavyLayers = !!timing\.performanceThrottle/);
   assert.match(engineBody, /this\.evaluatePerformanceBudget\(\)/);
@@ -3234,7 +3234,7 @@ test('pause-on-background handles WARMING instead of letting startup continue hi
   const pauseBranch = visibilityBody.match(/if \(Store\.config\.pauseOnBackground\) \{([\s\S]*?)\n        \} else if/)?.[1] || '';
   assert.ok(pauseBranch, 'pauseOnBackground branch should be present');
   assert.match(pauseBranch, /st === 'WARMING'/);
-  assert.match(pauseBranch, /UI\.showError\('Recording stopped: tab backgrounded during initialization', 'FATAL'\)/);
+  assert.match(pauseBranch, /UI\.showError\('页面切到后台，导出准备已停止', 'FATAL'\)/);
 });
 
 test('performance report preserves explicit zero export metrics and trigger context', () => {
@@ -3273,9 +3273,9 @@ test('stream save rejects zero-byte finalized writers instead of reporting verif
   const streamBranch = saveBody.match(/if \(wasStreamSave\) \{([\s\S]*?)\n    \} else if \(this\.chunks\.length\)/)?.[1] || '';
   assert.ok(streamBranch, 'Recorder.save stream-save branch should be present');
   assert.match(streamBranch, /outputBytes = this\.chunksBytes \|\| 0/);
-  assert.match(streamBranch, /if \(!outputBytes\) \{[\s\S]*?this\.failExport\('No recorded data available', 'FATAL'\);[\s\S]*?return;[\s\S]*?\}/);
+  assert.match(streamBranch, /if \(!outputBytes\) \{[\s\S]*?this\.failExport\('没有可保存的视频数据', 'FATAL'\);[\s\S]*?return;[\s\S]*?\}/);
   assert.ok(streamBranch.indexOf('if (!outputBytes)') > streamBranch.indexOf('outputBytes = this.chunksBytes || 0;'));
-  assert.ok(streamBranch.indexOf('if (!outputBytes)') < streamBranch.indexOf("successLog = 'EXPORT COMPLETE. (STREAM)';"));
+  assert.ok(streamBranch.indexOf('if (!outputBytes)') < streamBranch.indexOf("successLog = '导出完成。';"));
   assert.ok(saveBody.indexOf('if (!outputBytes)') < saveBody.indexOf('saveVerified: !!downloadResult.saveVerified'));
 });
 
@@ -3302,7 +3302,7 @@ test('mobile layout and core live regions are present', () => {
   assert.match(html, /id="preflight-summary"[^>]*class="preflight-summary"[^>]*role="status"[^>]*aria-live="polite"[^>]*aria-atomic="true"/);
   assert.match(html, /role="dialog" aria-modal="true"/);
   assert.match(html, /aria-describedby="err-msg err-recovery"/);
-  assert.match(html, /id="err-recovery"[^>]*>渲染已停止，未保存文件。回到编辑器检查预检后再重试。\/ Rendering stopped; no file was saved; return to the editor and check Preflight before trying again\./);
+  assert.match(html, /id="err-recovery"[^>]*>视频生成已停止，未保存文件。回到编辑器检查素材清单后再重试。/);
 });
 
 test('mobile preview canvas keeps a usable quality-check size', () => {
@@ -3326,7 +3326,7 @@ test('mobile preview canvas keeps a usable quality-check size', () => {
   assert.match(html, /@media \(max-width: 720px\)[\s\S]*?\.sidebar > \.status-bar \{[\s\S]*?position: sticky;[\s\S]*?top: 118px/);
   assert.match(mobileCss, /button[\s\S]*?min-height: 44px/);
   assert.match(mobileCss, /input\[type="text"\],[\s\S]*?select,[\s\S]*?\.file-upload-btn,[\s\S]*?\.primary-action-blocker \{[\s\S]*?min-height: 44px/);
-  assert.match(html, /@media \(max-width: 720px\) and \(max-height: 520px\) \{[\s\S]*?\.sidebar \{[\s\S]*?height: 72dvh/);
+  assert.match(html, /@media \(max-width: 720px\) and \(max-height: 520px\) \{[\s\S]*?\.sidebar \{[\s\S]*?height: 74dvh/);
   assert.match(html, /@media \(max-width: 720px\) and \(max-height: 520px\) \{[\s\S]*?body \{[\s\S]*?overflow-y: auto/);
   assert.match(html, /@media \(max-width: 720px\) and \(max-height: 520px\) \{[\s\S]*?\.viewport \{[\s\S]*?height: max\(240px, 28dvh\);[\s\S]*?min-height: 240px/);
   assert.match(html, /@media \(max-width: 720px\) and \(max-height: 520px\) \{[\s\S]*?\.canvas-wrap \{[\s\S]*?height: min\(240px, calc\(\(100vw - 16px\) \* 16 \/ 9\)\)/);
@@ -3340,21 +3340,21 @@ test('keyboard and assistive tech states expose commercial-grade focus feedback'
   assert.doesNotMatch(script, /toLocaleTimeString\(\[\]/);
   assert.doesNotMatch(script, /toLocaleString\(\)/);
   assert.match(html, /\.file-upload-wrapper:focus-within \.file-upload-btn/);
-  assert.match(html, /id="progress-fill"[^>]*role="progressbar"[^>]*aria-valuemin="0"[^>]*aria-valuemax="100"[^>]*aria-label="渲染进度 \/ Render progress"/);
+  assert.match(html, /id="progress-fill"[^>]*role="progressbar"[^>]*aria-valuemin="0"[^>]*aria-valuemax="100"[^>]*aria-label="导出进度"/);
   assert.match(html, /id="primary-action-blocker"[^>]*tabindex="-1"[^>]*aria-describedby="preflight-summary"/);
   assert.match(html, /id="err-msg"[^>]*tabindex="0"[^>]*role="document"[^>]*aria-label="错误诊断详情"/);
   assert.match(html, /#err-msg:focus-visible \{[^}]*box-shadow: 0 0 0 2px rgba\(255, 68, 68, 0\.65\)/);
   assert.match(html, /id="in-font"[^>]*aria-label="字体 \/ Font family"/);
-  assert.match(html, /id="in-logo-size"[^>]*aria-valuetext="Logo 尺寸 200px \/ 200 px logo size"/);
-  assert.match(html, /id="in-logo-pos"[^>]*aria-valuetext="Logo 底部距离 180px \/ 180 px bottom margin"/);
-  assert.match(html, /id="in-sensitivity"[^>]*aria-valuetext="音频响应灵敏度 100% \/ 100% audio response sensitivity"/);
-  assert.match(html, /id="in-fx-intensity"[^>]*aria-valuetext="FX 强度 100% \/ 100% FX intensity"/);
-  assert.match(html, /id="in-glow-amount"[^>]*aria-valuetext="辉光强度 100% \/ 100% glow strength"/);
-  assert.match(script, /'in-logo-size': `Logo 尺寸 \$\{value\}px \/ \$\{value\} px logo size`/);
-  assert.match(script, /'in-logo-pos': `Logo 底部距离 \$\{value\}px \/ \$\{value\} px bottom margin`/);
-  assert.match(script, /'in-sensitivity': `音频响应灵敏度 \$\{value\}% \/ \$\{value\}% audio response sensitivity`/);
-  assert.match(script, /'in-fx-intensity': `FX 强度 \$\{value\}% \/ \$\{value\}% FX intensity`/);
-  assert.match(script, /'in-glow-amount': `辉光强度 \$\{value\}% \/ \$\{value\}% glow strength`/);
+  assert.match(html, /id="in-logo-size"[^>]*aria-valuetext="Logo 尺寸 200px"/);
+  assert.match(html, /id="in-logo-pos"[^>]*aria-valuetext="Logo 底部距离 180px"/);
+  assert.match(html, /id="in-sensitivity"[^>]*aria-valuetext="音频响应灵敏度 100%"/);
+  assert.match(html, /id="in-fx-intensity"[^>]*aria-valuetext="特效强度 100%"/);
+  assert.match(html, /id="in-glow-amount"[^>]*aria-valuetext="辉光强度 100%"/);
+  assert.match(script, /'in-logo-size': `Logo 尺寸 \$\{value\}px`/);
+  assert.match(script, /'in-logo-pos': `Logo 底部距离 \$\{value\}px`/);
+  assert.match(script, /'in-sensitivity': `音频响应灵敏度 \$\{value\}%`/);
+  assert.match(script, /'in-fx-intensity': `特效强度 \$\{value\}%`/);
+  assert.match(script, /'in-glow-amount': `辉光强度 \$\{value\}%`/);
   assert.match(html, /\.range-control \{[^}]*grid-template-columns: minmax\(0, 1fr\) minmax\(58px, max-content\)/);
   assert.match(html, /\.range-value \{[^}]*min-width: 58px;[^}]*letter-spacing: 0;[^}]*white-space: nowrap/);
   assert.match(html, /id="out-logo-size"[^>]*for="in-logo-size"[^>]*>200 px<\/output>/);
@@ -3367,10 +3367,10 @@ test('keyboard and assistive tech states expose commercial-grade focus feedback'
   assert.match(script, /section\.setAttribute\('role', 'group'\)/);
   assert.match(script, /section\.setAttribute\('aria-labelledby', label\.id\)/);
   assert.match(script, /UI\.enhanceSectionGroups\(\)/);
-  assert.match(html, /id="recent-projects"[^>]*aria-label="最近自动保存快照 \/ Recent autosave snapshots"/);
+  assert.match(html, /id="recent-projects"[^>]*aria-label="最近自动保存状态"/);
   assert.match(html, /id="btn-restore-selected"[^>]*aria-describedby="autosave-summary"/);
   assert.match(html, /id="in-custom-preset-name"[^>]*aria-label="自定义预设名称"/);
-  assert.match(html, /id="custom-preset-list"[^>]*aria-label="已保存自定义预设 \/ Saved custom presets"/);
+  assert.match(html, /id="custom-preset-list"[^>]*aria-label="已保存自定义预设"/);
   assert.match(script, /moveFocusForState\(state, previousState\)/);
   assert.match(script, /updatePrimaryActionBlocker\(readiness\)/);
   assert.match(script, /const previewReady = readiness\.previewReady/);
@@ -3506,8 +3506,8 @@ test('shared disabled summaries expose action-specific reasons and ready states'
   const customControlsBody = customBody.match(/updateControls\(\) \{([\s\S]*?)\n  \},\n\n  renderList/)?.[1] || '';
   assert.ok(customControlsBody, 'CustomPresets.updateControls body should be present');
   assert.match(customControlsBody, /const summary = Dom\['custom-preset-summary'\]/);
-  assert.match(customControlsBody, /summary\.textContent = lockReason[\s\S]*?CUSTOM PRESETS LOCKED: \$\{lockReason\}/);
-  assert.match(customControlsBody, /Choose a preset to apply or delete/);
+  assert.match(customControlsBody, /自定义预设暂不可用/);
+  assert.match(customControlsBody, /选择预设可应用或删除/);
 
   const packageBody = script.match(/updateControls\(\) \{([\s\S]*?)\n  \},\n\n  async exportPackageBlob/)?.[1] || '';
   assert.ok(packageBody, 'ProjectPackage.updateControls body should be present');
@@ -3520,8 +3520,8 @@ test('shared disabled summaries expose action-specific reasons and ready states'
 
   const batchBody = script.match(/render\(\) \{([\s\S]*?)\n  \},\n\n  init/)?.[1] || '';
   assert.ok(batchBody, 'BatchQueue.render body should be present');
-  assert.match(batchBody, /const addStatus = addReason \? `ADD BLOCKED: \$\{addReason\}` : 'ADD READY'/);
-  assert.match(batchBody, /const startStatus = startReason \? `START BLOCKED: \$\{startReason\}` : 'START READY'/);
+  assert.match(batchBody, /const addStatus = addReason \? `添加音频暂不可用：\$\{UI\.localizeBusyReason\(addReason\)\}` : '可以添加音频'/);
+  assert.match(batchBody, /const startStatus = startReason \? `开始批量暂不可用：\$\{UI\.localizeBusyReason\(startReason\)\}` : '可以开始批量'/);
   assert.match(batchBody, /: `\$\{addStatus\} \| \$\{startStatus\}\$\{restoreIssue\}`/);
   assert.doesNotMatch(batchBody, /: 'QUEUE EMPTY'/);
 });
@@ -3562,15 +3562,15 @@ test('asset load failures remain visible in preflight after transient warnings',
   assert.match(script, /Store\.assetErrors\[type\] = why/);
   assert.match(script, /Store\.assetErrors\[type\] = ''/);
   assert.match(script, /assetStatus\(type, fallbackName\)/);
-  assert.match(script, /Rejected: \$\{Store\.assetErrors\[type\]\}/);
+  assert.match(script, /未通过： \$\{Store\.assetErrors\[type\]\}/);
   assert.match(script, /renderBlockers\(durationSec = this\.getAudioDuration\(\)\)/);
-  assert.match(script, /Render Blocker/);
+  assert.match(script, /导出阻塞/);
 });
 
 test('cover and logo images are hard-blocked when decoded dimensions are unsafe', () => {
   assert.match(script, /maxImageDim/);
-  assert.match(script, /cover\/logo image dimension invalid/);
-  assert.match(script, /IMAGE DIMENSION INVALID/);
+  assert.match(script, /封面或 Logo 图片尺寸过大或无效/);
+  assert.match(script, /图片尺寸过大或无效/);
   assert.match(script, /pixels > LIMITS\.maxImagePixels \|\| maxDim > LIMITS\.maxImageDim/);
   assert.doesNotMatch(script, /LARGE \$\{type\.toUpperCase\(\)\}[\s\S]*accepted, may reduce performance/);
 });
@@ -3586,7 +3586,7 @@ test('asset load callbacks are token-gated and timeout-protected', () => {
   assert.match(preflightBody, /const assertNotCancelled = \(\) => \{/);
   assert.match(preflightBody, /cancelTid = setInterval\(rejectIfCancelled, 50\)/);
   assert.match(preflightBody, /clearInterval\(cancelTid\)/);
-  assert.match(preflightBody, /const preflightTimeoutReason = \(\) => \(type === 'audio' && audioMetadataSeen \? 'audio duration unavailable' : `\$\{type\} preflight timeout`\)/);
+  assert.match(preflightBody, /const preflightTimeoutReason = \(\) => \(type === 'audio' && audioMetadataSeen \? '音频时长不可用' : `\$\{type\}素材检查超时`\)/);
   assert.match(preflightBody, /const finishAudioDurationIfReady = \(\) =>/);
   assert.match(preflightBody, /if \(!Number\.isFinite\(d\) \|\| d <= 0\) return false/);
   assert.match(preflightBody, /if \(d > LIMITS\.maxAudioSeconds\)/);
@@ -3595,7 +3595,7 @@ test('asset load callbacks are token-gated and timeout-protected', () => {
   const loadFileBody = script.match(/loadFile\(type, file, opts = \{\}\) \{([\s\S]*?)\n  \},\n  bindFile/)?.[1] || '';
   assert.ok(loadFileBody, 'AssetManager.loadFile body should be present');
   assert.match(loadFileBody, /const token = this\.nextLoadToken\(type\)/);
-  assert.match(loadFileBody, /const loadTimeoutReason = \(\) => \(type === 'audio' && audioMetadataSeen \? 'AUDIO DURATION UNAVAILABLE' : 'LOAD TIMEOUT'\)/);
+  assert.match(loadFileBody, /const loadTimeoutReason = \(\) => \(type === 'audio' && audioMetadataSeen \? '音频时长不可用' : '载入超时'\)/);
   assert.match(loadFileBody, /setTimeout\(\(\) => fail\(loadTimeoutReason\(\)\), opts\.timeoutMs \|\| LIMITS\.warmupTimeoutMs\)/);
   assert.match(loadFileBody, /const acceptAudioDurationIfReady = \(\) =>/);
   assert.match(loadFileBody, /if \(!Number\.isFinite\(d\) \|\| d <= 0\) return false/);
@@ -3625,20 +3625,20 @@ test('autosave has a quota-aware state-only fallback instead of forcing huge fil
   assert.ok(snapshotBody, 'AutoSave.snapshot body should be present');
   assert.match(snapshotBody, /assetsStored/);
   assert.match(script, /plan\.assetsStored/);
-  assert.match(script, /ASSETS NOT INCLUDED/);
-  assert.match(script, /STATE ONLY/);
+  assert.match(script, /素材没有一起保存/);
+  assert.match(script, /仅保存设置/);
   assert.match(script, /item\.assetSaveSkippedReason/);
 });
 
 test('batch abort stops the queue instead of continuing through remaining songs', () => {
   assert.match(script, /cancelRequested/);
-  assert.match(script, /requestCancel\(reason = 'Batch cancelled'\)/);
+  assert.match(script, /requestCancel\(reason = '批量导出已取消'\)/);
   assert.match(script, /if \(Store\.batch\.running\) BatchQueue\.requestCancel/);
   assert.match(script, /if \(Store\.batch\.cancelRequested\) break/);
-  assert.match(script, /BATCH CANCELLED/);
+  assert.match(script, /批量导出已取消/);
   assert.match(script, /const clearMain = Store\.batch\.running/);
   assert.match(script, /Dom\['btn-clear-batch'\]\.innerHTML = `<span class="btn-main">\$\{clearMain\}<\/span><span class="btn-sub">\$\{clearSub\}<\/span>`/);
-  assert.match(script, /clearConfirmArmed \? '确认丢弃 \/ Discard' : '清空 \/ Clear'/);
+  assert.match(script, /clearConfirmArmed \? '确认丢弃批量输出' : '清空批量'/);
   assert.match(script, /Dom\['btn-clear-batch'\]\.disabled = Store\.packageJob\.running \|\| Store\.restoreJob\.running \|\| Store\.autosaveJob\.running \|\| restoring \|\| cancelling \|\| \(!Store\.batch\.running && Machine\.status !== 'IDLE'\)/);
 });
 
@@ -3665,7 +3665,7 @@ test('batch render restores the current project audio and metadata after it stop
   assert.match(restoreBody, /audioRestored = restored != null && !!Store\.flags\.assetValid\.audio/);
   assert.match(restoreBody, /AssetManager\.clearAsset\('audio'/);
   assert.match(restoreBody, /if \(audioRestored\) \{[\s\S]*?Store\.audioAnalysis = snapshot\.audioAnalysis/);
-  assert.match(restoreBody, /AudioAnalysis\.reset\('ORIGINAL AUDIO RESTORE FAILED'\)/);
+  assert.match(restoreBody, /AudioAnalysis\.reset\('原项目音频恢复失败'\)/);
   assert.match(restoreBody, /ProjectPresets\.setText\('in-song', snapshot\.meta\.song/);
 });
 
@@ -3686,8 +3686,8 @@ test('batch project restore failures are durable in summary, report, and public 
   assert.ok(restoreBody, 'BatchQueue.restoreProjectRuntime body should be present');
   assert.match(restoreBody, /let restoreError = ''/);
   assert.match(restoreBody, /restoreError = Utils\.safeErrMsg\(err\)/);
-  assert.match(restoreBody, /readiness refresh failed/);
-  assert.match(restoreBody, /preview refresh failed/);
+  assert.match(restoreBody, /就绪状态刷新失败/);
+  assert.match(restoreBody, /预览刷新失败/);
   assert.match(restoreBody, /return \{ ok: !restoreError, error: restoreError \}/);
 
   const startBody = batchBody.match(/async start\(\) \{([\s\S]*?)\n  \},\n\n  render\(\)/)?.[1] || '';
@@ -3698,20 +3698,20 @@ test('batch project restore failures are durable in summary, report, and public 
   assert.match(startBody, /let restoreResult = \{ ok: true, error: '' \}/);
   assert.match(startBody, /restoreResult = await this\.restoreProjectRuntime\(projectSnapshot\)/);
   assert.match(startBody, /Store\.batch\.restoreFailed = restoreResult\?\.ok === false/);
-  assert.match(startBody, /Batch render restore failed: \$\{Store\.batch\.restoreError\}/);
-  assert.match(startBody, /Batch render restored original project/);
+  assert.match(startBody, /批量导出后原项目恢复失败：\$\{Store\.batch\.restoreError\}/);
+  assert.match(startBody, /批量导出后已恢复原项目/);
   assert.match(startBody, /Store\.batch\.running = false/);
   assert.match(startBody, /Store\.batch\.restoring = false/);
   assert.match(startBody, /Batch UI unlock refresh failed/);
 
   const renderBody = batchBody.match(/render\(\) \{([\s\S]*?)\n  \},\n\n  init\(\)/)?.[1] || '';
   assert.ok(renderBody, 'BatchQueue.render body should be present');
-  assert.match(renderBody, /const restoreIssue = Store\.batch\.restoreFailed \? ` · RESTORE FAILED: \$\{Store\.batch\.restoreError \|\| 'original project restore failed'\}` : ''/);
+  assert.match(renderBody, /const restoreIssue = Store\.batch\.restoreFailed \? ` · 原项目恢复失败：\$\{Store\.batch\.restoreError \|\| '原项目恢复失败'\}` : ''/);
   assert.match(renderBody, /const restoring = Store\.batch\.running && Store\.batch\.restoring/);
   assert.match(renderBody, /const cancelling = Store\.batch\.running && Store\.batch\.cancelRequested && !restoring/);
-  assert.match(renderBody, /const batchRunStatus = restoring \? 'RESTORING PROJECT' : \(cancelling \? 'CANCELLING' : 'RUNNING'\)/);
-  assert.match(renderBody, /restoring \? '恢复中 \/ Restoring' : \(cancelling \? '取消中 \/ Cancelling' : '取消 \/ Cancel'\)/);
-  assert.match(renderBody, /restoring\s*\?\s*'Restoring original project after batch'/);
+  assert.match(renderBody, /const batchRunStatus = restoring \? '正在恢复原项目' : \(cancelling \? '正在取消' : '正在导出'\)/);
+  assert.match(renderBody, /restoring \? '请稍候' : \(cancelling \? '请稍候' : '停止队列'\)/);
+  assert.match(renderBody, /restoring\s*\?\s*'正在恢复原项目'/);
   assert.match(renderBody, /\$\{restoreIssue\}\$\{clearConfirmArmed \? ' · 已等待确认丢弃' : ''\} \| \$\{addStatus\} \| \$\{startStatus\}/);
 
   const clearBody = batchBody.match(/clear\(\) \{([\s\S]*?)\n  \},\n\n  requestCancel/)?.[1] || '';
@@ -3783,7 +3783,7 @@ test('state-only autosave restores keep current assets instead of destructive cl
   assert.match(reloadBody, /if \(prepared\[type\] \|\| Store\.flags\.assetValid\[type\]\) return/);
   assert.match(reloadBody, /ProjectPresets\.markAssetReloadRequired\(type, name\)/);
   assert.match(reloadBody, /if \(marked\) Engine\.checkReady\(\)/);
-  assert.match(snapshotBody, /CURRENT ASSETS KEPT/);
+  assert.match(snapshotBody, /快照已恢复，并保留当前素材。/);
 });
 
 test('plain JSON project imports clear live assets to avoid silent mismatched renders', () => {
@@ -3797,14 +3797,14 @@ test('plain JSON project imports clear live assets to avoid silent mismatched re
   assert.ok(clearBody, 'ProjectPresets.clearLiveAssetsAfterJsonImport body should be present');
   assert.match(clearBody, /const listedAssets = this\.listedAssetRefs\(data\)/);
   assert.match(clearBody, /this\.markAssetReloadRequired\(type, name\)/);
-  assert.match(clearBody, /PROJECT JSON LOADED — RELOAD LISTED ASSETS/);
-  assert.match(clearBody, /PROJECT SETTINGS LOADED — ADD ASSETS/);
+  assert.match(clearBody, /项目文件已载入，请重新选择其中列出的素材。/);
+  assert.match(clearBody, /项目设置已载入，请补齐素材。/);
   assert.match(script, /markAssetReloadRequired\(type, name\) \{[\s\S]*?Store\.assetRefsMissing\[type\] = name/);
 
   const assetSummaryBody = script.match(/assetInputSummary\(\) \{([\s\S]*?)\n  \},\n  updateControls/)?.[1] || '';
   assert.ok(assetSummaryBody, 'AssetManager.assetInputSummary body should be present');
   assert.match(assetSummaryBody, /Store\.assetRefsMissing/);
-  assert.match(assetSummaryBody, /ASSET RELOAD REQUIRED/);
+  assert.match(assetSummaryBody, /需要重新选择素材/);
 });
 
 test('plain JSON project imports save state-only recent entries without replacing latest autosave', () => {
@@ -3828,8 +3828,8 @@ test('plain JSON project imports roll back partial mutations after late failures
   assert.ok(loadProjectBody, 'ProjectPresets.loadProjectFile body should be present');
   assert.match(loadProjectBody, /const previous = this\.captureRuntime\(\)/);
   assert.match(loadProjectBody, /const rollback = await this\.restoreRuntime\(previous\)/);
-  assert.match(loadProjectBody, /Project JSON import failed with incomplete rollback/);
-  assert.match(loadProjectBody, /Project JSON import failed and rollback was incomplete/);
+  assert.match(loadProjectBody, /项目文件载入失败，且回滚不完整/);
+  assert.match(loadProjectBody, /项目文件载入失败，且无法完整恢复到载入前状态/);
 });
 
 test('recording startup failures unlock warming state and reject batch waiters', () => {
@@ -3849,7 +3849,7 @@ test('recording startup failures unlock warming state and reject batch waiters',
   assert.match(catchBody, /this\.rejectSaveWaiters\(startErr\)/);
   assert.match(catchBody, /Machine\.forceIdle\(\)/);
   assert.match(catchBody, /UI\.resetProgress\(\)/);
-  assert.ok(catchBody.indexOf('Machine.forceIdle();') < catchBody.indexOf("UI.showError('Stream save cancelled'"));
+  assert.ok(catchBody.indexOf('Machine.forceIdle();') < catchBody.indexOf("UI.showError('已取消边生成边保存。'"));
 });
 
 test('fatal Recorder.start failures preserve a failed render report before abort guards take over', () => {
@@ -3863,7 +3863,7 @@ test('fatal Recorder.start failures preserve a failed render report before abort
   assert.ok(baselineAt < startBody.indexOf('const mime = Store.caps.recordMime || this.getSafeMime();'));
   const catchBody = startBody.match(/\} catch \(err\) \{([\s\S]*?)\n    \}/)?.[1] || '';
   assert.ok(catchBody, 'Recorder.start catch body should be present');
-  assert.match(catchBody, /const startErr = this\.isUserCancel\(err\) \? new Error\('Render aborted'\) : this\.recordFailedExport\(err\)/);
+  assert.match(catchBody, /const startErr = this\.isUserCancel\(err\) \? new Error\('导出已取消'\) : this\.recordFailedExport\(err\)/);
   assert.ok(catchBody.indexOf('this.recordFailedExport(err)') < catchBody.indexOf('this._aborting = true'));
   assert.match(catchBody, /this\.rejectSaveWaiters\(startErr\)/);
 });
@@ -3904,11 +3904,11 @@ test('Recorder.start cleans up if WARMING cannot transition to RECORDING', () =>
   assert.doesNotMatch(startBody, /if \(!Machine\.transition\('RECORDING'\)\) return false/);
   const transitionFailure = startBody.match(/if \(!Machine\.transition\('RECORDING'\)\) \{([\s\S]*?)\n      \}/)?.[1] || '';
   assert.ok(transitionFailure, 'RECORDING transition failure branch should be present');
-  assert.match(transitionFailure, /if \(this\._sessionId === sid && Machine\.status === 'WARMING'\) throw new Error\('Recording transition failed'\)/);
+  assert.match(transitionFailure, /if \(this\._sessionId === sid && Machine\.status === 'WARMING'\) throw new Error\('导出状态切换失败'\)/);
   assert.match(transitionFailure, /return false/);
   const catchBody = startBody.match(/\} catch \(err\) \{([\s\S]*?)\n    \}/)?.[1] || '';
   assert.ok(catchBody, 'Recorder.start catch body should be present');
-  assert.match(catchBody, /const startErr = this\.isUserCancel\(err\) \? new Error\('Render aborted'\) : this\.recordFailedExport\(err\)/);
+  assert.match(catchBody, /const startErr = this\.isUserCancel\(err\) \? new Error\('导出已取消'\) : this\.recordFailedExport\(err\)/);
   assert.match(catchBody, /this\.rejectSaveWaiters\(startErr\)/);
   assert.match(catchBody, /Machine\.forceIdle\(\)/);
 });
@@ -3918,14 +3918,14 @@ test('Recorder.start exposes a true or false contract for callers instead of sil
   assert.ok(recorderBody, 'Recorder body should be present');
   const blockerBody = recorderBody.match(/renderStartBlocker\(opts = \{\}\) \{([\s\S]*?)\n  \},\n\n  async start/)?.[1] || '';
   assert.ok(blockerBody, 'Recorder.renderStartBlocker body should be present');
-  assert.match(blockerBody, /if \(Store\.packageJob\.running\) \{[\s\S]*?return 'Package operation in progress\. Wait for it to finish before starting render\.'/);
-  assert.match(blockerBody, /if \(Store\.restoreJob\.running\) \{[\s\S]*?return 'Project restore in progress\. Wait for it to finish before starting render\.'/);
-  assert.match(blockerBody, /if \(Store\.autosaveJob\.running\) \{[\s\S]*?return 'Autosave in progress\. Wait for it to finish before starting render\.'/);
+  assert.match(blockerBody, /if \(Store\.packageJob\.running\) \{[\s\S]*?return '项目文件操作进行中，请完成后再导出。'/);
+  assert.match(blockerBody, /if \(Store\.restoreJob\.running\) \{[\s\S]*?return '项目恢复中，请完成后再导出。'/);
+  assert.match(blockerBody, /if \(Store\.autosaveJob\.running\) \{[\s\S]*?return '自动保存中，请完成后再导出。'/);
   assert.doesNotMatch(blockerBody, /if \(Store\.packageJob\.running\) throw/);
   assert.doesNotMatch(blockerBody, /if \(Store\.restoreJob\.running\) throw/);
-  assert.match(blockerBody, /if \(!Store\.caps\.canRecord\) \{[\s\S]*?return 'Recording unsupported'/);
+  assert.match(blockerBody, /if \(!Store\.caps\.canRecord\) \{[\s\S]*?return '当前浏览器不支持导出视频。'/);
   assert.match(blockerBody, /const readiness = Preflight\.getRenderReadiness\(Preflight\.getAudioDuration\(\), \{ ignoreBatchLock: !!opts\.ignoreBatchLock \}\)/);
-  assert.match(blockerBody, /if \(!readiness\.recordReady\) \{[\s\S]*?return readiness\.recordReason \|\| 'Inputs not ready'/);
+  assert.match(blockerBody, /if \(!readiness\.recordReady\) \{[\s\S]*?return readiness\.recordReason \|\| '素材还没准备好。'/);
 
   const startBody = recorderBody.match(/async start\(opts = \{\}\) \{([\s\S]*?)\n  \},\n\n  finish\(\)/)?.[1] || '';
   assert.ok(startBody, 'Recorder.start body should be present');
@@ -3948,8 +3948,8 @@ test('Recorder.start exposes a true or false contract for callers instead of sil
   const catchBody = startBody.match(/\} catch \(err\) \{([\s\S]*?)\n    \}/)?.[1] || '';
   assert.ok(catchBody, 'Recorder.start catch body should be present');
   assert.match(catchBody, /if \(this\._sessionId !== sid \|\| this\._aborting\) \{[\s\S]*?this\.pauseMedia\(\);[\s\S]*?return false/);
-  assert.match(catchBody, /UI\.showError\('Stream save cancelled', 'WARN'\);\s*return false/);
-  assert.match(catchBody, /UI\.showError\(Utils\.safeErrMsg\(err, 'Start failed'\), 'FATAL', \{ phase: failurePhase \}\);\s*return false/);
+  assert.match(catchBody, /UI\.showError\('已取消边生成边保存。', 'WARN'\);\s*return false/);
+  assert.match(catchBody, /UI\.showError\(Utils\.safeErrMsg\(err, '导出启动失败'\), 'FATAL', \{ phase: failurePhase \}\);\s*return false/);
 });
 
 test('render save waiters are session scoped and explicitly cancellable', () => {
@@ -3959,28 +3959,28 @@ test('render save waiters are session scoped and explicitly cancellable', () => 
   assert.ok(waitBody, 'Recorder.waitForNextSave body should be present');
   assert.match(waitBody, /waiter = \{ resolve, reject, timer: null, sid, settled: false \}/);
   assert.match(waitBody, /promise\.sid = sid/);
-  assert.match(waitBody, /promise\.cancel = \(reason = 'Render save cancelled'\) => this\.cancelSaveWaiter\(waiter, reason\)/);
+  assert.match(waitBody, /promise\.cancel = \(reason = '导出保存已取消'\) => this\.cancelSaveWaiter\(waiter, reason\)/);
 
   const settleBody = recorderBody.match(/settleSaveWaiter\(waiter, method, value\) \{([\s\S]*?)\n  \},\n\n  cancelSaveWaiter/)?.[1] || '';
   assert.ok(settleBody, 'Recorder.settleSaveWaiter body should be present');
   assert.match(settleBody, /if \(!waiter \|\| waiter\.settled\) return false/);
   assert.match(settleBody, /this\._saveWaiters = this\._saveWaiters\.filter\(\(item\) => item !== waiter\)/);
 
-  const cancelBody = recorderBody.match(/cancelSaveWaiter\(waiter, reason = 'Render save cancelled'\) \{([\s\S]*?)\n  \},\n\n  resolveSaveWaiters/)?.[1] || '';
+  const cancelBody = recorderBody.match(/cancelSaveWaiter\(waiter, reason = '导出保存已取消'\) \{([\s\S]*?)\n  \},\n\n  resolveSaveWaiters/)?.[1] || '';
   assert.ok(cancelBody, 'Recorder.cancelSaveWaiter body should be present');
   assert.match(cancelBody, /this\.settleSaveWaiter\(waiter, 'reject', reason instanceof Error \? reason : new Error\(reason\)\)/);
 
   const resolveBody = recorderBody.match(/resolveSaveWaiters\(result, sid = this\._sessionId\) \{([\s\S]*?)\n  \},\n\n  rejectSaveWaiters/)?.[1] || '';
   assert.ok(resolveBody, 'Recorder.resolveSaveWaiters body should be present');
   assert.match(resolveBody, /if \(waiter\.sid === sid\) this\.settleSaveWaiter\(waiter, 'resolve', result\)/);
-  assert.match(resolveBody, /else this\.settleSaveWaiter\(waiter, 'reject', new Error\('Stale render save waiter'\)\)/);
+  assert.match(resolveBody, /else this\.settleSaveWaiter\(waiter, 'reject', new Error\('过期的导出保存等待已取消'\)\)/);
 });
 
 test('stream save finalize has its own timeout instead of hanging forever after recorder stop', () => {
   assert.match(script, /maxStreamFinalizeMs/);
   assert.match(script, /streamFinalizeWithTimeout\(promise, label\)/);
   assert.match(script, /Promise\.race\(\[promise, timeout\]\)/);
-  assert.match(script, /Stream finalize timeout/);
+  assert.match(script, /边生成边保存收尾超时/);
   const finalizeBody = script.match(/async finalizeStreamSave\(commit\) \{([\s\S]*?)\n  \},\n\n  async togglePreview/)?.[1] || '';
   assert.ok(finalizeBody, 'Recorder.finalizeStreamSave body should be present');
   assert.match(finalizeBody, /if \(commit && this\._aborting\) return false/);
@@ -4007,7 +4007,7 @@ test('stream save finalize has its own timeout instead of hanging forever after 
   assert.match(saveBody, /const isCurrentExport = \(\) => !this\._aborting && this\._sessionId === sid && Machine\.status === 'EXPORTING'/);
   assert.match(saveBody, /if \(!isCurrentExport\(\)\) return/);
   assert.match(saveBody, /const detail = this\._lastStreamFinalizeError/);
-  assert.match(saveBody, /detail \? `Stream save failed: \$\{detail\}` : 'Stream save failed'/);
+  assert.match(saveBody, /detail \? `边生成边保存失败：\$\{detail\}` : '边生成边保存失败'/);
   assert.match(saveBody, /failurePhase: 'stream-finalize'/);
   assert.ok(saveBody.indexOf('Machine.forceIdle();') < saveBody.indexOf('if (successLog) UI.log(successLog,'));
 });
@@ -4025,7 +4025,7 @@ test('stream save write queue is bounded before slow writers can retain unlimite
   assert.match(enqueueBody, /this\.streamPendingBytes \+= pendingBytes/);
   assert.match(enqueueBody, /this\.streamPendingWrites \+= 1/);
   assert.match(enqueueBody, /this\.streamPendingBytes > LIMITS\.maxStreamPendingBytes/);
-  assert.match(enqueueBody, /this\.failExport\(`Streaming Save 磁盘写入积压超过 \$\{Utils\.formatBytes\(LIMITS\.maxStreamPendingBytes\)\}[\s\S]*?Streaming Save disk write backlog > \$\{Utils\.formatBytes\(LIMITS\.maxStreamPendingBytes\)\}[\s\S]*?'FATAL'\)/);
+  assert.match(enqueueBody, /this\.failExport\(`边生成边保存的磁盘写入积压超过 \$\{Utils\.formatBytes\(LIMITS\.maxStreamPendingBytes\)\}[\s\S]*?'FATAL'\)/);
   assert.match(enqueueBody, /\.finally\(\(\) => \{[\s\S]*?this\.streamPendingBytes = Math\.max\(0, this\.streamPendingBytes - pendingBytes\)[\s\S]*?this\.streamPendingWrites = Math\.max\(0, this\.streamPendingWrites - 1\)/);
   assert.ok(enqueueBody.indexOf('this.streamPendingBytes += pendingBytes') < enqueueBody.indexOf('this.writeChain = this.writeChain'));
   assert.ok(enqueueBody.indexOf('LIMITS.maxStreamPendingBytes') < enqueueBody.indexOf('this.writeChain = this.writeChain'));
@@ -4059,7 +4059,7 @@ test('preview startup failures recover without opening the fatal error modal', (
   const transitionAt = toggleBody.indexOf("if (!Machine.transition('PREVIEWING')) return");
   assert.ok(readinessAt >= 0, 'Recorder.togglePreview should check preview readiness before entering PREVIEWING');
   assert.ok(readinessAt < transitionAt, 'preview readiness should be checked before state transition');
-  assert.match(toggleBody, /if \(!readiness\.previewReady\) \{[\s\S]*?UI\.showError\(readiness\.previewReason \|\| 'Inputs not ready for preview', 'WARN'\);[\s\S]*?return false/);
+  assert.match(toggleBody, /if \(!readiness\.previewReady\) \{[\s\S]*?UI\.showError\(readiness\.previewReason \|\| '素材还没准备好预览', 'WARN'\);[\s\S]*?return false/);
   assert.match(toggleBody, /if \(!Machine\.transition\('PREVIEWING'\)\) return/);
   const catchBody = toggleBody.match(/\} catch \(e\) \{([\s\S]*?)\n    \}/)?.[1] || '';
   assert.ok(catchBody, 'Recorder.togglePreview catch body should be present');
@@ -4069,7 +4069,7 @@ test('preview startup failures recover without opening the fatal error modal', (
   assert.match(catchBody, /AudioEngine\.setRoute\('IDLE'\)/);
   assert.match(catchBody, /Machine\.forceIdle\(\)/);
   assert.match(catchBody, /UI\.resetProgress\(\)/);
-  assert.match(catchBody, /UI\.showError\(`Preview failed: \$\{Utils\.safeErrMsg\(e\)\}`, 'WARN'\)/);
+  assert.match(catchBody, /UI\.showError\(`预览失败：\$\{Utils\.safeErrMsg\(e\)\}`, 'WARN'\)/);
   assert.doesNotMatch(catchBody, /'FATAL'/);
 });
 
@@ -4086,7 +4086,7 @@ test('preview background resume failures return to idle instead of leaving stopp
   assert.match(catchBody, /AudioEngine\.setRoute\('IDLE'\)/);
   assert.match(catchBody, /Machine\.forceIdle\(\)/);
   assert.match(catchBody, /UI\.resetProgress\(\)/);
-  assert.match(catchBody, /UI\.showError\('Preview resume blocked by browser autoplay policy\. Preview stopped; click Preview to restart\.', 'WARN'\)/);
+  assert.match(catchBody, /UI\.showError\('浏览器阻止了预览自动恢复。预览已停止，请重新点击“预览”。', 'WARN'\)/);
   assert.doesNotMatch(catchBody, /'FATAL'/);
 });
 
@@ -4184,7 +4184,7 @@ test('recording MIME support gates render readiness and is reported', () => {
   assert.ok(preflightBody, 'Preflight body should be present');
   assert.match(preflightBody, /const mimeReady = !!Store\.caps\.recordMime/);
   assert.match(preflightBody, /const recordReady = blockers\.length === 0 && Store\.caps\.canRecord/);
-  assert.match(preflightBody, /Recording MIME unsupported in this browser/);
+  assert.match(preflightBody, /当前浏览器不支持这个视频格式/);
   assert.match(preflightBody, /recording-mime/);
 
   const browserCapsBody = script.match(/browserCaps\(\) \{([\s\S]*?)\n  \},\n\n  assetManifest/)?.[1] || '';
@@ -4206,8 +4206,8 @@ test('recording readiness waits for media canplay threshold before enabling rend
   assert.match(preflightBody, /const aMetadataReady = !!a && a\.readyState >= 1/);
   assert.match(preflightBody, /const aPreviewReady = aMetadataReady \|\| aValidatedForPreview/);
   assert.match(preflightBody, /const aRecordPlayable = !!a && a\.readyState >= 2/);
-  assert.match(preflightBody, /Center visual not ready to play/);
-  assert.match(preflightBody, /Audio not ready to play/);
+  assert.match(preflightBody, /中心视觉素材还没准备好播放/);
+  assert.match(preflightBody, /音频还没准备好播放/);
 
   const batchReadyBody = engineBody.match(/getBatchRenderReadiness\(\) \{([\s\S]*?)\n  \},\n\n  checkReady/)?.[1] || '';
   assert.ok(batchReadyBody, 'Engine.getBatchRenderReadiness body should be present');
@@ -4243,7 +4243,7 @@ test('export failure paths reject save waiters and record failed reports', () =>
   assert.ok(recorderBody, 'Recorder body should be present');
   const recordFailureBody = recorderBody.match(/recordFailedExport\(reason, outputInfo = \{\}\) \{([\s\S]*?)\n  \},\n\n  failExport/)?.[1] || '';
   assert.ok(recordFailureBody, 'Recorder.recordFailedExport body should be present');
-  assert.match(recordFailureBody, /const err = reason instanceof Error \? reason : new Error\(reason \|\| 'Export failed'\)/);
+  assert.match(recordFailureBody, /const err = reason instanceof Error \? reason : new Error\(reason \|\| '导出失败'\)/);
   assert.match(recordFailureBody, /RenderReport\.recordExport\(\{/);
   assert.match(recordFailureBody, /failed: true/);
   assert.match(recordFailureBody, /error: err\.message/);
@@ -4258,9 +4258,9 @@ test('export failure paths reject save waiters and record failed reports', () =>
 
   const finishBody = recorderBody.match(/finish\(\) \{([\s\S]*?)\n  \},\n\n  abort/)?.[1] || '';
   assert.ok(finishBody, 'Recorder.finish body should be present');
-  assert.match(finishBody, /return this\.failExport\('Recorder inactive during export', 'WARN'\)/);
-  assert.match(finishBody, /this\.failExport\('Export forced to reset after extended timeout', 'WARN'\)/);
-  assert.doesNotMatch(finishBody, /Export forced to reset after extended timeout'[\s\S]*?Machine\.forceIdle\(\)/);
+  assert.match(finishBody, /return this\.failExport\('录制器在保存时已停止', 'WARN'\)/);
+  assert.match(finishBody, /this\.failExport\('视频保存超时，已强制复位。', 'WARN'\)/);
+  assert.doesNotMatch(finishBody, /视频保存超时，已强制复位。'[\s\S]*?Machine\.forceIdle\(\)/);
 });
 
 test('fatal recorder dialogs preserve the failure phase after cleanup resets state', () => {
@@ -4284,7 +4284,7 @@ test('fatal recorder dialogs preserve the failure phase after cleanup resets sta
   assert.ok(catchBody, 'Recorder.start catch body should be present');
   assert.match(catchBody, /const failurePhase = Machine\.status/);
   assert.ok(catchBody.indexOf('const failurePhase = Machine.status') < catchBody.indexOf('Machine.forceIdle();'));
-  assert.match(catchBody, /UI\.showError\(Utils\.safeErrMsg\(err, 'Start failed'\), 'FATAL', \{ phase: failurePhase \}\)/);
+  assert.match(catchBody, /UI\.showError\(Utils\.safeErrMsg\(err, '导出启动失败'\), 'FATAL', \{ phase: failurePhase \}\)/);
 });
 
 test('fatal aborts during active renders preserve failed render report evidence', () => {
@@ -4297,7 +4297,7 @@ test('fatal aborts during active renders preserve failed render report evidence'
   const abortBody = recorderBody.match(/abort\(isFatal = false, reason = ''\) \{([\s\S]*?)\n  \},\n\n  requestAbort/)?.[1] || '';
   assert.ok(abortBody, 'Recorder.abort body should be present');
   assert.match(abortBody, /const wasRenderActive = \['WARMING', 'RECORDING', 'EXPORTING'\]\.includes\(Machine\.status\) \|\| this\._saveWaiters\.length > 0/);
-  assert.match(abortBody, /const err = new Error\(isFatal \? \(reason \|\| 'Render failed'\) : 'Render aborted'\)/);
+  assert.match(abortBody, /const err = new Error\(isFatal \? \(reason \|\| '导出失败'\) : '导出已取消'\)/);
   assert.match(abortBody, /if \(isFatal && wasRenderActive\) this\.recordFailedExport\(err\)/);
   assert.match(abortBody, /this\.rejectSaveWaiters\(err\)/);
 });
@@ -4306,7 +4306,7 @@ test('failed render reports show failure state and root cause in the report pane
   const updatePanelBody = script.match(/updatePanel\(\) \{([\s\S]*?)\n  \},\n\n  init\(\)/)?.[1] || '';
   assert.ok(updatePanelBody, 'RenderReport.updatePanel body should be present');
   assert.match(updatePanelBody, /const failed = !!report\.output\.failed/);
-  assert.match(updatePanelBody, /summary\.textContent = reportStale\s*\?\s*`REPORT STALE: \$\{report\.output\.staleReason \|\| 'Previous render'\}`[\s\S]*?: failed\s*\?\s*`REPORT FAILED: \$\{report\.output\.error \|\| 'Export failed'\}`/);
+  assert.match(updatePanelBody, /summary\.textContent = reportStale\s*\?\s*`导出记录已过期：\$\{report\.output\.staleReason \|\| '上一次导出'\}`[\s\S]*?: failed\s*\?\s*`导出记录显示失败：\$\{report\.output\.error \|\| '导出失败'\}`/);
   assert.match(updatePanelBody, /\['保存状态', reportStale \? '上一次渲染已过期' : \(failed \? '失败' : \(report\.output\.saveVerified \? '已验证' : \(report\.output\.downloadDispatched \? \(retryAvailable \? '已触发下载 · 可重试' : '已触发下载'\) : '未知'\)\)\)\]/);
   assert.match(updatePanelBody, /if \(failed\) rows\.unshift\(\['错误', report\.output\.error \|\| '未知导出错误'\]\)/);
   assert.match(updatePanelBody, /if \(retryAvailable\) rows\.push\(\['恢复建议', '开始新渲染前，请先重试导出下载'\]\)/);
@@ -4318,8 +4318,8 @@ test('recorder onstop save exceptions settle export failure instead of leaving b
   const catchBody = onStopBody.match(/\} catch \(e\) \{([\s\S]*?)\n        \}/)?.[1] || '';
   assert.ok(catchBody, 'MediaRecorder onstop catch body should be present');
   assert.match(catchBody, /if \(!this\._aborting && this\._sessionId === sid\)/);
-  assert.match(catchBody, /this\.failExport\(`Export failed: \$\{Utils\.safeErrMsg\(e\)\}`, 'FATAL'\)/);
-  assert.doesNotMatch(catchBody, /UI\.showError\(`Export failed:/);
+  assert.match(catchBody, /this\.failExport\(`导出失败: \$\{Utils\.safeErrMsg\(e\)\}`, 'FATAL'\)/);
+  assert.doesNotMatch(catchBody, /UI\.showError\(`导出失败:/);
 });
 
 test('recorder error events are session guarded before failing the active export', () => {
@@ -4327,7 +4327,7 @@ test('recorder error events are session guarded before failing the active export
   assert.ok(onErrorBody, 'MediaRecorder onerror body should be present');
   assert.match(onErrorBody, /if \(this\._aborting \|\| this\._sessionId !== sid\) return/);
   assert.match(onErrorBody, /if \(!\['RECORDING', 'EXPORTING'\]\.includes\(Machine\.status\)\) return/);
-  assert.match(onErrorBody, /this\.failExport\(`Recorder error: \$\{this\.formatRecorderError\(e, mime\)\}`, 'FATAL'\)/);
+  assert.match(onErrorBody, /this\.failExport\(`录制器错误：\$\{this\.formatRecorderError\(e, mime\)\}`, 'FATAL'\)/);
   assert.ok(onErrorBody.indexOf('this._sessionId !== sid') < onErrorBody.indexOf('this.failExport('));
 });
 
@@ -4336,8 +4336,8 @@ test('recording validates live canvas tracks and binds stream failure handlers',
   assert.ok(recorderBody, 'Recorder body should be present');
   const startBody = recorderBody.match(/async start\(opts = \{\}\) \{([\s\S]*?)\n  \},\n\n  finish\(\)/)?.[1] || '';
   assert.ok(startBody, 'Recorder.start body should be present');
-  assert.match(startBody, /if \(!videoTrack \|\| videoTrack\.readyState !== 'live'\) throw new Error\('Canvas video track unavailable'\)/);
-  assert.match(startBody, /if \(!audioTrack \|\| audioTrack\.readyState !== 'live'\) throw new Error\('Audio Routing Failed'\)/);
-  assert.match(startBody, /this\.bindTrackFailure\(videoTrack, 'Canvas video', sid\)/);
-  assert.match(startBody, /this\.bindTrackFailure\(audioTrack, 'Audio', sid\)/);
+  assert.match(startBody, /if \(!videoTrack \|\| videoTrack\.readyState !== 'live'\) throw new Error\('画面轨道不可用'\)/);
+  assert.match(startBody, /if \(!audioTrack \|\| audioTrack\.readyState !== 'live'\) throw new Error\('音频路由失败'\)/);
+  assert.match(startBody, /this\.bindTrackFailure\(videoTrack, '画面', sid\)/);
+  assert.match(startBody, /this\.bindTrackFailure\(audioTrack, '音频', sid\)/);
 });

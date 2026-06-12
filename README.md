@@ -37,7 +37,7 @@ npm run test:motion
 - Motion 交接规格：`apps/motion-batch/DESIGN.md`
 - 官网产品规格：`docs/website/openfad.zh-CN.md`
 - 发布信任矩阵：`docs/release/trust-matrix.zh-CN.md`
-- GitHub Release v0.1.0 正文：`docs/release/v0.1.0.zh-CN.md`
+- GitHub Release v0.1.1 正文：`docs/release/v0.1.1.zh-CN.md`
 
 ## 品牌边界
 

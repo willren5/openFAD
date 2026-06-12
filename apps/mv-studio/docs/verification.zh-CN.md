@@ -16,4 +16,4 @@ npm test
 - 移动端截图。
 - 预览成功截图。
 - 导出或重试下载路径证据。
-- `docs/verification/mv-0.1.0.md` 中的日期化记录。
+- `docs/verification/mv-0.1.1.md` 中的日期化记录。
