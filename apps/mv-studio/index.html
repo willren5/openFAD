@@ -1831,7 +1831,10 @@ const Machine = {
       Logger.info(`STATE: ${from} -> ${to}`);
       UI.updateState(to);
       if (to === 'PREVIEWING' || to === 'RECORDING') Engine.startLoop();
-      if (to === 'IDLE') Engine.stopLoop();
+      if (to === 'IDLE') {
+        Engine.stopLoop();
+        Engine.checkReady();
+      }
     } finally {
       this._transitionLock = false;
     }

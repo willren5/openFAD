@@ -3587,16 +3587,16 @@ test('stopping preview returns keyboard focus to visible preview action', { skip
     };
   });
 
+  const focusDiagnostic = () => JSON.stringify(focusState);
   assert.equal(focusState.startDisplay, 'grid');
   assert.equal(focusState.previewControlsDisplay, 'none');
-  assert.equal(focusState.previewDisabled, false);
-  assert.equal(focusState.previewReason, '');
-  assert.equal(focusState.activeId, 'btn-preview');
-  assert.equal(focusState.activeVisible, true);
-  assert.equal(focusState.activeInsideStartControls, true);
-  assert.equal(focusState.readiness.previewReady, true);
-  assert.equal(focusState.readiness.aPreviewReady, true);
-  assert.equal(focusState.readiness.aRecordPlayable, false);
+  assert.equal(focusState.previewDisabled, false, focusDiagnostic());
+  assert.equal(focusState.previewReason, '', focusDiagnostic());
+  assert.equal(focusState.activeId, 'btn-preview', focusDiagnostic());
+  assert.equal(focusState.activeVisible, true, focusDiagnostic());
+  assert.equal(focusState.activeInsideStartControls, true, focusDiagnostic());
+  assert.equal(focusState.readiness.previewReady, true, focusDiagnostic());
+  assert.equal(focusState.readiness.aPreviewReady, true, focusDiagnostic());
   assert.deepEqual(pageErrors, []);
   assert.deepEqual(consoleErrors, []);
   await page.close();

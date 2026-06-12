@@ -3402,6 +3402,17 @@ test('state transitions refresh readiness before moving keyboard focus', () => {
   assert.ok(checkReadyAt < moveFocusAt, 'render readiness must refresh before focus target selection');
 });
 
+test('idle state transitions refresh readiness after loop shutdown', () => {
+  const transitionBody = script.match(/transition\(to\) \{([\s\S]*?)\n  \},\n  forceIdle/)?.[1] || '';
+  assert.ok(transitionBody, 'Machine.transition body should be present');
+  const idleBlockAt = transitionBody.indexOf("if (to === 'IDLE') {");
+  const stopLoopAt = transitionBody.indexOf('Engine.stopLoop();', idleBlockAt);
+  const checkReadyAt = transitionBody.indexOf('Engine.checkReady();', stopLoopAt);
+  assert.ok(idleBlockAt >= 0, 'IDLE transition should have an explicit loop-shutdown block');
+  assert.ok(stopLoopAt > idleBlockAt, 'IDLE transition should stop the render loop');
+  assert.ok(checkReadyAt > stopLoopAt, 'IDLE transition should refresh controls after loop shutdown');
+});
+
 test('state transition focus restore prioritizes visible action focus over stale controls', () => {
   const moveFocusBody = script.match(/moveFocusForState\(state, previousState\) \{([\s\S]*?)\n  \},\n  isVisibleFocusable/)?.[1] || '';
   assert.ok(moveFocusBody, 'UI.moveFocusForState body should be present');
