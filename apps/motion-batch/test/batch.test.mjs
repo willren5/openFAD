@@ -814,7 +814,7 @@ test("multi-file batch keeps timed-out shared encoder probe as a hard stop", asy
     return true;
   });
 
-  assert.equal(await fileExists(terminatedPath), true);
+  await waitForFile(terminatedPath);
   assert.equal(await fileExists(path.join(outDir, "cover-a__apple-motion-1x1.mp4")), false);
   assert.equal(await fileExists(path.join(outDir, "cover-b__apple-motion-1x1.mp4")), false);
 });
@@ -1434,7 +1434,7 @@ test("preview-only input probe records the configured probe timeout", async () =
     assert.equal(error.code, "PROCESS_TIMEOUT");
     assert.equal(error.timeoutMs, 2000);
   });
-  assert.equal(await fileExists(terminatedPath), true);
+  await waitForFile(terminatedPath);
 });
 
 test("preview-only render records the configured render timeout", async () => {
@@ -1474,7 +1474,7 @@ test("preview-only render records the configured render timeout", async () => {
     clearTimeout(abortTimer);
   }
 
-  assert.equal(await fileExists(terminatedPath), true);
+  await waitForFile(terminatedPath);
   assert.equal(await fileExists(path.join(outDir, "cover__apple-motion-3x4-preview.png")), false);
 });
 
@@ -1507,7 +1507,7 @@ test("qc-only report probe records the configured probe timeout", async () => {
     assert.equal(error.code, "PROCESS_TIMEOUT");
     assert.equal(error.timeoutMs, 2000);
   });
-  assert.equal(await fileExists(terminatedPath), true);
+  await waitForFile(terminatedPath);
 });
 
 test("QC command failures make the final report fail", async () => {
@@ -1575,7 +1575,7 @@ test("QC command timeouts do not leave a full render job running indefinitely", 
   } finally {
     clearTimeout(abortTimer);
   }
-  assert.equal(await fileExists(terminatedPath), true);
+  await waitForFile(terminatedPath);
 });
 
 test("qc-only skips deep QC passes after fatal probe validation errors", async () => {
@@ -2128,6 +2128,15 @@ async function fileExists(filePath) {
     if (error.code === "ENOENT") return false;
     throw error;
   }
+}
+
+async function waitForFile(filePath, timeoutMs = 1000) {
+  const started = Date.now();
+  while (Date.now() - started < timeoutMs) {
+    if (await fileExists(filePath)) return;
+    await new Promise((resolve) => setTimeout(resolve, 10));
+  }
+  throw new Error(`Timed out waiting for ${filePath}`);
 }
 
 function isAtomicLeftoverName(name) {

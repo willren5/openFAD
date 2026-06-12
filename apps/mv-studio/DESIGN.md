@@ -143,7 +143,7 @@ openFAD MV Studio 是中文优先、本地优先的音乐视觉制作工具。�
 
 ## Public-Safe 规则
 
-- 默认 label 使用 `openFAD Public Release` 或 `openFAD Public Demo`。
+- 默认 label 使用 `openFAD`。
 - 导出后缀使用 `_openfad`。
 - console 前缀使用 `[openFAD]`。
 - 不允许默认 UI 出现 `FAD Records Release`、`_FAD`、`Untitled FAD MV`。

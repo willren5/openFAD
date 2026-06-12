@@ -250,7 +250,7 @@ test('brand visual presets expose one-click openFAD style controls', () => {
   assert.match(script, /applyPreset\(/);
   assert.match(script, /presetMatchesCurrentState\(name\)/);
   assert.match(script, /syncActivePreset\(reason = 'Project changed'\)/);
-  assert.match(script, /openFAD Public Release/);
+  assert.match(script, /openFAD/);
   assert.match(script, /button\.classList\.toggle\('active', active\)/);
   assert.match(script, /button\.setAttribute\('aria-pressed', active \? 'true' : 'false'\)/);
 });

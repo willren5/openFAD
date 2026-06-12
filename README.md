@@ -4,21 +4,24 @@ openFAD 是 FAD Records 发起的开源音乐视觉工具集，帮助独立音�
 
 ## 我想直接使用
 
-- Cover Machine：打开 `apps/cover-machine/index.html`，制作发行封面、社媒图和透明图层。
-- MV Studio：打开 `apps/mv-studio/index.html`，制作本地音乐视觉和 visualizer。
-- Motion Batch：进入 `apps/motion-batch`，运行 `npm ci && npm run ui`，把方形 motion cover 转成 Apple Music 交付素材，并生成 QC 报告。
+你可以直接访问官网在线入口进行操作：<https://fadrecords.com/openfad/>
 
-Cover Machine 不需要 Node.js、GitHub、FFmpeg 或命令行才能开始使用。打开页面后点击“打开示例”，改歌名和艺人，再点击“导出封面 JPG”。
+- **做封面 (Cover Machine)**：在浏览器里直接排版，输出符合发行规格的单曲封面、透明 Logo 层和社媒宣发图。
+- **做音乐可视化 (MV Studio)**：上传音频和图片，直接在浏览器里渲染带音频反应 (Audio Reactive) 效果的本地短视频或 Visualizer。
+- **处理 Apple Music 动态封面 (Motion Batch)**：下载本地裁切工具，将方形动态封面批量自动裁切成 Apple Music 常用比例并生成检查报告。
 
-MV Studio 也保留单文件本地打开能力。打开页面后点击“打开示例”，选择视觉系统，先“预览”，再换成自己的素材并“导出视频”。
+## 我想检查源码或开发
 
-Motion Batch 面向交付批处理，需要 Node.js 和 FFmpeg。轻度用户优先用本地 UI；深度用户可用 CLI、QC-only、preview-only、Windows portable smoke 和 release evidence。
+如果需要进行本地开发或测试：
 
-## 我想检查源码
+- **Cover Machine / MV Studio**：均支持单文件本地打开（`apps/cover-machine/index.html` 或 `apps/mv-studio/index.html`），可直接修改代码调试。
+- **Motion Batch**：提供本地 UI，需要 Node.js 和 FFmpeg 支持，在 `apps/motion-batch` 目录下运行 `npm ci && npm run ui`。
+
 
 ```bash
 npm ci
 npm ci --prefix apps/motion-batch
+npm run build:site
 npm run scan:public
 npm test
 npm run test:cover
@@ -26,19 +29,15 @@ npm run test:mv
 npm run test:motion
 ```
 
-## 我想继续开发或发布
+## 文档
 
 - 总规格：`docs/openfad-release-spec.zh-CN.md`
 - Cover 交接规格：`apps/cover-machine/DESIGN.md`
 - MV 交接规格：`apps/mv-studio/DESIGN.md`
 - Motion 交接规格：`apps/motion-batch/DESIGN.md`
-- 官网 `/openfad` 规格：`docs/website/openfad.zh-CN.md`
-- release 信任矩阵：`docs/release/trust-matrix.zh-CN.md`
+- 官网产品规格：`docs/website/openfad.zh-CN.md`
+- 发布信任矩阵：`docs/release/trust-matrix.zh-CN.md`
 - GitHub Release v0.1.0 正文：`docs/release/v0.1.0.zh-CN.md`
-
-## 当前状态
-
-v0.1.0 是可信开源发布流程的首发候选。请以每个工具 README 和 `docs/verification/` 内的验证记录为准；Motion Batch 的 source zip 不等于 Windows 可执行可信产物。
 
 ## 品牌边界
 

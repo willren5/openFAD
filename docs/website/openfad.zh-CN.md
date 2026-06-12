@@ -1,164 +1,198 @@
-# fadrecords.com/openfad 页面规格
+# openFAD 官网执行规格
 
-Last updated: 2026-06-12
+Last updated: 2026-06-13
 
-## 页面目标
+本文是给 openFAD 后续 Cover、Visualizer、Motion Batch 和官网实现者使用的内部规格。它不是用户页面文案。公开页面必须让非技术音乐人一眼知道该点哪里；技术验证、发布证据和源码说明只放在 GitHub、开发者文档或 release notes 中。
 
-`/openfad` 是 openFAD 的官方下载入口和可信 release 说明页。页面必须让轻度用户能下载/打开工具，也让深度用户能验证 artifact、commit、SHA256、license 和已知限制。
+## 1. 项目边界
 
-## 首屏
+openFAD 是独立开源项目，不属于 FAD-Model-1。任何 openFAD 页面、构建脚本、下载入口、应用代码都必须位于 openFAD 仓库或独立静态部署面，不允许再添加到 FAD-Model-1 web 源码中。
 
-H1：
+官网入口部署在：
 
-```text
-openFAD
-```
+- `https://fadrecords.com/openfad/`
 
-副标题：
+首页只承担一个任务：让用户选择工具。
 
-```text
-FAD Records 发起的中文开源音乐视觉工具集：封面、音乐视觉、动态封面交付。
-```
+- 封面：直接进入浏览器工具。
+- 音乐可视化：直接进入浏览器工具。
+- Apple Music 动态封面裁切：跳转到 GitHub 最新发布，下载本地工具。
 
-主操作：
+## 2. 信息架构
 
-- 下载 Cover Machine
-- 下载 MV Studio
-- 下载 Motion Batch 源码包
-- 查看 GitHub
+### 2.1 首页必须出现的三个主动作
 
-如果 Motion Batch Windows runtime 没有 full-render smoke evidence，不能显示“下载 Windows 版”作为主按钮。
+首页首屏必须只把以下三件事作为主入口，不增加第四个同级入口。
 
-## 工具卡片
+1. 做封面
+   - 链接：`./cover/`
+   - 用户理解：我要做单曲或专辑封面。
+   - 页面文案方向：在浏览器里排版封面，调整文字、背景和导出尺寸。
 
-Cover Machine：
+2. 做音乐可视化
+   - 链接：`./visualizer/`
+   - 用户理解：我要把音乐和图片做成带律动的视频。
+   - 页面文案方向：上传音乐和图片，在浏览器里生成可视化视频。
 
-- 一句话：浏览器里制作发行封面、社媒图和透明图层。
-- 适合：不想装软件的音乐人、厂牌运营、视觉协作者。
-- 下载：`cover-machine` artifact。
-- 运行：解压后打开 `index.html`。
-- 可信状态：web zip + checksum + tests。
+3. 裁切 Apple Music 动态封面
+   - 链接：`https://github.com/willren5/openFAD/releases/latest`
+   - 用户理解：我已经有方形动态封面，需要裁成 Apple Music 常用比例。
+   - 页面文案方向：下载本地工具，把方形动态封面批量裁成 3:4，并生成检查结果。
 
-MV Studio：
+### 2.2 次级入口
 
-- 一句话：浏览器里制作本地音乐视觉和 visualizer。
-- 适合：单曲预告、短视频视觉、演出视觉草稿。
-- 下载：`mv-studio` artifact。
-- 运行：解压后打开 `index.html`。
-- 可信状态：web zip + checksum + tests。
+只能作为弱入口出现：
 
-Motion Batch：
+- GitHub 开源链接：`https://github.com/willren5/openFAD`
+- 源码查看：同 GitHub 仓库。
 
-- 一句话：把方形 motion cover 批量转成 Apple Music `1x1` / `3x4` 交付素材并生成 QC 报告。
-- 适合：发行交付、厂牌批处理、技术审查。
-- 下载：`motion-batch` source artifact。
-- 运行：解压后进入目录，执行 `npm ci && npm run ui`。
-- 可信状态：source zip + tests；Windows runtime 需要额外 full-render smoke。
+不得在首页首屏用“下载源码”“本地打开文件”“运行命令”作为普通用户主入口。
 
-## 下载表
+## 3. 中文优先规则
 
-页面必须从 release manifest 渲染以下字段：
+所有公开可见页面默认中文。英文只允许用于固定产品名、平台名或用户已经熟悉的格式名，例如：
 
-- 工具
-- 平台/类型
-- 可信标签：`Preview`、`Tested` 或 `Stable`
-- 信任范围：说明这是网页包、源码包还是平台 runtime
-- 文件名
-- 版本
-- commit
-- 文件大小
-- SHA256
-- 下载链接
-- 验证状态
-- 已知限制
+- openFAD
+- Cover Machine
+- Visualizer
+- Motion Batch
+- Apple Music
 
-SHA256 必须可复制。不要只把 checksum 放在折叠区。
-不要把 `motion-batch-source` 渲染成 Windows 稳定桌面版；它只能按 manifest 的 `platform: source` 和 `stability: Preview` 展示。
+中文文案必须短、具体、动作明确。不要写“技术证明”“流程说明”“工程状态”。用户来到这里是做图和做视频，不是读发布报告。
 
-## 验证区
+推荐语气：
 
-面向深度用户显示：
+- “开始制作”
+- “下载工具”
+- “在浏览器里完成”
+- “下载到本地处理”
+- “把方形动态封面裁成 3:4”
+
+不推荐语气：
+
+- “请核对发布证据”
+- “按示例开始，深度用户核对文件”
+- “等待某平台可信产物”
+- “当前仅开放某某包”
+
+## 4. 首页视觉与交互要求
+
+首页不是营销落地页，也不是开发者下载页。首屏必须是可操作工具入口。
+
+必须满足：
+
+- H1 直接说明 openFAD 做什么，不写抽象口号。
+- 三个工具入口在桌面首屏可见；移动端向下滚动后仍按“封面、可视化、动态封面裁切”的顺序出现。
+- Cover 和 Visualizer 的按钮必须直接进入对应网页工具。
+- Motion Batch 的按钮必须明确是“下载工具”，不能暗示它是在线网页工具。
+- GitHub 链接可见但弱于三个主动作。
+- 至少使用一个真实产品视觉资产，且构建产物中不能出现缺失图片。
+- 不使用不存在的图片、私有品牌素材、真实艺人素材或未授权封面。
+- 卡片、按钮、预览容器最大圆角为 8px，避免模板感。
+- 不用大面积紫蓝渐变、光球、装饰性背景图或工程仪表盘样式。
+- 移动端不能横向溢出，按钮文字不能挤出容器。
+
+## 5. Cover Machine 入口要求
+
+Cover Machine 是轻度用户和深度用户共用的浏览器工具。
+
+公开入口必须满足：
+
+- 进入 `/cover/` 后，不要求用户先读 README、下载代码或使用命令行。
+- 默认界面中文。
+- 新用户能通过示例、输入歌名艺人、替换背景、导出封面完成一次闭环。
+- 专业用户能继续调整字体、字号、背景位置、导出目标和高级设置。
+- 高级设置可以折叠，但不能删除。
+- 导出失败、图片过大、浏览器能力不足等失败路径要用中文解释，不暴露本机路径、堆栈或内部错误。
+- 默认示例素材必须公开安全，不使用 FAD Records 私有 Logo、艺人照片或真实发行资产。
+
+## 6. Visualizer 入口要求
+
+Visualizer 是直接在浏览器使用的音乐视觉工具。
+
+公开入口必须满足：
+
+- 进入 `/visualizer/` 后，用户能看到上传音频、上传图片、预览、导出视频的核心路径。
+- 默认界面中文。
+- 默认 label 使用 `openFAD`，不使用内部发布名或私有品牌后缀。
+- 新用户可以打开示例并立即预览。
+- 专业用户可以进入高级模式调整视觉系统、项目状态、批量导出和包导入导出。
+- 失败路径必须本地化，例如音频太大、浏览器不支持、导出被阻止、项目恢复失败。
+- 不把原始文件路径、浏览器内部错误、堆栈或调试对象展示给普通用户。
+- 导出文件名使用 openFAD 公共标记，不使用私有品牌后缀。
+
+## 7. Motion Batch 入口要求
+
+Motion Batch 是本地工具，不做成在线网页工具。
+
+公开入口必须满足：
+
+- 首页按钮文字使用“下载工具”或等价中文。
+- 文案必须说明它用于 Apple Music 动态封面裁切。
+- 不承诺用户可以在网页里直接处理本地视频。
+- GitHub 发布页必须中文优先，说明适用平台、打开方式、已知限制和回退路径。
+- 本地工具 UI 继续保留中文、路径选择、队列、预览、检查结果和失败恢复。
+- Motion Batch 必须继续保持单一 video stream 输入约束；遇到多 video stream 输入时要明确拒绝并本地化错误。
+
+## 8. 公开页面禁用内容
+
+以下内容可以存在于开发者文档或 GitHub 发布说明中，但不能出现在 `fadrecords.com/openfad/` 首页、Cover 首屏、Visualizer 首屏或面向普通用户的下载按钮旁：
+
+- 校验散列、发布清单、构建命令、自动化流水线、测试证据等发布工程细节。
+- “可信门槛”“运行时证据”“完整渲染冒烟”等只有工程师能理解的说法。
+- 让普通用户复制命令、打开源码文件、核对内部文件名的说明。
+- Windows 或 macOS 技术状态作为主按钮文案。
+- 本机路径、服务器路径、IP、密钥、环境变量、私有素材路径。
+
+## 9. 构建产物
+
+静态站构建输出为 `dist/openfad-site/`，包含：
+
+- `/index.html`：openFAD 首页。
+- `/cover/index.html`：Cover Machine。
+- `/cover/vendor/html2canvas.min.js`：Cover 导出依赖。
+- `/visualizer/index.html`：MV Studio / Visualizer。
+- `/assets/*`：首页使用的公开安全视觉资产。
+
+`npm run build:site` 必须能从干净仓库生成上述结构。首页引用的本地资源必须真实存在于构建产物中。
+
+## 10. 验收清单
+
+每次修改官网或工具入口后，至少执行：
 
 ```bash
-npm ci
-npm ci --prefix apps/motion-batch
+npm run build:site
+node --test scripts/build-site.test.mjs
 npm run scan:public
 npm test
-npm run package:web
-npm run checksums
-npm run release:manifest
 ```
 
-文案规则：
+浏览器检查必须覆盖：
 
-- 可以说“这些 artifact 由 release manifest 记录 SHA256”。
-- 可以说“本地验证命令见 docs/verification”。
-- 只有 `ciRunUrl` 非空且对应当前 commit 时，才可以说“CI 已验证”。
-- 不能说“Windows 版可信可用”，除非 Windows full-render smoke evidence 通过。
+- `http://127.0.0.1:<port>/`
+- `http://127.0.0.1:<port>/cover/`
+- `http://127.0.0.1:<port>/visualizer/`
 
-## 品牌和授权边界
+必须确认：
 
-页面必须显示：
+- 首页三条入口链接正确。
+- 首页无破图、无 404 静态资源。
+- 首页没有普通用户看不懂的工程发布语言。
+- 移动端无横向滚动。
+- Cover 和 Visualizer 页面能直接打开。
+- Motion Batch 主按钮跳转 GitHub 最新发布。
 
-```text
-代码开源不代表 FAD Records 品牌、Logo、艺人素材或真实发行资产开源。openFAD 示例素材仅为公开安全占位内容。
-```
+## 11. GitHub 与官网发布
 
-链接：
+GitHub 是开源和下载源，官网是普通用户入口。
 
-- `LICENSE`
-- `NOTICE`
-- `TRADEMARKS.md`
-- GitHub repository
-- Release manifest JSON
+发布顺序：
 
-## 空状态和失败状态
+1. openFAD 仓库完成测试、构建和 public safety scan。
+2. 提交并推送 openFAD 仓库。
+3. GitHub Release 提供 Motion Batch 下载和中文说明。
+4. 官网部署 `dist/openfad-site/` 到 `/openfad/` 静态入口。
+5. 线上验证 `/openfad/`、`/openfad/cover/`、`/openfad/visualizer/`。
+6. 再次确认 FAD-Model-1 web 中没有重新引入 openFAD 页面源码。
 
-manifest 加载失败：
-
-```text
-暂时无法读取 release manifest。请稍后刷新，或前往 GitHub Releases 查看下载。
-```
-
-checksum 缺失：
-
-```text
-该 artifact 缺少 SHA256，暂不作为可信下载展示。
-```
-
-CI URL 为空：
-
-```text
-本版本提供本地验证证据；CI 链接尚未写入 manifest。
-```
-
-Motion Windows runtime 未开放：
-
-```text
-Windows 可执行包等待 full-render smoke evidence；当前仅开放源码包。
-```
-
-## SEO / 分享
-
-title：
-
-```text
-openFAD｜中文开源音乐视觉工具集
-```
-
-description：
-
-```text
-下载 openFAD Cover Machine、MV Studio 和 Motion Batch：FAD Records 发起的中文开源音乐视觉工具集，附 SHA256、release manifest 和验证说明。
-```
-
-OG 图应使用公开安全 openFAD 图形，不得使用 FAD Records 私有 Logo 或真实艺人素材。
-
-## 发布流程
-
-1. release owner 在 openFAD 仓库生成 clean manifest。
-2. 将 artifact 上传 GitHub Releases。
-3. 官网同步 manifest URL 或复制 manifest 内容。
-4. `/openfad` 页面从 manifest 渲染下载表。
-5. 人工检查页面上没有过度信任声明。
-6. 发布后记录官网 URL、GitHub release URL、manifest commit。
+官网部署只应该修改服务器静态路由或静态文件，不应该把 openFAD 重新写回 FAD-Model-1。
