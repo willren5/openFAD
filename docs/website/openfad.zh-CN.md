@@ -35,9 +35,9 @@ openFAD 是独立开源项目，不属于 FAD-Model-1。任何 openFAD 页面、
    - 页面文案方向：上传音乐和图片，在浏览器里生成可视化视频。
 
 3. 裁切 Apple Music 动态封面
-   - 链接：`https://github.com/willren5/openFAD/releases/latest`
+   - 链接：`./downloads/openfad-motion-batch-source-<version>.zip`
    - 用户理解：我已经有方形动态封面，需要裁成 Apple Music 常用比例。
-   - 页面文案方向：下载本地工具，把方形动态封面批量裁成 3:4，并生成检查结果。
+   - 页面文案方向：从官网直接下载本地工具，把方形动态封面批量裁成 3:4，并生成检查结果。
 
 ### 2.2 次级入口
 
@@ -47,6 +47,7 @@ openFAD 是独立开源项目，不属于 FAD-Model-1。任何 openFAD 页面、
 - 源码查看：同 GitHub 仓库。
 
 不得在首页首屏用“下载源码”“本地打开文件”“运行命令”作为普通用户主入口。
+Motion Batch 主按钮不得跳到 GitHub Releases 页面；GitHub 只作为弱开源链接出现。
 
 ## 3. 中文优先规则
 
@@ -86,6 +87,7 @@ openFAD 是独立开源项目，不属于 FAD-Model-1。任何 openFAD 页面、
 - Cover 和 Visualizer 的按钮必须直接进入对应网页工具。
 - Motion Batch 的按钮必须明确是“下载工具”，不能暗示它是在线网页工具。
 - GitHub 链接可见但弱于三个主动作。
+- Motion Batch 主按钮必须从官网静态目录直接下载文件，不能把普通用户送到 GitHub Releases 自己找文件。
 - 至少使用一个真实产品视觉资产，且构建产物中不能出现缺失图片。
 - 不使用不存在的图片、私有品牌素材、真实艺人素材或未授权封面。
 - 卡片、按钮、预览容器最大圆角为 8px，避免模板感。
@@ -130,6 +132,7 @@ Motion Batch 是本地工具，不做成在线网页工具。
 - 首页按钮文字使用“下载工具”或等价中文。
 - 文案必须说明它用于 Apple Music 动态封面裁切。
 - 不承诺用户可以在网页里直接处理本地视频。
+- 官网必须提供站内直接下载链接，例如 `/openfad/downloads/openfad-motion-batch-source-<version>.zip`。
 - GitHub 发布页必须中文优先，说明适用平台、打开方式、已知限制和回退路径。
 - 本地工具 UI 继续保留中文、路径选择、队列、预览、检查结果和失败恢复。
 - Motion Batch 必须继续保持单一 video stream 输入约束；遇到多 video stream 输入时要明确拒绝并本地化错误。
@@ -180,7 +183,7 @@ npm test
 - 首页没有普通用户看不懂的工程发布语言。
 - 移动端无横向滚动。
 - Cover 和 Visualizer 页面能直接打开。
-- Motion Batch 主按钮跳转 GitHub 最新发布。
+- Motion Batch 主按钮从官网下载目录直接下载。
 
 ## 11. GitHub 与官网发布
 
@@ -191,8 +194,9 @@ GitHub 是开源和下载源，官网是普通用户入口。
 1. openFAD 仓库完成测试、构建和 public safety scan。
 2. 提交并推送 openFAD 仓库。
 3. GitHub Release 提供 Motion Batch 下载和中文说明。
-4. 官网部署 `dist/openfad-site/` 到 `/openfad/` 静态入口。
-5. 线上验证 `/openfad/`、`/openfad/cover/`、`/openfad/visualizer/`。
-6. 再次确认 FAD-Model-1 web 中没有重新引入 openFAD 页面源码。
+4. 官网 `dist/openfad-site/downloads/` 同步 Motion Batch 下载文件。
+5. 官网部署 `dist/openfad-site/` 到 `/openfad/` 静态入口。
+6. 线上验证 `/openfad/`、`/openfad/cover/`、`/openfad/visualizer/` 和下载文件。
+7. 再次确认 FAD-Model-1 web 中没有重新引入 openFAD 页面源码。
 
 官网部署只应该修改服务器静态路由或静态文件，不应该把 openFAD 重新写回 FAD-Model-1。

@@ -81,7 +81,6 @@
       font-weight: 650;
     }
 
-    .source-link,
     .footer-link {
       color: var(--muted);
       text-decoration: none;
@@ -89,9 +88,7 @@
       font-weight: 700;
     }
 
-    .source-link:hover,
     .footer-link:hover,
-    .source-link:focus-visible,
     .footer-link:focus-visible {
       color: var(--text);
       outline: none;
@@ -362,10 +359,6 @@
         display: none;
       }
 
-      .source-link {
-        font-size: 12px;
-      }
-
       .main-grid {
         gap: 22px;
         padding: 24px 0 28px;
@@ -398,7 +391,6 @@
   <div class="shell">
     <header class="topbar">
       <a class="brand" href="./" aria-label="openFAD 首页">openFAD <span>音乐视觉工具集</span></a>
-      <a class="source-link" href="https://github.com/willren5/openFAD" target="_blank" rel="noopener noreferrer">GitHub 开源</a>
     </header>
 
     <main class="main-grid">
@@ -409,7 +401,7 @@
         <div class="format-line" aria-label="openFAD 支持的创作任务">
           <span>1:1 封面</span>
           <span>音乐可视化</span>
-          <span>Apple Music 3:4</span>
+          <span>Apple Music 动态封面</span>
         </div>
 
         <div class="preview-zone" aria-label="openFAD 工具预览">
@@ -453,20 +445,20 @@
           <span class="tool-cta">开始制作</span>
         </a>
 
-        <a class="tool-link motion" href="https://github.com/willren5/openFAD/releases/latest" target="_blank" rel="noopener noreferrer">
+        <a class="tool-link motion" href="./downloads/openfad-motion-batch-source-0.1.0.zip" download>
           <span>
-            <span class="tool-kicker">Motion Batch</span>
+            <span class="tool-kicker">动态封面批量裁切</span>
             <strong class="tool-title">裁切 Apple Music 动态封面</strong>
-            <span class="tool-copy">下载本地工具，把方形动态封面批量裁成 Apple Music 常用的 3:4 版本，并生成检查结果。</span>
+            <span class="tool-copy">下载到本地，把方形动态封面批量裁成 Apple Music 常用的 3:4 版本，并生成检查结果。</span>
           </span>
-          <span class="tool-cta">下载工具</span>
+          <span class="tool-cta">下载裁切工具</span>
         </a>
       </nav>
     </main>
 
     <footer>
       <p>openFAD 是 FAD Records 发起的开源工具项目。</p>
-      <a class="footer-link" href="https://github.com/willren5/openFAD" target="_blank" rel="noopener noreferrer">查看源码</a>
+      <a class="footer-link" href="https://github.com/willren5/openFAD" target="_blank" rel="noopener noreferrer">GitHub 开源项目</a>
     </footer>
   </div>
 </body>

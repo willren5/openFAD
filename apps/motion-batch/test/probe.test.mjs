@@ -198,7 +198,9 @@ setInterval(() => {}, 1000);
   const controller = new AbortController();
   const assertion = assert.rejects(() => runProcess(wrapperScriptPath, [], {
     timeoutMs: 10_000,
-    killTimeoutMs: 100,
+    // Leave enough room for both parent and grandchild SIGTERM handlers to flush
+    // marker files before the SIGKILL fallback runs on loaded CI/dev hosts.
+    killTimeoutMs: 1000,
     signal: controller.signal
   }), (error) => {
     assert.equal(error.name, "AbortError");
