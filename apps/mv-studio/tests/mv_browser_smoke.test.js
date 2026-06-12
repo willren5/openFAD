@@ -112,9 +112,10 @@ function filePayload(name, mimeType, buffer) {
   return { name, mimeType, buffer };
 }
 
-function appHref({ pro = true } = {}) {
+function appHref({ pro = true, testHooks = false } = {}) {
   const url = new URL(pathToFileURL(htmlPath).href);
   if (pro) url.searchParams.set('pro', '1');
+  if (testHooks) url.searchParams.set('test', '1');
   return url.href;
 }
 
@@ -3498,6 +3499,7 @@ test('stopping preview returns keyboard focus to visible preview action', { skip
   });
   page.on('pageerror', (err) => pageErrors.push(err.message));
   await page.addInitScript(() => {
+    window.localStorage?.setItem('fad-mv-autosave', '0');
     const nativePause = HTMLMediaElement.prototype.pause;
     HTMLMediaElement.prototype.play = function play() {
       return Promise.resolve();
@@ -3507,7 +3509,7 @@ test('stopping preview returns keyboard focus to visible preview action', { skip
     };
   });
 
-  await gotoApp(page);
+  await gotoApp(page, { testHooks: true });
   await page.waitForFunction(() => document.readyState === 'complete');
   await page.setInputFiles('#in-cover', filePayload('cover.png', 'image/png', tinyPng));
   await page.waitForFunction(() => window.AssetManager?.status?.cover?.valid === true);
@@ -3552,10 +3554,20 @@ test('stopping preview returns keyboard focus to visible preview action', { skip
     document.querySelector('#btn-stop-preview')?.addEventListener('click', () => {
       forcedActiveElement = document.querySelector('#in-audio');
       forceAudioMetadataDrop = true;
+      try {
+        const token = window.__openFADTestHooks.startAutoSaveJob('autosave');
+        window.__testAutosaveStarted = true;
+        window.setTimeout(() => window.__openFADTestHooks.finishAutoSaveJob(token), 160);
+      } catch (err) {
+        window.__testAutosaveError = err?.message || String(err);
+      }
     }, { capture: true, once: true });
   });
   await page.click('#btn-stop-preview');
   await page.waitForFunction(() => window.Machine?.status === 'IDLE');
+  await page.waitForFunction(() => window.__testAutosaveStarted === true || !!window.__testAutosaveError);
+  assert.equal(await page.evaluate(() => window.__testAutosaveError || ''), '');
+  await page.waitForFunction(() => window.AutoSave?.status?.saving === false);
   await page.waitForFunction(() => {
     const preview = document.querySelector('#btn-preview');
     const startControls = document.querySelector('#start-controls');

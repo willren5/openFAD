@@ -1246,6 +1246,7 @@ const UI = {
   _lastFocusedBeforeError: null,
   _lastState: 'IDLE',
   _focusBeforeStateChange: null,
+  _pendingActionFocusTargetId: '',
   holdReadinessWarnings(ms = 3000) {
     this._warnHoldUntilMs = Math.max(this._warnHoldUntilMs || 0, performance.now() + ms);
   },
@@ -1412,6 +1413,7 @@ const UI = {
       state === 'RECORDING' ||
       state === 'EXPORTING' ||
       (state === 'IDLE' && previousState === 'PREVIEWING');
+    if (forceActionFocus) this._pendingActionFocusTargetId = targetId;
     const shouldRestoreFocus = () => {
       const active = document.activeElement;
       if (!active || active === document.body || active === previousFocus || groups.some((group) => group.contains(active))) return true;
@@ -1424,7 +1426,11 @@ const UI = {
       if (!shouldRestoreFocus()) return true;
       if (!this.isVisibleFocusable(target)) return false;
       try { target.focus({ preventScroll: true }); } catch (_) {}
-      return document.activeElement === target;
+      if (document.activeElement === target) {
+        if (this._pendingActionFocusTargetId === targetId) this._pendingActionFocusTargetId = '';
+        return true;
+      }
+      return false;
     };
     let attempts = 0;
     const retryFocus = () => {
@@ -1438,6 +1444,47 @@ const UI = {
     }
     if (focusTarget()) return;
     window.setTimeout(retryFocus, 0);
+  },
+  preserveFocusedActionForUnlock() {
+    const active = document.activeElement;
+    if (!(active instanceof HTMLElement)) return;
+    if (['btn-preview', 'btn-rec', 'btn-stop-preview', 'btn-finish'].includes(active.id)) {
+      this._pendingActionFocusTargetId = active.id;
+    }
+  },
+  restorePendingActionFocus() {
+    const targetId = this._pendingActionFocusTargetId;
+    if (!targetId) return;
+    const allowedStates = {
+      'btn-preview': ['IDLE'],
+      'btn-rec': ['IDLE'],
+      'btn-stop-preview': ['PREVIEWING'],
+      'btn-finish': ['WARMING', 'RECORDING', 'EXPORTING']
+    }[targetId];
+    if (allowedStates && !allowedStates.includes(Machine.status)) {
+      this._pendingActionFocusTargetId = '';
+      return;
+    }
+
+    const target = Dom[targetId];
+    if (!this.isVisibleFocusable(target)) return;
+
+    const active = document.activeElement;
+    const groups = ['start-controls', 'stop-controls', 'preview-controls']
+      .map((id) => Dom[id])
+      .filter(Boolean);
+    const activeInActionGroup = active instanceof HTMLElement && groups.some((group) => group.contains(active));
+    const blockerFocused = active instanceof HTMLElement && active.id === 'primary-action-blocker';
+    if (active instanceof HTMLElement && active !== document.body && active !== target && !activeInActionGroup && !blockerFocused) {
+      const interactive = active.matches('a[href], button, input, select, textarea, [contenteditable="true"], [tabindex]:not([tabindex="-1"])');
+      if (interactive) {
+        this._pendingActionFocusTargetId = '';
+        return;
+      }
+    }
+
+    try { target.focus({ preventScroll: true }); } catch (_) {}
+    if (document.activeElement === target) this._pendingActionFocusTargetId = '';
   },
   isVisibleFocusable(el) {
     if (!(el instanceof HTMLElement) || !el.isConnected) return false;
@@ -4587,6 +4634,7 @@ const AutoSave = {
     if (Store.autosaveJob.running) throw new Error(Store.autosaveJob.label || 'Autosave already in progress');
     const token = Store.autosaveJob.token + 1;
     const label = source === 'manual' ? 'SNAPSHOT SAVING' : 'AUTOSAVE SAVING';
+    UI.preserveFocusedActionForUnlock();
     Store.autosaveJob = { running: true, label, token, source };
     UI.updateState(Machine.status, { silent: true });
     Engine.checkReady();
@@ -7939,6 +7987,7 @@ const Engine = {
     UI.setControlReason(Dom['btn-preview'], Dom['btn-preview'].disabled, previewReason, 'preflight-summary');
     UI.setControlReason(Dom['btn-rec'], Dom['btn-rec'].disabled, recordReason, 'preflight-summary');
     UI.updatePrimaryActionBlocker(readiness);
+    UI.restorePendingActionFocus();
 
     if (!readiness.recordReady && Machine.status === 'IDLE' && performance.now() >= (UI._warnHoldUntilMs || 0)) {
       const blockerText = readiness.blockers?.length ? readiness.blockers.join(' · ') : reasons.join(', ');
@@ -9674,6 +9723,16 @@ window.AutoSave = Object.freeze({
     });
   }
 });
+if (new URLSearchParams(window.location.search).get('test') === '1') {
+  window.__openFADTestHooks = Object.freeze({
+    startAutoSaveJob(source = 'autosave') {
+      return AutoSave.startSaveJob(source);
+    },
+    finishAutoSaveJob(token) {
+      return AutoSave.finishSaveJob(token);
+    }
+  });
+}
 window.RenderReport = Object.freeze({
   get snapshot() {
     return Store.lastRenderReport ? JSON.parse(JSON.stringify(Store.lastRenderReport)) : null;

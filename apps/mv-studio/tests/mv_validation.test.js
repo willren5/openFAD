@@ -3413,8 +3413,29 @@ test('idle state transitions refresh readiness after loop shutdown', () => {
   assert.ok(checkReadyAt > stopLoopAt, 'IDLE transition should refresh controls after loop shutdown');
 });
 
+test('pending action focus survives autosave readiness locks', () => {
+  const uiBody = script.match(/const UI = \{([\s\S]*?)\n\};\n\nconst Machine/)?.[1] || '';
+  assert.ok(uiBody, 'UI body should be present');
+  assert.match(uiBody, /_pendingActionFocusTargetId: ''/);
+  assert.match(uiBody, /preserveFocusedActionForUnlock\(\) \{/);
+  assert.match(uiBody, /restorePendingActionFocus\(\) \{/);
+
+  const moveFocusBody = script.match(/moveFocusForState\(state, previousState\) \{([\s\S]*?)\n  \},\n  preserveFocusedActionForUnlock/)?.[1] || '';
+  assert.ok(moveFocusBody, 'UI.moveFocusForState body should be present');
+  assert.match(moveFocusBody, /if \(forceActionFocus\) this\._pendingActionFocusTargetId = targetId/);
+  assert.match(moveFocusBody, /this\._pendingActionFocusTargetId === targetId/);
+
+  const checkReadyBody = script.match(/checkReady\(\) \{([\s\S]*?)\n  \},\n\n  setupPerformanceObserver/)?.[1] || '';
+  assert.ok(checkReadyBody, 'Engine.checkReady body should be present');
+  assert.match(checkReadyBody, /UI\.restorePendingActionFocus\(\)/);
+
+  const startSaveJobBody = script.match(/startSaveJob\(source = 'autosave'\) \{([\s\S]*?)\n  \},\n\n  finishSaveJob/)?.[1] || '';
+  assert.ok(startSaveJobBody, 'AutoSave.startSaveJob body should be present');
+  assert.match(startSaveJobBody, /UI\.preserveFocusedActionForUnlock\(\)/);
+});
+
 test('state transition focus restore prioritizes visible action focus over stale controls', () => {
-  const moveFocusBody = script.match(/moveFocusForState\(state, previousState\) \{([\s\S]*?)\n  \},\n  isVisibleFocusable/)?.[1] || '';
+  const moveFocusBody = script.match(/moveFocusForState\(state, previousState\) \{([\s\S]*?)\n  \},\n  preserveFocusedActionForUnlock/)?.[1] || '';
   assert.ok(moveFocusBody, 'UI.moveFocusForState body should be present');
   assert.match(moveFocusBody, /const isEditableFocus = \(el\) =>/);
   assert.match(moveFocusBody, /const isNonEditingInputFocus = \(el\) =>/);
