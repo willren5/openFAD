@@ -312,12 +312,10 @@ function flacStreamInfo({ sampleRate = 44100, channels = 2, bitsPerSample = 16, 
 }
 
 function realFlacBuffer(durationSec = 0.25) {
-  const ffmpeg = childProcess.execFileSync('/bin/zsh', ['-lc', 'command -v ffmpeg || true'], { encoding: 'utf8' }).trim();
-  if (!ffmpeg) return Buffer.from(tinyRealFlac);
   const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'fad-mv-flac-'));
   const out = path.join(dir, 'tone.flac');
   try {
-    childProcess.execFileSync(ffmpeg, [
+    childProcess.execFileSync('ffmpeg', [
       '-hide_banner',
       '-loglevel', 'error',
       '-f', 'lavfi',
