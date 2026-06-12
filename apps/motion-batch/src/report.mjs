@@ -64,26 +64,26 @@ function throwIfAborted(signal) {
 
 export function renderHtmlReport(report) {
   const safeReport = sanitizeReport(report);
-  const status = safeReport.ok ? "PASS" : "FAIL";
+  const status = safeReport.ok ? "通过 / PASS" : "失败 / FAIL";
   const summaryRows = renderTechnicalSummaryRows(safeReport.items);
   const issues = safeReport.items.flatMap((item) => item.errors.map((error) => ({
     target: item.target,
-    severity: "error",
+    severity: "错误 / error",
     message: error
   }))).concat(safeReport.items.flatMap((item) => item.warnings.map((warning) => ({
     target: item.target,
-    severity: "warning",
+    severity: "警告 / warning",
     message: warning
   }))));
 
   const rows = issues.length === 0
-    ? "<tr><td colspan=\"3\">No issues found.</td></tr>"
+    ? "<tr><td colspan=\"3\">未发现问题 / No issues found.</td></tr>"
     : issues.map((issue) => {
       return `<tr><td>${escapeHtml(issue.target)}</td><td>${escapeHtml(issue.severity)}</td><td>${escapeHtml(issue.message)}</td></tr>`;
     }).join("\n");
 
   return `<!doctype html>
-<html lang="en">
+<html lang="zh-CN">
 <head>
   <meta charset="utf-8">
   <title>Apple Motion QC - ${escapeHtml(status)}</title>
@@ -97,16 +97,16 @@ export function renderHtmlReport(report) {
   </style>
 </head>
 <body>
-  <h1>Apple Motion QC <span class="status">${escapeHtml(status)}</span></h1>
-  <p>Source: ${escapeHtml(safeReport.source)}</p>
-  <h2>Technical Summary</h2>
+  <h1>Apple Motion 质检 / Apple Motion QC <span class="status">${escapeHtml(status)}</span></h1>
+  <p>来源 / Source: ${escapeHtml(safeReport.source)}</p>
+  <h2>技术摘要 / Technical Summary</h2>
   <table>
-    <thead><tr><th>Target</th><th>Codec</th><th>Dimensions</th><th>Duration</th><th>Frame Rate</th><th>Bitrate</th><th>Color Space</th><th>Color Transfer</th><th>Color Primaries</th></tr></thead>
+    <thead><tr><th>目标 / Target</th><th>编码 / Codec</th><th>尺寸 / Dimensions</th><th>时长 / Duration</th><th>帧率 / Frame Rate</th><th>码率 / Bitrate</th><th>色彩空间 / Color Space</th><th>传递函数 / Color Transfer</th><th>色彩原色 / Color Primaries</th></tr></thead>
     <tbody>${summaryRows}</tbody>
   </table>
-  <h2>Issues</h2>
+  <h2>问题 / Issues</h2>
   <table>
-    <thead><tr><th>Target</th><th>Severity</th><th>Message</th></tr></thead>
+    <thead><tr><th>目标 / Target</th><th>级别 / Severity</th><th>说明 / Message</th></tr></thead>
     <tbody>${rows}</tbody>
   </table>
 </body>
@@ -157,7 +157,7 @@ function sanitizeMessages(messages) {
 
 function renderTechnicalSummaryRows(items) {
   if (items.length === 0) {
-    return "<tr><td colspan=\"9\">No technical summary available.</td></tr>";
+    return "<tr><td colspan=\"9\">暂无技术摘要 / No technical summary available.</td></tr>";
   }
 
   return items.map((item) => {

@@ -1,6 +1,6 @@
 # openFAD Release Trust Matrix
 
-Last updated: 2026-06-12
+Last updated: 2026-06-13
 
 ## 信任等级
 
@@ -28,7 +28,7 @@ Level 3 - Trusted Public Release：
 - Level 2 通过。
 - GitHub release artifact 与 manifest 一致。
 - 官网 `/openfad` 指向同一个 manifest。
-- verification docs 更新到当前 commit。
+- verification docs 更新到当前 commit，并记录当前测试计数。
 - Windows runtime 产物还需要对应平台 full-render smoke。
 
 ## Artifact 矩阵
@@ -99,4 +99,3 @@ CI 链接为空时，本页展示本地验证证据和 manifest，不宣称 CI �
 - 记录 `/openfad` 页面 URL。
 - 抽查下载后的 zip 是否包含 `LICENSE`、`NOTICE`、`TRADEMARKS.md`。
 - 抽查官网 SHA256 与 manifest 一致。
-

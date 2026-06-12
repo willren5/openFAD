@@ -1,10 +1,10 @@
 # Motion Batch v0.1.0 Verification
 
-Date: 2026-06-12
+Date: 2026-06-13
 
 ## Environment
 
-- Worktree: isolated `openfad-trusted-release` branch worktree
+- Worktree: `/tmp/openFAD-public-main`, branch `ci-focus-fix`
 - Source: migrated from an internal Motion Batch snapshot, then renamed and filtered for public openFAD release boundaries.
 - Node: `v25.9.0`
 - OS: macOS 26.3.1, build 25D2128, arm64
@@ -29,10 +29,10 @@ npm test
 Output summary from repository root:
 
 - Cover Machine: `tests 1`, `pass 1`, `fail 0`.
-- MV Studio: `tests 286`, `pass 286`, `fail 0`.
+- MV Studio: `tests 288`, `pass 288`, `fail 0`.
 - Motion Batch: `tests 488`, `pass 488`, `fail 0`.
 - Root scanner tests: `tests 7`, `pass 7`, `fail 0`.
-- Motion Batch coverage included atomic outputs, batch recovery, render/QC failure paths, encoder selection, CLI formatting, desktop bridge security, UI state/recovery, source graph visibility, spec validation, single-stream enforcement, and local API hardening.
+- Motion Batch coverage included atomic outputs, batch recovery, render/QC failure paths, encoder selection, Chinese-first CLI/report diagnostics, desktop bridge security, UI state/recovery, source graph visibility, spec validation, single-stream enforcement, and local API hardening.
 
 ```bash
 node --test --test-concurrency=1 test/cli.test.mjs test/report.test.mjs test/probe.test.mjs test/qc.test.mjs test/desktop-picker.test.mjs test/renderer-behavior.test.mjs test/ui-server.test.mjs
@@ -92,7 +92,7 @@ Output summary from repository root:
 
 ## Covered Behaviors
 
-- 中文首屏 README and quickstart.
+- 中文首屏 README、quickstart、recovery 文档、CLI 诊断和 HTML QC 报告。
 - Local UI and CLI entry points.
 - Single video stream rule preserved in spec, FFmpeg args, QC, reports, and Windows smoke verifier.
 - No committed `node_modules`, `dist`, `build`, vendor FFmpeg binaries, private outputs, local caches, or real release assets.

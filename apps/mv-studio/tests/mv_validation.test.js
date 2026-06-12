@@ -238,7 +238,7 @@ test('preflight panel reports readiness before export', () => {
   assert.match(script, /updatePreflight/);
   assert.match(script, /recordReady/);
   assert.match(script, /estimatedSizeBytes/);
-  assert.match(script, /const summaryText = status\.recordReady \? '预检通过 \/ READY TO RENDER' : `需要检查：\$\{status\.blockers\[0\] \|\| '等待素材 \/ Waiting'\}`/);
+  assert.match(script, /const summaryText = status\.recordReady \? '预检通过 \/ READY TO RENDER' : `需要检查：\$\{UI\.localizeUserMessage\(status\.blockers\[0\] \|\| '等待素材 \/ Waiting'\)\}`/);
   assert.match(script, /Dom\['preflight-summary'\]\.textContent = summaryText/);
 });
 
@@ -846,7 +846,7 @@ test('non-fatal UI warnings do not pollute browser error logs', () => {
   const showErrorBody = script.match(/showError\(msg, level = 'FATAL'(?:, opts = \{\})?\) \{([\s\S]*?)\n  \},\n  dismissError/)?.[1] || '';
   assert.ok(showErrorBody, 'UI.showError body should be present');
   assert.match(showErrorBody, /if \(level === 'FATAL'\) \{\s*Logger\.error/);
-  assert.match(showErrorBody, /else \{\s*Logger\.warn\(msg\)/);
+  assert.match(showErrorBody, /else \{\s*const displayMsg = this\.localizeUserMessage\(msg\);\s*Logger\.warn\(msg\)/);
   assert.match(showErrorBody, /this\.holdReadinessWarnings\(\)/);
 });
 
@@ -866,8 +866,8 @@ test('non-fatal warnings retain full recovery text outside the truncated status 
   assert.match(script, /clearWarnings\(\) \{/);
   const showErrorBody = script.match(/showError\(msg, level = 'FATAL'(?:, opts = \{\})?\) \{([\s\S]*?)\n  \},\n  dismissError/)?.[1] || '';
   assert.ok(showErrorBody, 'UI.showError body should be present');
-  assert.match(showErrorBody, /this\.recordWarning\(msg\)/);
-  assert.match(showErrorBody, /this\.log\(`WARN: \$\{msg\}`, 'warn', \{ live: false \}\)/);
+  assert.match(showErrorBody, /this\.recordWarning\(displayMsg\)/);
+  assert.match(showErrorBody, /this\.log\(`警告：\$\{displayMsg\}`, 'warn', \{ live: false \}\)/);
   assert.match(script, /get warnings\(\) \{/);
   const publicUiBody = script.match(/window\.UI = Object\.freeze\(\{([\s\S]*?)\n\}\);/)?.[1] || '';
   assert.ok(publicUiBody, 'public UI facade should be present');
@@ -1043,7 +1043,7 @@ test('starting a new render marks previous render reports stale before download'
   assert.ok(updatePanelBody, 'RenderReport.updatePanel body should be present');
   assert.match(updatePanelBody, /const reportStale = !!report\?\.output\?\.stale/);
   assert.match(updatePanelBody, /UI\.setControlReason\(Dom\['btn-download-report'\], !report \|\| reportStale, downloadReason, 'render-report-summary'\)/);
-  assert.match(updatePanelBody, /REPORT STALE: \$\{report\.output\.staleReason \|\| 'Previous render'\}/);
+  assert.match(updatePanelBody, /报告已过期：\$\{UI\.localizeUserMessage\(report\.output\.staleReason \|\| 'Previous render'\)\} \/ REPORT STALE/);
 
   const recorderBody = script.match(/const Recorder = \{([\s\S]*?)\n\};\n\nwindow\.LIMITS/)?.[1] || '';
   assert.ok(recorderBody, 'Recorder body should be present');
@@ -1507,17 +1507,17 @@ test('fadmv package jobs report stage progress through the live progressbar', ()
   assert.match(script, /const progressLabel = this\.progressAriaLabel\(label\)/);
   assert.match(script, /Dom\['progress-fill'\]\.setAttribute\('aria-label', `进度 \/ \$\{label\} progress`\)/);
   assert.match(script, /Dom\['progress-fill'\]\.setAttribute\('aria-valuetext', `进度 \$\{pct\.toFixed\(1\)\}% \/ \$\{progressLabel\} \$\{pct\.toFixed\(1\)\}%`\)/);
-  assert.match(script, /const statusMsg = `\$\{label\}: \$\{pct\.toFixed\(1\)\}%`/);
+  assert.match(script, /const statusMsg = `\$\{progressLabel\}: \$\{pct\.toFixed\(1\)\}%`/);
   assert.match(script, /Dom\['status-text'\]\.textContent = statusMsg/);
   assert.match(script, /Dom\['status-text'\]\.title = statusMsg/);
   const progressBody = script.match(/progress\(curr, total, label = 'REC'\) \{([\s\S]*?)\n  \},\n  log/)?.[1] || '';
   assert.match(progressBody, /const liveBucket = Math\.floor\(pct \/ 5\)/);
-  assert.match(progressBody, /Dom\['status-live'\]\.textContent = `\$\{label\}: \$\{pct\.toFixed\(1\)\}%`/);
+  assert.match(progressBody, /Dom\['status-live'\]\.textContent = `\$\{progressLabel\}: \$\{pct\.toFixed\(1\)\}%`/);
   assert.match(script, /progressPending\(label = 'WORKING'\)/);
-  assert.match(script, /const statusMsg = `\$\{label\}: pending`/);
+  assert.match(script, /const statusMsg = `\$\{progressLabel\}: 待完成 \/ pending`/);
   assert.match(script, /progressAriaLabel\(label = 'REC'\)/);
   assert.match(script, /Dom\['progress-fill'\]\.setAttribute\('aria-valuetext', `进度待定 \/ \$\{progressLabel\} pending`\)/);
-  assert.match(script, /Dom\['status-live'\]\.textContent = msg/);
+  assert.match(script, /Dom\['status-live'\]\.textContent = statusMsg/);
   assert.match(script, /updatePackageProgress\(stage, loaded, total\)/);
   assert.match(script, /UI\.progress\(loaded, total, stage\)/);
   assert.match(script, /Store\.packageProgress = \{ stage: '', loaded: 0, total: 0 \}/);
@@ -2550,7 +2550,7 @@ test('batch cancellation exposes a persistent cancelling state while teardown is
   assert.ok(renderBody, 'BatchQueue.render body should be present');
   assert.match(renderBody, /const restoring = Store\.batch\.running && Store\.batch\.restoring/);
   assert.match(renderBody, /const cancelling = Store\.batch\.running && Store\.batch\.cancelRequested && !restoring/);
-  assert.match(renderBody, /restoring \? 'RESTORING PROJECT' : \(cancelling \? 'CANCELLING' : 'RUNNING'\)/);
+  assert.match(renderBody, /restoring \? '正在恢复原项目 \/ RESTORING PROJECT' : \(cancelling \? '正在取消 \/ CANCELLING' : '运行中 \/ RUNNING'\)/);
   assert.match(renderBody, /Store\.batch\.running/);
   assert.match(renderBody, /restoring \? '恢复中 \/ Restoring' : \(cancelling \? '取消中 \/ Cancelling' : '取消 \/ Cancel'\)/);
   assert.match(renderBody, /clearConfirmArmed \? '确认丢弃 \/ Discard' : '清空 \/ Clear'/);
@@ -3506,7 +3506,7 @@ test('shared disabled summaries expose action-specific reasons and ready states'
   const customControlsBody = customBody.match(/updateControls\(\) \{([\s\S]*?)\n  \},\n\n  renderList/)?.[1] || '';
   assert.ok(customControlsBody, 'CustomPresets.updateControls body should be present');
   assert.match(customControlsBody, /const summary = Dom\['custom-preset-summary'\]/);
-  assert.match(customControlsBody, /summary\.textContent = lockReason[\s\S]*?CUSTOM PRESETS LOCKED: \$\{lockReason\}/);
+  assert.match(customControlsBody, /summary\.textContent = lockReason[\s\S]*?自定义预设已锁定：\$\{UI\.localizeBusyReason\(lockReason\)\} \/ CUSTOM PRESETS LOCKED/);
   assert.match(customControlsBody, /Choose a preset to apply or delete/);
 
   const packageBody = script.match(/updateControls\(\) \{([\s\S]*?)\n  \},\n\n  async exportPackageBlob/)?.[1] || '';
@@ -3520,8 +3520,8 @@ test('shared disabled summaries expose action-specific reasons and ready states'
 
   const batchBody = script.match(/render\(\) \{([\s\S]*?)\n  \},\n\n  init/)?.[1] || '';
   assert.ok(batchBody, 'BatchQueue.render body should be present');
-  assert.match(batchBody, /const addStatus = addReason \? `ADD BLOCKED: \$\{addReason\}` : 'ADD READY'/);
-  assert.match(batchBody, /const startStatus = startReason \? `START BLOCKED: \$\{startReason\}` : 'START READY'/);
+  assert.match(batchBody, /const addStatus = addReason \? `添加音频已阻止：\$\{UI\.localizeBusyReason\(addReason\)\} \/ ADD BLOCKED` : '可添加音频 \/ ADD READY'/);
+  assert.match(batchBody, /const startStatus = startReason \? `开始批量已阻止：\$\{UI\.localizeBusyReason\(startReason\)\} \/ START BLOCKED` : '可开始批量 \/ START READY'/);
   assert.match(batchBody, /: `\$\{addStatus\} \| \$\{startStatus\}\$\{restoreIssue\}`/);
   assert.doesNotMatch(batchBody, /: 'QUEUE EMPTY'/);
 });
@@ -3562,7 +3562,7 @@ test('asset load failures remain visible in preflight after transient warnings',
   assert.match(script, /Store\.assetErrors\[type\] = why/);
   assert.match(script, /Store\.assetErrors\[type\] = ''/);
   assert.match(script, /assetStatus\(type, fallbackName\)/);
-  assert.match(script, /Rejected: \$\{Store\.assetErrors\[type\]\}/);
+  assert.match(script, /已拒绝：\$\{Store\.assetErrors\[type\]\} \/ Rejected/);
   assert.match(script, /renderBlockers\(durationSec = this\.getAudioDuration\(\)\)/);
   assert.match(script, /Render Blocker/);
 });
@@ -3706,10 +3706,10 @@ test('batch project restore failures are durable in summary, report, and public 
 
   const renderBody = batchBody.match(/render\(\) \{([\s\S]*?)\n  \},\n\n  init\(\)/)?.[1] || '';
   assert.ok(renderBody, 'BatchQueue.render body should be present');
-  assert.match(renderBody, /const restoreIssue = Store\.batch\.restoreFailed \? ` · RESTORE FAILED: \$\{Store\.batch\.restoreError \|\| 'original project restore failed'\}` : ''/);
+  assert.match(renderBody, /const restoreIssue = Store\.batch\.restoreFailed \? ` · 恢复原项目失败：\$\{UI\.localizeUserMessage\(Store\.batch\.restoreError \|\| 'original project restore failed'\)\} \/ RESTORE FAILED` : ''/);
   assert.match(renderBody, /const restoring = Store\.batch\.running && Store\.batch\.restoring/);
   assert.match(renderBody, /const cancelling = Store\.batch\.running && Store\.batch\.cancelRequested && !restoring/);
-  assert.match(renderBody, /const batchRunStatus = restoring \? 'RESTORING PROJECT' : \(cancelling \? 'CANCELLING' : 'RUNNING'\)/);
+  assert.match(renderBody, /const batchRunStatus = restoring \? '正在恢复原项目 \/ RESTORING PROJECT' : \(cancelling \? '正在取消 \/ CANCELLING' : '运行中 \/ RUNNING'\)/);
   assert.match(renderBody, /restoring \? '恢复中 \/ Restoring' : \(cancelling \? '取消中 \/ Cancelling' : '取消 \/ Cancel'\)/);
   assert.match(renderBody, /restoring\s*\?\s*'Restoring original project after batch'/);
   assert.match(renderBody, /\$\{restoreIssue\}\$\{clearConfirmArmed \? ' · 已等待确认丢弃' : ''\} \| \$\{addStatus\} \| \$\{startStatus\}/);
@@ -4306,9 +4306,9 @@ test('failed render reports show failure state and root cause in the report pane
   const updatePanelBody = script.match(/updatePanel\(\) \{([\s\S]*?)\n  \},\n\n  init\(\)/)?.[1] || '';
   assert.ok(updatePanelBody, 'RenderReport.updatePanel body should be present');
   assert.match(updatePanelBody, /const failed = !!report\.output\.failed/);
-  assert.match(updatePanelBody, /summary\.textContent = reportStale\s*\?\s*`REPORT STALE: \$\{report\.output\.staleReason \|\| 'Previous render'\}`[\s\S]*?: failed\s*\?\s*`REPORT FAILED: \$\{report\.output\.error \|\| 'Export failed'\}`/);
+  assert.match(updatePanelBody, /summary\.textContent = reportStale\s*\?\s*`报告已过期：\$\{UI\.localizeUserMessage\(report\.output\.staleReason \|\| 'Previous render'\)\} \/ REPORT STALE`[\s\S]*?: failed\s*\?\s*`报告显示导出失败：\$\{outputError\} \/ REPORT FAILED`/);
   assert.match(updatePanelBody, /\['保存状态', reportStale \? '上一次渲染已过期' : \(failed \? '失败' : \(report\.output\.saveVerified \? '已验证' : \(report\.output\.downloadDispatched \? \(retryAvailable \? '已触发下载 · 可重试' : '已触发下载'\) : '未知'\)\)\)\]/);
-  assert.match(updatePanelBody, /if \(failed\) rows\.unshift\(\['错误', report\.output\.error \|\| '未知导出错误'\]\)/);
+  assert.match(updatePanelBody, /if \(failed\) rows\.unshift\(\['错误', outputError \|\| '未知导出错误'\]\)/);
   assert.match(updatePanelBody, /if \(retryAvailable\) rows\.push\(\['恢复建议', '开始新渲染前，请先重试导出下载'\]\)/);
 });
 

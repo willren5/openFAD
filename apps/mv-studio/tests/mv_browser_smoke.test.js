@@ -793,7 +793,7 @@ test('fatal dialog traps keyboard focus and Escape dismisses it after boot failu
   assert.deepEqual(pageErrors, []);
   assert.ok(consoleErrors.some((message) => message.includes('[openFAD][FATAL] Canvas 2D context unavailable')));
   assert.equal(openState.fatalOpen, true);
-  assert.equal(openState.message, 'Canvas 2D context unavailable');
+  assert.match(openState.message, /画布 2D 上下文不可用[\s\S]*Canvas 2D context unavailable/);
   assert.equal(openState.activeId, 'btn-err-reset');
   assert.equal(openState.sidebarHidden, 'true');
   assert.equal(openState.viewportHidden, 'true');
@@ -2859,7 +2859,7 @@ test('autosave recent read failures disable autosave instead of rendering empty 
   }));
 
   assert.equal(state.available, false);
-  assert.equal(state.summary, 'AUTOSAVE UNAVAILABLE');
+  assert.match(state.summary, /自动保存不可用 \/ AUTOSAVE UNAVAILABLE/);
   assert.match(state.list, /Autosave read failed/);
   assert.match(state.recentText, /Autosave read failed/);
   assert.equal(state.saveDisabled, true);
@@ -4016,7 +4016,7 @@ test('long non-fatal warnings remain readable after later status updates', { ski
   }, before);
 
   assert.ok(metrics.before.statusScrollWidth > metrics.before.statusClientWidth, 'mobile status line should reproduce warning truncation pressure');
-  assert.equal(metrics.before.statusTitle, `WARN: Project JSON download failed: ${longMsg}`);
+  assert.equal(metrics.before.statusTitle, `警告：Project JSON download failed: ${longMsg}`);
 	  assert.equal(metrics.panelHidden, false);
 	  assert.equal(metrics.panelRole, 'document');
 	  assert.equal(metrics.panelLive, '');
@@ -4037,7 +4037,7 @@ test('long non-fatal warnings remain readable after later status updates', { ski
   assert.equal(metrics.warningCount, 2);
   assert.match(metrics.statusText, /Project JSON download failed/);
   assert.match(metrics.statusText, /Audio analysis skipped/);
-  assert.equal(metrics.statusTitle, `WARN: Project JSON download failed: ${followUpMsg}`);
+  assert.equal(metrics.statusTitle, `警告：Project JSON download failed: ${followUpMsg}`);
   assert.ok(metrics.panelScrollWidth <= metrics.panelClientWidth + 2, `warning panel should wrap instead of horizontal overflow: ${metrics.panelScrollWidth} > ${metrics.panelClientWidth}`);
   assert.equal(metrics.itemWhiteSpace, 'normal');
   assert.deepEqual(pageErrors, []);
@@ -4175,7 +4175,7 @@ test('warning ledger can be cleared without refreshing the page', { skip: !playw
 	  assert.equal(after.panelHidden, true);
 	  assert.equal(after.panelText, '');
 	  assert.equal(after.liveRegionText, '警告历史已清空 / Warning history cleared.');
-	  assert.match(after.statusText, /WARN: Project JSON download failed: Preset saved without thumbnail/);
+	  assert.match(after.statusText, /警告：Project JSON download failed: Preset saved without thumbnail/);
   assert.deepEqual(pageErrors, []);
   assert.deepEqual(consoleErrors, []);
   await page.close();
@@ -4461,9 +4461,9 @@ test('runtime safeguards expose package focus, live progress, preset state, and 
   assert.equal(cancellingPackage.packageStatus.progress.total, 0);
   assert.equal(cancellingPackage.cancelDisabled, true);
   assert.match(cancellingPackage.cancelText, /Cancelling Package/);
-  assert.match(cancellingPackage.statusText, /PACKAGE CANCELLING: pending/);
-  assert.match(cancellingPackage.statusLive, /PACKAGE CANCELLING: pending/);
-  assert.match(cancellingPackage.ariaValueText, /PACKAGE CANCELLING pending/);
+  assert.match(cancellingPackage.statusText, /工程包取消 \/ PACKAGE CANCELLING: 待完成 \/ pending/);
+  assert.match(cancellingPackage.statusLive, /工程包取消 \/ PACKAGE CANCELLING: 待完成 \/ pending/);
+  assert.match(cancellingPackage.ariaValueText, /工程包取消 \/ PACKAGE CANCELLING pending/);
   assert.notEqual(cancellingPackage.ariaNow, '100.0');
   assert.doesNotMatch(cancellingPackage.statusText, /100\.0%/);
   assert.doesNotMatch(cancellingPackage.statusLive, /100\.0%/);
@@ -6996,16 +6996,20 @@ test('batch render fires a browser download for each item while keeping save ver
       start() {
         window.__batchRecorderEvents.push('start');
         this.state = 'recording';
-        setTimeout(() => {
+        const schedule = (fn) => {
+          if (typeof queueMicrotask === 'function') queueMicrotask(fn);
+          else Promise.resolve().then(fn);
+        };
+        schedule(() => {
           if (this.state === 'inactive') return;
           window.__batchRecorderEvents.push('data');
           this.ondataavailable?.({ data: new Blob([new Uint8Array(1024)], { type: 'video/webm' }) });
-          setTimeout(() => {
+          schedule(() => {
             window.__batchRecorderEvents.push('finish');
             document.querySelector('#btn-finish')?.click();
-          }, 15);
-          setTimeout(() => this.stop(), 35);
-        }, 20);
+            schedule(() => this.stop());
+          });
+        });
       }
 
       stop() {

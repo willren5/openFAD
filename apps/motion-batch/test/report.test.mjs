@@ -379,7 +379,7 @@ test("HTML QC report renders a technical summary table", () => {
   });
 
   assert.match(html, /Technical Summary/);
-  assert.match(html, /<th>Dimensions<\/th>/);
+  assert.match(html, /<th>尺寸 \/ Dimensions<\/th>/);
   assert.match(html, /2048x2732/);
   assert.match(html, /15\.1 s/);
   assert.match(html, /30 fps/);

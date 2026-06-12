@@ -1,10 +1,10 @@
 # MV Studio v0.1.0 Verification
 
-Date: 2026-06-12
+Date: 2026-06-13
 
 ## Environment
 
-- Worktree: isolated `openfad-trusted-release` branch worktree
+- Worktree: `/tmp/openFAD-public-main`, branch `ci-focus-fix`
 - Source: migrated from an internal MV Studio snapshot, then public defaults were relabeled to openFAD demo copy.
 - Node: `v25.9.0`
 - OS: macOS 26.3.1, build 25D2128, arm64
@@ -17,9 +17,9 @@ npm run test:mv
 
 Output summary:
 
-- `tests 286`, `pass 286`, `fail 0`, `skipped 0`.
-- Browser smoke covered Start Mode demo, visual systems, preflight, autosave, package import/export, render retry, batch render, performance guard, accessibility, and failure recovery paths.
-- Static validation covered embedded script parsing, public output filenames, preflight copy, mobile layout, performance warning copy, public runtime facades, and state transition focus restore from non-editing inputs.
+- `tests 288`, `pass 288`, `fail 0`, `skipped 0`.
+- Browser smoke covered Start Mode demo, visual systems, preflight, autosave, package import/export, render retry, batch render, performance guard, accessibility, Chinese-first runtime errors, and failure recovery paths.
+- Static validation covered embedded script parsing, public output filenames, Chinese-first preflight copy, report summaries, mobile layout, performance warning copy, public runtime facades, and state transition focus restore from non-editing inputs.
 
 Screenshot evidence refreshed:
 
@@ -32,7 +32,7 @@ Manual classification:
 - `INTERNAL_RESTORE_APPLY_TOKEN` is a public-safe internal lock symbol name, not a credential or access token.
 - The openFAD public default label is `openFAD Public Release`; the private `FAD Records Release` default was removed from the migrated app.
 - Export filenames use `_openfad` and the regression test blocks `_FAD` / `Untitled FAD MV`.
-- Runtime busy and performance warnings are Chinese-first, with English as secondary fallback.
+- Runtime busy, report, autosave, package, batch, preflight, and performance warnings are Chinese-first, with English as secondary fallback.
 
 ```bash
 npm run scan:public
@@ -47,7 +47,7 @@ Root release-gate summary:
 
 - `npm run scan:public`: `public safety scan passed`.
 - `git diff --check -- .`: no whitespace errors reported.
-- Root `npm test`: Cover `pass 1`, MV `pass 286`, Motion `pass 488`, root scanner `pass 7`, all `fail 0`.
+- Root `npm test`: Cover `pass 1`, MV `pass 288`, Motion `pass 488`, root scanner `pass 7`, all `fail 0`.
 - `openfad-mv-studio-0.1.0.zip` was generated with 11 files.
 - MV web zip includes root `LICENSE`, `NOTICE`, and `TRADEMARKS.md`.
 - `dist/SHA256SUMS` and `dist/release-manifest.json` were written for the generated artifact set.

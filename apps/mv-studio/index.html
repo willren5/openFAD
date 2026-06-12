@@ -620,7 +620,7 @@ body:not(.pro-mode-open) .pro-section { display: none; }
 	<input type="file" id="in-project-file" accept="application/json,.json" hidden />
 	<input type="file" id="in-package-file" accept=".fadmv,.zip,application/zip" aria-describedby="package-summary" hidden />
 <div class="preflight-panel" style="margin-top:8px">
-<div id="package-summary" class="preflight-summary">PACKAGE READY</div>
+<div id="package-summary" class="preflight-summary">工程包就绪 / PACKAGE READY</div>
 <ul id="package-list" class="preflight-list compact-list"></ul>
 </div>
 </div>
@@ -638,7 +638,7 @@ body:not(.pro-mode-open) .pro-section { display: none; }
 	<select id="recent-projects" aria-label="最近自动保存快照 / Recent autosave snapshots" aria-describedby="autosave-summary" style="margin-top:8px"></select>
 		<button id="btn-restore-selected" class="secondary btn-full" style="margin-top:8px" disabled aria-describedby="autosave-summary"><span class="btn-main">恢复所选</span><span class="btn-sub">Restore Selected</span></button>
 <div class="preflight-panel" style="margin-top:8px">
-<div id="autosave-summary" class="preflight-summary">AUTOSAVE CHECKING</div>
+<div id="autosave-summary" class="preflight-summary">正在检查自动保存 / AUTOSAVE CHECKING</div>
 <ul id="autosave-list" class="preflight-list compact-list"></ul>
 </div>
 </div>
@@ -663,7 +663,7 @@ body:not(.pro-mode-open) .pro-section { display: none; }
 		<button id="btn-download-report" class="secondary btn-full" disabled aria-describedby="render-report-summary"><span class="btn-main">下载报告</span><span class="btn-sub">Download Report</span></button>
 		<button id="btn-retry-export-download" class="secondary btn-full" style="margin-top:8px; display:none" disabled aria-describedby="render-report-summary"><span class="btn-main">重试导出下载</span><span class="btn-sub">Retry Export Download</span></button>
 <div class="preflight-panel" style="margin-top:8px">
-<div id="render-report-summary" class="preflight-summary">NO RENDER YET</div>
+<div id="render-report-summary" class="preflight-summary">还没有渲染 / NO RENDER YET</div>
 <ul id="render-report-list" class="preflight-list"></ul>
 </div>
 </div>
@@ -677,7 +677,7 @@ body:not(.pro-mode-open) .pro-section { display: none; }
 		<button id="btn-clear-batch" class="secondary btn-full" style="margin-top:8px" aria-describedby="batch-summary"><span class="btn-main">清空批量</span><span class="btn-sub">Clear Batch</span></button>
 <input type="file" id="in-batch-audio" accept="audio/*" multiple aria-describedby="batch-summary" hidden />
 <div class="preflight-panel" style="margin-top:8px">
-<div id="batch-summary" class="preflight-summary">QUEUE EMPTY</div>
+<div id="batch-summary" class="preflight-summary">批量队列为空 / QUEUE EMPTY</div>
 <ul id="batch-list" class="preflight-list compact-list"></ul>
 </div>
 </div>
@@ -1506,7 +1506,8 @@ const UI = {
     const blocker = Dom['primary-action-blocker'];
     if (!blocker || !readiness) return;
     const blocked = Machine.status === 'IDLE' && (!readiness.previewReady || !readiness.recordReady);
-    const reason = readiness.recordReason || readiness.previewReason || readiness.blockers?.[0] || '请先补齐素材再预览或导出 / Load required assets before previewing or rendering.';
+    const rawReason = readiness.recordReason || readiness.previewReason || readiness.blockers?.[0] || '请先补齐素材再预览或导出 / Load required assets before previewing or rendering.';
+    const reason = this.localizeUserMessage(rawReason);
     blocker.hidden = !blocked;
     blocker.tabIndex = blocked ? 0 : -1;
     blocker.textContent = blocked ? `操作被阻止：${reason}` : '';
@@ -1529,7 +1530,7 @@ const UI = {
     Dom['progress-fill'].setAttribute('aria-valuenow', pct.toFixed(1));
     Dom['progress-fill'].setAttribute('aria-label', `进度 / ${label} progress`);
     Dom['progress-fill'].setAttribute('aria-valuetext', `进度 ${pct.toFixed(1)}% / ${progressLabel} ${pct.toFixed(1)}%`);
-    const statusMsg = `${label}: ${pct.toFixed(1)}%`;
+    const statusMsg = `${progressLabel}: ${pct.toFixed(1)}%`;
     Dom['status-text'].textContent = statusMsg;
     Dom['status-text'].title = statusMsg;
     const liveBucket = Math.floor(pct / 5);
@@ -1538,7 +1539,7 @@ const UI = {
     if (Dom['status-live'] && (liveLabelChanged || liveBucket !== lastLiveBucket || pct >= 100)) {
       this._lastProgressLivePct = pct;
       this._lastProgressLiveLabel = label;
-      Dom['status-live'].textContent = `${label}: ${pct.toFixed(1)}%`;
+      Dom['status-live'].textContent = `${progressLabel}: ${pct.toFixed(1)}%`;
     }
   },
   progressPending(label = 'WORKING') {
@@ -1552,7 +1553,7 @@ const UI = {
     Dom['progress-fill'].removeAttribute('aria-valuenow');
     Dom['progress-fill'].setAttribute('aria-label', `进度 / ${label} progress`);
     Dom['progress-fill'].setAttribute('aria-valuetext', `进度待定 / ${progressLabel} pending`);
-    const statusMsg = `${label}: pending`;
+    const statusMsg = `${progressLabel}: 待完成 / pending`;
     Dom['status-text'].textContent = statusMsg;
     Dom['status-text'].title = statusMsg;
     if (Dom['status-live']) Dom['status-live'].textContent = statusMsg;
@@ -1567,6 +1568,14 @@ const UI = {
   localizeBusyReason(reason = '') {
     const text = String(reason || '').trim();
     if (!text || /[\u4e00-\u9fff]/.test(text)) return text;
+    if (/^Locked while package task/i.test(text)) return `项目包操作进行中，请完成后再继续 / ${text}`;
+    if (/^Locked while project restore/i.test(text)) return `项目恢复进行中，请完成后再继续 / ${text}`;
+    if (/^Locked while autosave/i.test(text)) return `自动保存进行中，请完成后再继续 / ${text}`;
+    if (/^Locked while batch render/i.test(text)) return `批量渲染进行中，请等待或取消后再继续 / ${text}`;
+    if (/^Locked while renderer is ([a-z0-9_-]+)/i.test(text)) {
+      const state = text.match(/^Locked while renderer is ([a-z0-9_-]+)/i)?.[1] || '';
+      return `渲染器正在${this.stateLabel(state)}，请完成后再继续 / ${text}`;
+    }
     if (/^Package operation/i.test(text)) return `项目包操作进行中，请完成后再继续 / ${text}`;
     if (/^Project restore/i.test(text)) return `项目恢复进行中，请完成后再继续 / ${text}`;
     if (/^Autosave/i.test(text)) return `自动保存进行中，请完成后再继续 / ${text}`;
@@ -1599,6 +1608,74 @@ const UI = {
                     : '后再继续';
       return `请等待${stateLabel}完成${action} / ${text}`;
     }
+    if (/^Choose a recent snapshot/i.test(text)) return `请先选择一个最近快照 / ${text}`;
+    if (/^Choose a preset before applying/i.test(text)) return `请先选择要应用的预设 / ${text}`;
+    if (/^Choose a preset before deleting/i.test(text)) return `请先选择要删除的预设 / ${text}`;
+    if (/^No retryable package download/i.test(text)) return `没有可重试的项目包下载 / ${text}`;
+    if (/^No retryable export download/i.test(text)) return `没有可重试的导出下载 / ${text}`;
+    if (/^No retryable batch download/i.test(text)) return `没有可重试的批量下载 / ${text}`;
+    if (/^Queue is empty/i.test(text)) return `批量队列为空，请先添加音频 / ${text}`;
+    if (/^No queued audio left/i.test(text)) return `没有待渲染的音频 / ${text}`;
+    if (/^Load (.+) first/i.test(text)) return `请先补齐素材：${text.replace(/^Load /i, '').replace(/ first$/i, '')} / ${text}`;
+    if (/^Audio analysis running/i.test(text)) return `音频分析进行中，请等待或取消后再继续 / ${text}`;
+    if (/^Recording unsupported/i.test(text)) return `当前浏览器不支持录制，请改用 Chrome 或 Edge / ${text}`;
+    if (/^Recording MIME unsupported/i.test(text)) return `当前浏览器不支持可用录制格式，请改用 Chrome 或 Edge / ${text}`;
+    if (/^Rendering engine unavailable/i.test(text)) return `渲染引擎不可用，请刷新页面或改用 Chrome / Edge / ${text}`;
+    if (/^Canvas 2D context unavailable/i.test(text)) return `画布 2D 上下文不可用，请刷新页面或改用 Chrome / Edge / ${text}`;
+    if (/^AudioContext unsupported/i.test(text)) return `当前浏览器不支持音频引擎，请改用 Chrome / Edge / ${text}`;
+    if (/^Inputs not ready/i.test(text)) return `素材还没有准备好，请按预检补齐后再继续 / ${text}`;
+    return text;
+  },
+  stateLabel(state = '') {
+    const key = String(state || '').toUpperCase();
+    return {
+      IDLE: '空闲',
+      PREVIEWING: '预览',
+      WARMING: '准备渲染',
+      RECORDING: '录制',
+      EXPORTING: '导出',
+      RUNNING: '运行'
+    }[key] || String(state || '任务').toLowerCase();
+  },
+  localizeUserMessage(message = '') {
+    const text = String(message || '').trim();
+    if (!text) return text;
+    if (/[\u4e00-\u9fff]/.test(text)) return text;
+    const busy = this.localizeBusyReason(text);
+    if (busy && busy !== text) return busy;
+    if (/^Boot failed:/i.test(text)) return `启动失败：${text.replace(/^Boot failed:\s*/i, '')}。请刷新页面，或改用 Chrome / Edge 后重试。 / ${text}`;
+    if (/^Preview failed:/i.test(text)) return `预览失败：${text.replace(/^Preview failed:\s*/i, '')}。请按预检检查素材后再点“预览”。 / ${text}`;
+    if (/^Preview stopped:/i.test(text)) return `预览已停止：${text.replace(/^Preview stopped:\s*/i, '')}。请回到页面后重新点击“预览”。 / ${text}`;
+    if (/^Start failed/i.test(text)) return `渲染启动失败：请按预检检查素材、浏览器录制能力和音频状态后重试。 / ${text}`;
+    if (/^Export failed:/i.test(text)) return `导出失败：${text.replace(/^Export failed:\s*/i, '')}。请查看报告，必要时点击“重试导出下载”。 / ${text}`;
+    if (/^Export download failed:/i.test(text)) return `导出下载触发失败：${text.replace(/^Export download failed:\s*/i, '')}。请保持页面打开并点击“重试导出下载”。 / ${text}`;
+    if (/^Stream save init failed:/i.test(text)) return `Streaming Save 启动失败：${text.replace(/^Stream save init failed:\s*/i, '')}。请关闭 Streaming Save 或改用 Chrome / Edge。 / ${text}`;
+    if (/^Stream finalize failed:/i.test(text)) return `Streaming Save 封装失败：${text.replace(/^Stream finalize failed:\s*/i, '')}。请检查磁盘权限后重试。 / ${text}`;
+    if (/^Stream save cancelled/i.test(text)) return `Streaming Save 已取消，未保存文件。请重新导出。 / ${text}`;
+    if (/^Time cap reached/i.test(text)) return `已达到最长录制时长，正在结束导出。 / ${text}`;
+    if (/^Export taking longer than expected/i.test(text)) return `导出封装时间较长，请等待；如果卡住，查看报告后重试。 / ${text}`;
+    if (/^Click abort again/i.test(text)) return `再次点击中止按钮会停止当前渲染。 / ${text}`;
+    if (/^Canvas video track unavailable/i.test(text)) return `画布视频轨不可用，请刷新页面或降低素材尺寸后重试。 / ${text}`;
+    if (/^Audio Routing Failed/i.test(text)) return `音频路由失败，请重新载入音频后再导出。 / ${text}`;
+    if (/^No supported MIME type/i.test(text)) return `当前浏览器没有可用录制格式，请改用 Chrome 或 Edge。 / ${text}`;
+    if (/^No recorded data available/i.test(text)) return `没有可保存的录制数据，请重新预览并导出。 / ${text}`;
+    if (/^Recorder inactive during export/i.test(text)) return `录制器已停止，无法完成导出。请重新开始导出。 / ${text}`;
+    if (/^Export forced to reset/i.test(text)) return `导出超时，已要求重置。请降低码率或缩短音频后重试。 / ${text}`;
+    if (/^Recording stopped: tab backgrounded/i.test(text)) return `页面进入后台，录制已停止。请保持标签页在前台后重试。 / ${text}`;
+    if (/^Recording unsupported/i.test(text)) return `当前浏览器不支持录制，请改用 Chrome 或 Edge。 / ${text}`;
+    if (/^Recording MIME unsupported/i.test(text)) return `当前浏览器不支持可用录制格式，请改用 Chrome 或 Edge。 / ${text}`;
+    if (/^Render report is from a previous render/i.test(text)) return `这是上一次渲染报告，当前项目已变更，请重新渲染后再下载报告。 / ${text}`;
+    if (/^Package save failed:/i.test(text)) return `项目包保存失败：${text.replace(/^Package save failed:\s*/i, '')}。请检查素材大小并重试。 / ${text}`;
+    if (/^Package load failed:/i.test(text)) return `项目包载入失败：${text.replace(/^Package load failed:\s*/i, '')}。请确认文件是 .fadmv 包。 / ${text}`;
+    if (/^Project load failed:/i.test(text)) return `项目 JSON 载入失败：${text.replace(/^Project load failed:\s*/i, '')}。请确认文件来自 openFAD MV Studio。 / ${text}`;
+    if (/^Audio analysis failed:/i.test(text)) return `音频分析失败：${text.replace(/^Audio analysis failed:\s*/i, '')}。可以跳过分析继续渲染。 / ${text}`;
+    if (/^Batch failed:/i.test(text)) return `批量渲染失败：${text.replace(/^Batch failed:\s*/i, '')}。请查看队列中失败项目。 / ${text}`;
+    if (/^Batch item failed:/i.test(text)) return `批量项目失败：${text.replace(/^Batch item failed:\s*/i, '')}。请单独重试该音频。 / ${text}`;
+    if (/^Brand preset apply failed:/i.test(text)) return `品牌预设应用失败：${text.replace(/^Brand preset apply failed:\s*/i, '')}。请等待当前任务完成后重试。 / ${text}`;
+    if (/^Custom preset apply failed:/i.test(text)) return `自定义预设应用失败：${text.replace(/^Custom preset apply failed:\s*/i, '')}。 / ${text}`;
+    if (/^Custom preset delete failed:/i.test(text)) return `自定义预设删除失败：${text.replace(/^Custom preset delete failed:\s*/i, '')}。 / ${text}`;
+    if (/^Preset save/i.test(text)) return `预设保存提示：${text} / ${text}`;
+    if (/^Could not refresh|^Could not restore/i.test(text)) return `批量任务恢复时遇到问题：${text}。请检查当前项目状态后再继续。 / ${text}`;
     return text;
   },
 		  recordWarning(msg) {
@@ -1629,7 +1706,7 @@ const UI = {
       time.className = 'warning-time';
       time.textContent = `${warning.stamp} `;
       const text = document.createElement('span');
-      text.textContent = `WARN: ${warning.text}`;
+      text.textContent = `警告 / WARN: ${warning.text}`;
       row.append(time, text, document.createTextNode('\n'));
       list.appendChild(row);
     });
@@ -1741,16 +1818,17 @@ const UI = {
         const failurePhase = opts.phase || Machine.status;
         Dom['error-title'].textContent = opts.title || this.failureTitleForState(failurePhase);
       }
-      Dom['err-msg'].textContent = msg;
+      Dom['err-msg'].textContent = this.localizeUserMessage(msg);
       this.setModalOpen(true);
       Dom['error-overlay'].style.display = 'flex';
       Dom['btn-err-reset']?.focus?.({ preventScroll: true });
       try { Recorder.abort(true, msg); } catch (_) {}
     } else {
+      const displayMsg = this.localizeUserMessage(msg);
       Logger.warn(msg);
       this.holdReadinessWarnings();
-      this.recordWarning(msg);
-      this.log(`WARN: ${msg}`, 'warn', { live: false });
+      this.recordWarning(displayMsg);
+      this.log(`警告：${displayMsg}`, 'warn', { live: false });
     }
   },
   dismissError() {
@@ -4339,14 +4417,14 @@ const AutoSave = {
       if (Dom['btn-restore-selected']) UI.setControlReason(Dom['btn-restore-selected'], true, summary || 'Autosave unavailable', 'autosave-summary');
     }
     if (Dom['autosave-summary']) {
-      Dom['autosave-summary'].textContent = unavailableReason ? 'AUTOSAVE UNAVAILABLE' : (lockReason ? 'AUTOSAVE LOCKED' : 'AUTOSAVE READY');
+      Dom['autosave-summary'].textContent = unavailableReason ? '自动保存不可用 / AUTOSAVE UNAVAILABLE' : (lockReason ? '自动保存已锁定 / AUTOSAVE LOCKED' : '自动保存就绪 / AUTOSAVE READY');
       Dom['autosave-summary'].classList.toggle('ready', !!available && !lockReason);
     }
     UI.renderKeyValueList(Dom['autosave-list'], [
-      ['Storage', unavailableReason || 'IndexedDB ready'],
-      ['Snapshot', snapshotReason || 'Ready'],
-      ['Recent', snapshotReason || 'Ready'],
-      ['Selected', selectedRecentLabel]
+      ['存储 / Storage', unavailableReason || 'IndexedDB 就绪 / IndexedDB ready'],
+      ['快照 / Snapshot', snapshotReason || '就绪 / Ready'],
+      ['最近项目 / Recent', snapshotReason || '就绪 / Ready'],
+      ['已选择 / Selected', selectedRecentLabel]
     ]);
   },
 
@@ -5230,15 +5308,16 @@ const RenderReport = {
     }
     list.replaceChildren();
     if (!report) {
-      summary.textContent = 'NO RENDER YET';
+      summary.textContent = '还没有渲染 / NO RENDER YET';
       return;
     }
     const failed = !!report.output.failed;
+    const outputError = UI.localizeUserMessage(report.output.error || 'Export failed');
     summary.textContent = reportStale
-      ? `REPORT STALE: ${report.output.staleReason || 'Previous render'}`
+      ? `报告已过期：${UI.localizeUserMessage(report.output.staleReason || 'Previous render')} / REPORT STALE`
       : failed
-      ? `REPORT FAILED: ${report.output.error || 'Export failed'}`
-      : `REPORT READY: ${report.output.fileName || 'render'}`;
+      ? `报告显示导出失败：${outputError} / REPORT FAILED`
+      : `报告就绪：${report.output.fileName || 'render'} / REPORT READY`;
     const rows = [
       ['FPS', `${report.config.fps}`],
       ['Target Bitrate', Utils.formatBitrate(report.config.videoBitrate)],
@@ -5248,8 +5327,8 @@ const RenderReport = {
       ['Frames', `${report.output.renderedFrames || 0} drawn · ${report.output.droppedFrames || 0} dropped`],
       ['保存状态', reportStale ? '上一次渲染已过期' : (failed ? '失败' : (report.output.saveVerified ? '已验证' : (report.output.downloadDispatched ? (retryAvailable ? '已触发下载 · 可重试' : '已触发下载') : '未知')))]
     ];
-    if (reportStale) rows.unshift(['状态', report.output.staleReason || '上一次渲染']);
-    if (failed) rows.unshift(['错误', report.output.error || '未知导出错误']);
+    if (reportStale) rows.unshift(['状态', UI.localizeUserMessage(report.output.staleReason || '上一次渲染')]);
+    if (failed) rows.unshift(['错误', outputError || '未知导出错误']);
     if (retryAvailable) rows.push(['恢复建议', '开始新渲染前，请先重试导出下载']);
     if (report.output.retryNote) rows.push(['恢复建议', report.output.retryNote]);
     if (report.audioAnalysis) {
@@ -5450,10 +5529,10 @@ const CustomPresets = {
     const deleteReason = lockReason || (!item ? 'Choose a preset before deleting it.' : '');
     if (summary) {
       summary.textContent = lockReason
-        ? `CUSTOM PRESETS LOCKED: ${lockReason}`
+        ? `自定义预设已锁定：${UI.localizeBusyReason(lockReason)} / CUSTOM PRESETS LOCKED`
         : item
-          ? `Selected preset: ${item.name || 'Untitled preset'}`
-          : 'Choose a preset to apply or delete. Save creates one from the current project.';
+          ? `已选择预设：${item.name || '未命名预设'} / Selected preset`
+          : '选择预设后可应用或删除；“保存预设”会从当前工程创建一个新预设。/ Choose a preset to apply or delete.';
     }
     UI.setControlReason(Dom['btn-save-custom-preset'], !!lockReason, lockReason, 'custom-preset-summary');
     UI.setControlReason(Dom['btn-apply-custom-preset'], !item || !!lockReason, applyReason, 'custom-preset-summary');
@@ -6018,12 +6097,12 @@ const BatchQueue = {
                       ? `Load ${missing.join(', ')} first`
                       : '';
     const batchStartBlocked = Store.packageJob.running || Store.restoreJob.running || Store.autosaveJob.running || analysisBusy || streamSaveBatchBlock || !runnablePending || !baseReady || Store.batch.running || Machine.status !== 'IDLE';
-    const addStatus = addReason ? `ADD BLOCKED: ${addReason}` : 'ADD READY';
-    const startStatus = startReason ? `START BLOCKED: ${startReason}` : 'START READY';
-    const restoreIssue = Store.batch.restoreFailed ? ` · RESTORE FAILED: ${Store.batch.restoreError || 'original project restore failed'}` : '';
+    const addStatus = addReason ? `添加音频已阻止：${UI.localizeBusyReason(addReason)} / ADD BLOCKED` : '可添加音频 / ADD READY';
+    const startStatus = startReason ? `开始批量已阻止：${UI.localizeBusyReason(startReason)} / START BLOCKED` : '可开始批量 / START READY';
+    const restoreIssue = Store.batch.restoreFailed ? ` · 恢复原项目失败：${UI.localizeUserMessage(Store.batch.restoreError || 'original project restore failed')} / RESTORE FAILED` : '';
     const clearConfirmArmed = this.isClearConfirmArmed();
     const clearNeedsConfirmation = this.hasProtectedClearOutputs();
-    const batchRunStatus = restoring ? 'RESTORING PROJECT' : (cancelling ? 'CANCELLING' : 'RUNNING');
+    const batchRunStatus = restoring ? '正在恢复原项目 / RESTORING PROJECT' : (cancelling ? '正在取消 / CANCELLING' : '运行中 / RUNNING');
     summary.textContent = items.length
       ? (Store.batch.running
         ? `${done}/${runnable.length} ${dispatched ? '下载已触发，请检查文件' : '已渲染'} · ${batchRunStatus}${errors ? ` · ${errors} 个问题` : ''}${restoreIssue}`
@@ -7226,8 +7305,8 @@ const Preflight = {
   },
 
   assetStatus(type, fallbackName) {
-    if (Store.flags.assetValid[type]) return Store.assetNames[type] || fallbackName || 'Loaded';
-    return Store.assetErrors[type] ? `Rejected: ${Store.assetErrors[type]}` : 'Missing';
+    if (Store.flags.assetValid[type]) return Store.assetNames[type] || fallbackName || '已载入 / Loaded';
+    return Store.assetErrors[type] ? `已拒绝：${Store.assetErrors[type]} / Rejected` : '缺少 / Missing';
   },
 
   ensureRecorderCaps() {
@@ -7382,14 +7461,14 @@ const Preflight = {
       tooLargeForMemory,
       blockers,
       items: [
-        ...(recordReady ? [] : [['渲染阻塞 / Render Blocker', blockers.length ? blockers.join(' · ') : '等待 / Waiting']]),
-        ['封面 / Cover', this.assetStatus('cover', 'Loaded')],
-        ['中心视觉 / Center', valid.video ? `${Store.assetNames.video || 'Loaded'}${Store.flags.videoIsStaticImage ? ' (Still)' : ''}` : this.assetStatus('video', 'Loaded')],
-        ['音频 / Audio', valid.audio ? `${Store.assetNames.audio || 'Loaded'} · ${Utils.formatSeconds(durationSec)}` : this.assetStatus('audio', 'Loaded')],
+        ...(recordReady ? [] : [['渲染阻塞 / Render Blocker', blockers.length ? blockers.map((item) => UI.localizeUserMessage(item)).join(' · ') : '等待 / Waiting']]),
+        ['封面 / Cover', this.assetStatus('cover', '已载入 / Loaded')],
+        ['中心视觉 / Center', valid.video ? `${Store.assetNames.video || '已载入 / Loaded'}${Store.flags.videoIsStaticImage ? ' (静态图 / Still)' : ''}` : this.assetStatus('video', '已载入 / Loaded')],
+        ['音频 / Audio', valid.audio ? `${Store.assetNames.audio || '已载入 / Loaded'} · ${Utils.formatSeconds(durationSec)}` : this.assetStatus('audio', '已载入 / Loaded')],
         ['音频分析 / Audio Analysis', this.audioAnalysisStatusLabel()],
         ['输出 / Output', `${Store.config.recordFps} FPS · ${Math.round((Store.config.videoBps || 0) / 1_000_000)} Mbps`],
         ['预估 / Estimate', estimatedSizeBytes ? `${Utils.formatBytes(estimatedSizeBytes)} · live ${Utils.formatBytes(estimatedLiveMemoryBytes)}${tooLargeForMemory ? ` · ${Preflight.memoryCapEstimateHint()}` : ''}` : '等待 / Waiting'],
-        ['浏览器 / Browser', Store.caps.canRecord ? `Recorder ready · ${Store.caps.recordMime}` : (Store.caps.recordMime ? 'Recorder unavailable' : 'Recording MIME unsupported')]
+        ['浏览器 / Browser', Store.caps.canRecord ? `录制器就绪 / Recorder ready · ${Store.caps.recordMime}` : (Store.caps.recordMime ? '录制器不可用 / Recorder unavailable' : '录制格式不支持 / Recording MIME unsupported')]
       ]
     };
   },
@@ -7397,7 +7476,7 @@ const Preflight = {
   updatePreflight() {
     if (!Dom['preflight-summary'] || !Dom['preflight-list']) return;
     const status = this.getStatus();
-    const summaryText = status.recordReady ? '预检通过 / READY TO RENDER' : `需要检查：${status.blockers[0] || '等待素材 / Waiting'}`;
+    const summaryText = status.recordReady ? '预检通过 / READY TO RENDER' : `需要检查：${UI.localizeUserMessage(status.blockers[0] || '等待素材 / Waiting')}`;
     Dom['preflight-summary'].textContent = summaryText;
     Dom['preflight-summary'].classList.toggle('ready', status.recordReady);
     if (status.recordReady && this._lastSummaryText !== summaryText && Dom['status-live']) {
