@@ -3524,6 +3524,17 @@ test('stopping preview returns keyboard focus to visible preview action', { skip
   await page.waitForFunction(() => window.Machine?.status === 'PREVIEWING');
   await page.click('#btn-stop-preview');
   await page.waitForFunction(() => window.Machine?.status === 'IDLE');
+  await page.waitForFunction(() => {
+    const preview = document.querySelector('#btn-preview');
+    const startControls = document.querySelector('#start-controls');
+    const previewControls = document.querySelector('#preview-controls');
+    return window.Machine?.status === 'IDLE' &&
+      !!preview &&
+      !preview.disabled &&
+      document.activeElement === preview &&
+      getComputedStyle(startControls).display === 'grid' &&
+      getComputedStyle(previewControls).display === 'none';
+  });
 
   const focusState = await page.evaluate(() => {
     const active = document.activeElement;
