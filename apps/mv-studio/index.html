@@ -1399,6 +1399,11 @@ const UI = {
       if (!(el instanceof HTMLElement)) return false;
       return el.matches('a[href], button, input, select, textarea, [contenteditable="true"], [tabindex]:not([tabindex="-1"])');
     };
+    const isNonEditingInputFocus = (el) => {
+      if (!(el instanceof HTMLElement) || el.tagName.toLowerCase() !== 'input') return false;
+      const type = (el.getAttribute('type') || 'text').toLowerCase();
+      return ['button', 'checkbox', 'color', 'file', 'image', 'radio', 'range', 'reset', 'submit'].includes(type);
+    };
     const previousFocusIsElement = previousFocus instanceof HTMLElement;
     const focusWasInActionGroup = previousFocusIsElement && groups.some((group) => group.contains(previousFocus));
     if (previousFocusIsElement && !focusWasInActionGroup && isEditableFocus(previousFocus)) return;
@@ -1406,6 +1411,7 @@ const UI = {
       const active = document.activeElement;
       if (!active || active === document.body || active === previousFocus || groups.some((group) => group.contains(active))) return true;
       if (isEditableFocus(active)) return false;
+      if (isNonEditingInputFocus(active)) return true;
       return !isInteractiveFocus(active);
     };
     const focusTarget = () => {
