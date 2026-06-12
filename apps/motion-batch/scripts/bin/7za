@@ -1,0 +1,19 @@
+#!/bin/sh
+set -eu
+
+SCRIPT_DIR=$(CDPATH= cd -- "$(dirname -- "$0")" && pwd)
+PROJECT_ROOT=$(CDPATH= cd -- "$SCRIPT_DIR/../.." && pwd)
+X64_7ZA="$PROJECT_ROOT/node_modules/7zip-bin/mac/x64/7za"
+STAGED_DIR="/tmp/openfad-motion-batch-native-tools/7za-x64-$$"
+STAGED_7ZA="$STAGED_DIR/7za"
+
+if [ ! -f "$X64_7ZA" ]; then
+  echo "Missing fallback 7za binary: $X64_7ZA" >&2
+  exit 127
+fi
+
+mkdir -p "$STAGED_DIR"
+cp "$X64_7ZA" "$STAGED_7ZA"
+
+chmod +x "$STAGED_7ZA"
+exec "$STAGED_7ZA" "$@"

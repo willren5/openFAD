@@ -1,0 +1,17 @@
+{
+  "version": 1,
+  "label": "BtbN FFmpeg Windows x64 GPL build",
+  "ffmpegVersion": "N-124795-gc27a3b12e3-20260604",
+  "resources": [
+    {
+      "path": "vendor/ffmpeg/win/x64/ffmpeg.exe",
+      "size": 204200448,
+      "sha256": "0a5ecf46b68e11732093a56cda04e6072ba2c417fd4c9f7940e030f6c3dc6baa"
+    },
+    {
+      "path": "vendor/ffmpeg/win/x64/ffprobe.exe",
+      "size": 203993088,
+      "sha256": "d573f2cc85177d2e868781f4d7765d69f68d5340d0417a21766a28d1811206dd"
+    }
+  ]
+}

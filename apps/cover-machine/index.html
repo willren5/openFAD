@@ -1,0 +1,3612 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>openFAD Cover Machine｜中文开源封面制作器</title>
+
+  <!-- Base font only (others are loaded on-demand) -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link
+    href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&display=swap"
+    rel="stylesheet"
+  />
+
+  <!-- Pin html2canvas version; load local first so file:// exports do not depend on CDN access. -->
+  <script>
+    window.OPENFAD_HTML2CANVAS_READY = (() => {
+      const sources = [
+        './vendor/html2canvas.min.js',
+        'https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js'
+      ];
+      let index = 0;
+
+      return new Promise((resolve) => {
+        const loadNext = () => {
+          if (typeof window.html2canvas === 'function') {
+            resolve(true);
+            return;
+          }
+
+          const src = sources[index];
+          index += 1;
+          if (!src) {
+            resolve(false);
+            return;
+          }
+
+          const script = document.createElement('script');
+          script.src = src;
+          if (/^https?:/i.test(src)) script.crossOrigin = 'anonymous';
+          script.onload = () => resolve(typeof window.html2canvas === 'function');
+          script.onerror = loadNext;
+          document.head.appendChild(script);
+        };
+
+        loadNext();
+      });
+    })();
+  </script>
+
+  <style>
+    :root {
+      --base-size: 1000px;
+      --bg-color: #0a0a0a;
+      --text-color: #ffffff;
+
+      --artist-font: 'Inter', sans-serif;
+      --song-font: 'Inter', sans-serif;
+
+      --artist-weight: 400;
+      --song-weight: 800;
+      --artist-size: 32px;
+      --meta-size: 14px;
+
+      --song-spacing: -2px;
+      --layout-padding: 60px;
+      --bg-x: 50%;
+      --bg-y: 50%;
+      --bg-zoom: 1;
+      --bg-rot: 0deg;
+
+      /* case control */
+      --song-transform: uppercase;
+
+      /* blend control (top meta only) */
+      --meta-blend: exclusion;
+      --meta-opacity: 0.9;
+    }
+
+    body {
+      background-color: #111;
+      font-family: 'Inter', sans-serif;
+      margin: 0;
+      overflow: hidden;
+      height: 100vh;
+      color: #888;
+    }
+
+    /* Export lock */
+    body.is-exporting .controls {
+      opacity: 0.82;
+      filter: grayscale(0.25);
+    }
+
+    /* --- Controls --- */
+    .controls {
+      position: fixed;
+      top: 0; left: 0; width: 100%;
+      box-sizing: border-box;
+      padding: 10px;
+      background: #1a1a1a;
+      border-bottom: 1px solid #333;
+      z-index: 1000;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      gap: 8px;
+      flex-wrap: wrap;
+      box-shadow: 0 4px 20px rgba(0,0,0,0.6);
+    }
+
+    .control-group {
+      display: flex;
+      gap: 4px;
+      align-items: center;
+      border-right: 1px solid #444;
+      padding-right: 8px;
+      margin-right: 4px;
+    }
+    .control-group:last-child { border: none; }
+
+    .start-mode {
+      flex: 1 1 100%;
+      display: grid;
+      grid-template-columns: minmax(260px, 1fr) minmax(360px, 1.2fr);
+      gap: 10px 14px;
+      align-items: center;
+      width: 100%;
+      max-width: 1320px;
+    }
+
+    .start-actions {
+      justify-content: flex-end;
+      border-right: 0;
+      padding-right: 0;
+      margin-right: 0;
+      flex-wrap: wrap;
+    }
+
+    .start-status {
+      grid-column: 1 / -1;
+      display: flex;
+      gap: 8px;
+      align-items: stretch;
+      justify-content: center;
+      flex-wrap: wrap;
+    }
+
+    .pro-mode {
+      flex: 1 1 100%;
+      width: 100%;
+      max-width: 1320px;
+      border-top: 1px solid #303030;
+      padding-top: 7px;
+    }
+
+    .pro-mode summary {
+      width: fit-content;
+      min-height: 30px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 0 10px;
+      border: 1px solid #444;
+      border-radius: 4px;
+      background: #242424;
+      color: #eee;
+      cursor: pointer;
+      font-size: 12px;
+      font-weight: 800;
+      list-style: none;
+      user-select: none;
+    }
+
+    .pro-mode summary::-webkit-details-marker { display: none; }
+    .pro-mode summary::after {
+      content: "+";
+      color: #aaa;
+      font-size: 14px;
+    }
+    .pro-mode[open] summary::after { content: "-"; }
+
+    .pro-grid {
+      display: flex;
+      gap: 6px;
+      align-items: stretch;
+      flex-wrap: wrap;
+      padding-top: 8px;
+    }
+
+    .control-section {
+      min-height: 38px;
+      display: flex;
+      gap: 5px;
+      align-items: center;
+      flex-wrap: wrap;
+      padding: 6px;
+      border: 1px solid #303030;
+      background: #181818;
+      border-radius: 6px;
+    }
+
+    .section-label {
+      min-width: 78px;
+      color: #d8d8d8;
+      font-size: 11px;
+      font-weight: 800;
+      white-space: nowrap;
+    }
+
+    .brand-strip {
+      flex-basis: 100%;
+      min-height: 34px;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      gap: 12px;
+      color: #e8e8e8;
+      font-family: 'Inter', sans-serif;
+      font-size: 12px;
+      font-weight: 800;
+      letter-spacing: 0;
+    }
+    .brand-logo {
+      width: 26px;
+      height: 26px;
+      object-fit: contain;
+      flex: 0 0 auto;
+    }
+    .brand-copy {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      flex-wrap: wrap;
+      justify-content: center;
+      line-height: 1.25;
+    }
+    .brand-copy strong {
+      color: #fff;
+      font-size: 13px;
+    }
+    .brand-pill {
+      height: 22px;
+      display: inline-flex;
+      align-items: center;
+      padding: 0 8px;
+      border: 1px solid rgba(255,255,255,0.18);
+      border-radius: 999px;
+      background: rgba(255,255,255,0.06);
+      color: #dcdcdc;
+      font-size: 11px;
+      font-weight: 800;
+      white-space: nowrap;
+    }
+    .brand-note {
+      color: #b8b8b8;
+      font-size: 11px;
+      font-weight: 700;
+      white-space: nowrap;
+    }
+
+    button, .file-btn, select, input[type="color"] {
+      padding: 0 10px;
+      height: 30px;
+      line-height: 28px;
+      background: #2a2a2a;
+      border: 1px solid #444;
+      color: #ccc;
+      cursor: pointer;
+      font-family: 'Inter', sans-serif;
+      font-size: 11px;
+      font-weight: 700;
+      text-transform: none;
+      border-radius: 3px;
+      outline: none;
+      transition: all 0.2s ease;
+      user-select: none;
+    }
+    button:hover, .file-btn:hover, select:hover { background: #444; color: #fff; border-color: #666; }
+    button.active { background: #eee; color: #000; border-color: #fff; }
+    button.primary-action {
+      background: #f5f5f5;
+      color: #050505;
+      border-color: #fff;
+      font-weight: 900;
+    }
+    button.secondary-action {
+      background: #333;
+      color: #f2f2f2;
+      border-color: #555;
+    }
+    button:disabled { opacity: 0.4; cursor: not-allowed; }
+
+    input[type="color"] { padding: 0; width: 32px; border: none; overflow: hidden; }
+    input[type="range"] {
+      width: 80px; height: 4px; border-radius: 2px; background: #444;
+      outline: none; appearance: none; -webkit-appearance: none; cursor: pointer;
+    }
+    input[type="range"]::-webkit-slider-thumb {
+      -webkit-appearance: none; width: 14px; height: 14px; border-radius: 50%; background: #fff;
+    }
+    #rngTitleSize,
+    #rngArtistSize,
+    #rngMetaSize,
+    #rngBgZoom,
+    #rngBgX,
+    #rngBgY,
+    #rngBgRot { width: 96px; }
+    .native-font-select {
+      position: absolute;
+      width: 1px;
+      height: 1px;
+      opacity: 0;
+      pointer-events: none;
+    }
+    .font-step {
+      width: 30px;
+      padding: 0;
+      font-size: 12px;
+    }
+    .font-picker {
+      position: relative;
+      display: inline-flex;
+      align-items: center;
+    }
+    .font-picker-button {
+      min-width: 156px;
+      max-width: 188px;
+      text-align: left;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+    .font-menu {
+      position: absolute;
+      top: 34px;
+      left: 0;
+      width: min(360px, 88vw);
+      max-height: min(540px, calc(100vh - 120px));
+      overflow: auto;
+      padding: 6px;
+      box-sizing: border-box;
+      background: #181818;
+      border: 1px solid #444;
+      border-radius: 6px;
+      box-shadow: 0 20px 60px rgba(0,0,0,0.65);
+      z-index: 2200;
+      display: none;
+    }
+    .font-menu.open { display: block; }
+    .font-menu-group {
+      padding: 8px 8px 5px;
+      color: #777;
+      font-family: 'Inter', sans-serif;
+      font-size: 10px;
+      font-weight: 800;
+      text-transform: uppercase;
+      letter-spacing: 0;
+    }
+    .font-option {
+      width: 100%;
+      height: auto;
+      min-height: 42px;
+      padding: 7px 9px;
+      margin: 0 0 3px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      text-align: left;
+      text-transform: none;
+      background: #222;
+      border-color: #333;
+    }
+    .font-option:hover,
+    .font-option.is-preview {
+      background: #313131;
+      border-color: #777;
+      color: #fff;
+    }
+    .font-option.is-active {
+      background: #efefef;
+      color: #050505;
+      border-color: #fff;
+    }
+    .font-sample {
+      min-width: 0;
+      color: inherit;
+      font-size: 17px;
+      font-weight: 700;
+      line-height: 1.1;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+    .font-name {
+      flex: 0 0 auto;
+      max-width: 116px;
+      color: #aaa;
+      font-family: 'Inter', sans-serif;
+      font-size: 10px;
+      font-weight: 800;
+      line-height: 1.1;
+      overflow: hidden;
+      text-align: right;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+    .font-option.is-active .font-name { color: #111; }
+    .control-value {
+      min-width: 66px;
+      height: 30px;
+      line-height: 28px;
+      padding: 0 8px;
+      box-sizing: border-box;
+      background: #202020;
+      border: 1px solid #383838;
+      color: #aaa;
+      font-family: 'Inter', sans-serif;
+      font-size: 11px;
+      font-weight: 800;
+      text-transform: none;
+      border-radius: 3px;
+      text-align: center;
+      user-select: none;
+      white-space: nowrap;
+    }
+
+    /* Accessibility: keyboard focus visibility */
+    button:focus-visible,
+    .file-btn:focus-visible,
+    select:focus-visible,
+    input[type="color"]:focus-visible,
+    input[type="range"]:focus-visible {
+      outline: 2px solid #fff;
+      outline-offset: 2px;
+    }
+
+    [contenteditable="true"]:focus-visible {
+      outline: 2px solid rgba(255,255,255,0.8);
+      outline-offset: 3px;
+      border-radius: 4px;
+    }
+
+    /* --- Canvas --- */
+    #preview-wrapper {
+      width: 100%;
+      box-sizing: border-box;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 40px;
+      overflow: hidden;
+    }
+
+    #artwork-canvas {
+      width: var(--base-size);
+      height: var(--base-size);
+      position: relative;
+      background-color: var(--bg-color);
+      overflow: hidden;
+      box-shadow: 0 0 120px rgba(0,0,0,0.9);
+      flex-shrink: 0;
+      transform-origin: center center;
+    }
+
+    .layer { position: absolute; top: 0; left: 0; width: 100%; height: 100%; }
+
+    .bg-layer { z-index: 1; transition: filter 0.3s; }
+    .bg-layer img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      object-position: var(--bg-x) var(--bg-y);
+      display: block;
+      transform: scale(var(--bg-zoom)) rotate(var(--bg-rot));
+      transform-origin: center center;
+      transition: transform 0.2s ease, object-position 0.2s ease;
+    }
+    .bg-layer.grayscale { filter: grayscale(100%) contrast(1.1); }
+
+    .texture-layer {
+      z-index: 2;
+      pointer-events: none;
+      opacity: 0;
+      transition: opacity 0.3s;
+      mix-blend-mode: overlay;
+    }
+    .texture-layer.active { opacity: 0.12; }
+    .texture-layer.noise {
+      background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.8' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)'/%3E%3C/svg%3E");
+    }
+
+    .layout-layer {
+      z-index: 3;
+      padding: var(--layout-padding);
+      box-sizing: border-box;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+    }
+
+    .top-meta {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      align-items: center;
+      font-family: 'Inter', sans-serif;
+      font-size: var(--meta-size);
+      letter-spacing: 1.5px;
+      font-weight: 600;
+      border-bottom: 2px solid var(--text-color);
+      padding-bottom: 20px;
+      color: var(--text-color);
+      opacity: var(--meta-opacity);
+      mix-blend-mode: var(--meta-blend);
+    }
+    .meta-item { outline: none; }
+
+    .meta-item:nth-child(1) { text-align: left; }
+    .meta-item:nth-child(2) { text-align: center; }
+    .meta-item:nth-child(3) { text-align: right; }
+
+    .bottom-content {
+      display: flex;
+      flex: 1;
+      align-items: flex-end;
+      justify-content: space-between;
+      flex-direction: row;
+      padding-top: 40px;
+    }
+    .bottom-content.layout-left { flex-direction: row-reverse; }
+    .bottom-content.layout-center {
+      flex-direction: column;
+      align-items: stretch;
+      justify-content: center;
+      gap: 40px;
+      text-align: center;
+    }
+
+    .logo-box {
+      width: 140px; height: 140px;
+      border: 2px dashed rgba(255,255,255,0.2);
+      background: rgba(255,255,255,0.02);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      position: relative;
+      z-index: 10;
+      flex-shrink: 0;
+    }
+    .logo-box:hover { border-color: rgba(255,255,255,0.5); }
+    .logo-box::after {
+      content: "LOGO";
+      font-family: 'Inter', sans-serif;
+      font-size: 10px;
+      font-weight: bold;
+      color: rgba(255,255,255,0.3);
+    }
+
+    /* IMPORTANT: explicit filter chains for html2canvas compatibility */
+    .logo-box img {
+      width: 100%;
+      height: auto;
+      max-height: 140px;
+      display: none;
+      filter: none;
+    }
+
+    .logo-box.has-logo { border: none; background: transparent; }
+    .logo-box.has-logo::after { display: none; }
+    .logo-box.has-logo img { display: block; }
+
+    .logo-box img.filter-white { filter: brightness(0) invert(1); }
+    .logo-box img.filter-black { filter: brightness(0); }
+
+    /* Shadows */
+    .text-group {
+      color: var(--text-color);
+      mix-blend-mode: normal;
+      display: flex;
+      flex-direction: column;
+      align-items: flex-end;
+      text-align: right;
+      min-width: 0;
+      flex: 1;
+      padding-left: 20px;
+      transform-origin: right bottom;
+    }
+    .bottom-content.layout-left .text-group {
+      align-items: flex-start;
+      text-align: left;
+      padding-left: 0;
+      padding-right: 20px;
+      transform-origin: left bottom;
+    }
+    .bottom-content.layout-center .text-group {
+      align-items: center;
+      text-align: center;
+      padding: 0;
+      width: 100%;
+      max-width: 100%;
+      transform-origin: center center;
+    }
+
+    .artist {
+      font-family: var(--artist-font);
+      font-size: var(--artist-size);
+      margin-bottom: 12px;
+      outline: none;
+      font-weight: var(--artist-weight);
+    }
+
+    .song {
+      font-family: var(--song-font);
+      font-size: var(--song-size, 82px);
+      line-height: 0.9;
+      letter-spacing: var(--song-spacing);
+      outline: none;
+      font-weight: var(--song-weight);
+      text-transform: var(--song-transform);
+      overflow: hidden;
+      word-break: break-word;
+    }
+
+    .shadow-on .song { overflow: visible; }
+
+    .shadow-on .artist,
+    .shadow-on .song,
+    .shadow-on .top-meta {
+      text-shadow:
+        0 2px 5px rgba(0,0,0,0.8),
+        0 5px 20px rgba(0,0,0,0.5),
+        0 15px 50px rgba(0,0,0,0.4);
+    }
+
+    /* PNG alpha-respecting shadow (apply to IMG for html2canvas compatibility) */
+    .shadow-on .logo-box.has-logo img {
+      filter:
+        drop-shadow(0 2px 5px rgba(0,0,0,0.8))
+        drop-shadow(0 5px 20px rgba(0,0,0,0.5))
+        drop-shadow(0 15px 50px rgba(0,0,0,0.4));
+    }
+
+    .shadow-on .logo-box.has-logo img.filter-white {
+      filter:
+        brightness(0) invert(1)
+        drop-shadow(0 2px 5px rgba(0,0,0,0.8))
+        drop-shadow(0 5px 20px rgba(0,0,0,0.5))
+        drop-shadow(0 15px 50px rgba(0,0,0,0.4));
+    }
+
+    .shadow-on .logo-box.has-logo img.filter-black {
+      filter:
+        brightness(0)
+        drop-shadow(0 2px 5px rgba(0,0,0,0.8))
+        drop-shadow(0 5px 20px rgba(0,0,0,0.5))
+        drop-shadow(0 15px 50px rgba(0,0,0,0.4));
+    }
+
+    .safe-zone {
+      z-index: 4;
+      display: none;
+      pointer-events: none;
+    }
+    .safe-zone.active { display: block; }
+    .safe-zone::before,
+    .safe-zone::after {
+      content: "";
+      position: absolute;
+      inset: 60px;
+      border: 1px solid rgba(0,240,255,0.45);
+      box-shadow: inset 0 0 0 1px rgba(0,0,0,0.35);
+    }
+    .safe-zone::after {
+      inset: 110px;
+      border-style: dashed;
+      opacity: 0.65;
+    }
+
+    .validation-panel {
+      min-width: min(720px, 94vw);
+      max-width: min(920px, 94vw);
+      height: auto;
+      min-height: 30px;
+      line-height: 1.35;
+      padding: 7px 10px;
+      color: #d8d8d8;
+      text-align: left;
+      white-space: normal;
+      text-transform: none;
+    }
+    .validation-panel.ready { border-color: rgba(80,255,160,0.55); color: #d8ffe8; }
+    .validation-panel.warn { border-color: rgba(255,200,80,0.65); color: #ffe9b8; }
+
+    .export-status {
+      min-width: min(420px, 94vw);
+      max-width: min(620px, 94vw);
+      height: auto;
+      min-height: 30px;
+      line-height: 1.35;
+      padding: 7px 10px;
+      color: #dcdcdc;
+      text-align: left;
+      white-space: normal;
+      border-color: #383838;
+    }
+    .export-status.ready { border-color: rgba(80,255,160,0.55); color: #d8ffe8; }
+    .export-status.warn { border-color: rgba(255,200,80,0.65); color: #ffe9b8; }
+
+    /* Non-blocking toast */
+    .toast {
+      position: fixed;
+      left: 50%;
+      bottom: 16px;
+      transform: translateX(-50%);
+      max-width: min(680px, 92vw);
+      background: rgba(0,0,0,0.88);
+      color: #fff;
+      padding: 10px 12px;
+      border-radius: 8px;
+      border: 1px solid rgba(255,255,255,0.16);
+      box-shadow: 0 12px 36px rgba(0,0,0,0.5);
+      z-index: 3000;
+      font-family: 'Inter', sans-serif;
+      font-size: 12px;
+      line-height: 1.35;
+      display: none;
+      pointer-events: none;
+      white-space: pre-wrap;
+    }
+    .toast.show { display: block; }
+    .toast.error { border-color: rgba(255, 80, 80, 0.65); }
+    .toast.warn  { border-color: rgba(255, 200, 80, 0.65); }
+    .toast.ok    { border-color: rgba(80, 255, 160, 0.55); }
+
+    @media (max-width: 760px) {
+      .controls {
+        max-height: 50vh;
+        justify-content: flex-start;
+        align-content: flex-start;
+        overflow-y: auto;
+        -webkit-overflow-scrolling: touch;
+      }
+
+      .control-group {
+        flex: 1 0 100%;
+        max-width: 100%;
+        overflow-x: auto;
+        padding: 0 0 7px;
+        margin: 0;
+        border-right: 0;
+        border-bottom: 1px solid #333;
+      }
+
+      .start-mode {
+        grid-template-columns: 1fr;
+      }
+
+      .start-actions {
+        justify-content: flex-start;
+        overflow-x: visible;
+      }
+
+      .pro-grid {
+        display: block;
+      }
+
+      .control-section {
+        margin-bottom: 7px;
+        overflow-x: auto;
+      }
+
+      .brand-strip {
+        justify-content: flex-start;
+        align-items: flex-start;
+      }
+
+      .brand-copy {
+        justify-content: flex-start;
+      }
+
+      .brand-note {
+        flex-basis: 100%;
+        white-space: normal;
+      }
+
+      .font-menu {
+        position: fixed;
+        inset: auto 8px 8px 8px;
+        top: auto;
+        width: auto;
+        max-height: 46vh;
+      }
+
+      #preview-wrapper {
+        min-height: 52vh;
+        padding: 18px;
+      }
+
+      .toast {
+        bottom: 10px;
+      }
+    }
+  </style>
+</head>
+
+<body>
+  <div class="controls" id="controls">
+    <section class="start-mode" aria-labelledby="coverStartTitle">
+      <div class="brand-strip" aria-label="openFAD Cover Machine 信息">
+        <img class="brand-logo" id="brandLogo" alt="openFAD logo">
+        <div class="brand-copy">
+          <span class="brand-pill">openFAD Cover Machine</span>
+          <strong id="coverStartTitle">制作一张发行封面</strong>
+          <span class="brand-pill">本地优先</span>
+          <span class="brand-pill">中文优先</span>
+          <span class="brand-note">示例素材为公开安全占位，不授予 FAD Records 品牌素材使用权。</span>
+        </div>
+      </div>
+
+      <div class="control-group start-actions">
+        <button id="btnOpenDemo" class="primary-action" data-action="openDemoProject">打开示例</button>
+        <label class="file-btn" role="button" tabindex="0" aria-label="上传背景图片" title="上传背景图片">
+          上传背景 <input type="file" id="bgInput" accept="image/*" style="display:none">
+        </label>
+        <label class="file-btn" role="button" tabindex="0" aria-label="上传 logo 图片" title="上传 logo 图片">
+          上传 Logo <input type="file" id="logoInput" accept="image/*" style="display:none">
+        </label>
+        <select id="selExportTarget" style="width:168px" aria-label="导出目标">
+          <option value="dsp-3000">DSP 方形封面 3000</option>
+          <option value="dsp-3840" selected>DSP 方形封面 3840</option>
+          <option value="dsp-4000">DSP 方形封面 4000</option>
+          <option value="social-4x5">社媒竖图 4:5</option>
+          <option value="story-9x16">社媒竖图 9:16</option>
+        </select>
+        <select id="selLayerMode" style="width:150px" aria-label="透明图层模式">
+          <option value="full" selected>透明图层: 完整封面</option>
+          <option value="text">透明图层: 文字</option>
+          <option value="meta">透明图层: 发行信息</option>
+        </select>
+        <button id="saveBtnJpg" class="primary-action" data-action="exportJpg">导出封面 JPG</button>
+        <button id="saveBtnPng" class="secondary-action" data-action="exportPng">导出透明图层</button>
+        <button id="btnRetryExport" data-action="retryLastExport" disabled>重试下载</button>
+      </div>
+
+      <div class="start-status">
+        <div id="validationPanel" class="control-value validation-panel" role="status" aria-live="polite">导出检查: 等待中</div>
+        <div id="exportStatus" class="control-value export-status" role="status" aria-live="polite">导出状态: 尚未导出</div>
+      </div>
+    </section>
+
+    <details class="pro-mode" id="proMode">
+      <summary>高级设置</summary>
+      <div class="pro-grid">
+        <div class="control-section">
+          <span class="section-label">基础信息</span>
+          <button id="btnResetProject" data-action="resetProject">重置项目</button>
+          <select id="selPreset" style="width:150px" aria-label="视觉预设">
+            <option value="builtin:openfad-right">视觉预设: 右侧</option>
+          </select>
+          <button id="btnSavePreset" data-action="savePreset">保存预设</button>
+          <button id="btnCase" data-action="toggleCase">大小写: 大写</button>
+          <input type="color" id="colorPicker" value="#ffffff" aria-label="文字颜色">
+        </div>
+
+        <div class="control-section">
+          <span class="section-label">图片与 Logo</span>
+          <button id="btnLogoColor" data-action="toggleLogoFilter" disabled>Logo: 原色</button>
+          <button id="btnShadow" data-action="toggleShadow">阴影: 关</button>
+          <button id="btnBlend" data-action="toggleBlend" class="active">混合: 开</button>
+          <button id="btnMeta" data-action="toggleMeta" class="active">发行信息: 开</button>
+          <button id="btnBW" data-action="toggleBW">黑白背景</button>
+          <button id="btnNoise" data-action="toggleNoise">颗粒</button>
+        </div>
+
+        <div class="control-section">
+          <span class="section-label">高级排版</span>
+          <button id="btnFontPrev" class="font-step" data-action="stepFontPrev" aria-label="上一款字体">▲</button>
+          <div class="font-picker" id="fontPicker">
+            <button id="fontPickerButton" type="button" class="font-picker-button" data-action="toggleFontMenu" aria-haspopup="listbox" aria-expanded="false">字体: Inter</button>
+            <div id="fontPickerMenu" class="font-menu" role="listbox" aria-label="字体菜单"></div>
+          </div>
+          <button id="btnFontNext" class="font-step" data-action="stepFontNext" aria-label="下一款字体">▼</button>
+      <select id="selSongFont" class="native-font-select" aria-label="标题字体">
+        <optgroup label="拉丁 / 英文">
+          <option value="'Inter', sans-serif" data-family="Inter">Inter</option>
+          <option value="'Space Grotesk', sans-serif" data-family="Space Grotesk">Space</option>
+          <option value="'Syne', sans-serif" data-family="Syne">Syne</option>
+          <option value="'Oswald', sans-serif" data-family="Oswald">Oswald</option>
+          <option value="'Montserrat', sans-serif" data-family="Montserrat">Montserrat</option>
+          <option value="'Archivo Black', sans-serif" data-family="Archivo Black">Archivo</option>
+          <option value="'Anton', sans-serif" data-family="Anton">Anton</option>
+          <option value="'Bebas Neue', sans-serif" data-family="Bebas Neue">Bebas</option>
+          <option value="'Michroma', sans-serif" data-family="Michroma">Michroma</option>
+          <option value="'Orbitron', sans-serif" data-family="Orbitron">Orbitron</option>
+          <option value="'Rajdhani', sans-serif" data-family="Rajdhani">Rajdhani</option>
+          <option value="'Saira Condensed', sans-serif" data-family="Saira Condensed">Saira</option>
+          <option value="'Barlow Condensed', sans-serif" data-family="Barlow Condensed">Barlow</option>
+          <option value="'Unbounded', sans-serif" data-family="Unbounded">Unbounded</option>
+          <option value="'Manrope', sans-serif" data-family="Manrope">Manrope</option>
+          <option value="'DM Sans', sans-serif" data-family="DM Sans">DM Sans</option>
+          <option value="'IBM Plex Sans', sans-serif" data-family="IBM Plex Sans">Plex Sans</option>
+          <option value="'Roboto Condensed', sans-serif" data-family="Roboto Condensed">Roboto Cond</option>
+          <option value="'Work Sans', sans-serif" data-family="Work Sans">Work Sans</option>
+          <option value="'Public Sans', sans-serif" data-family="Public Sans">Public Sans</option>
+          <option value="'Rubik', sans-serif" data-family="Rubik">Rubik</option>
+          <option value="'Urbanist', sans-serif" data-family="Urbanist">Urbanist</option>
+          <option value="'Red Hat Display', sans-serif" data-family="Red Hat Display">Red Hat</option>
+          <option value="'League Spartan', sans-serif" data-family="League Spartan">Spartan</option>
+          <option value="'Exo 2', sans-serif" data-family="Exo 2">Exo 2</option>
+          <option value="'Oxanium', sans-serif" data-family="Oxanium">Oxanium</option>
+          <option value="'Audiowide', sans-serif" data-family="Audiowide">Audiowide</option>
+          <option value="'Russo One', sans-serif" data-family="Russo One">Russo</option>
+          <option value="'Kanit', sans-serif" data-family="Kanit">Kanit</option>
+          <option value="'Teko', sans-serif" data-family="Teko">Teko</option>
+          <option value="'Big Shoulders Display', sans-serif" data-family="Big Shoulders Display">Big Shoulders</option>
+          <option value="'Fjalla One', sans-serif" data-family="Fjalla One">Fjalla</option>
+          <option value="'Raleway', sans-serif" data-family="Raleway">Raleway</option>
+          <option value="'Poppins', sans-serif" data-family="Poppins">Poppins</option>
+          <option value="'Figtree', sans-serif" data-family="Figtree">Figtree</option>
+          <option value="'Outfit', sans-serif" data-family="Outfit">Outfit</option>
+          <option value="'Staatliches', sans-serif" data-family="Staatliches">Staatliches</option>
+          <option value="'Bungee', sans-serif" data-family="Bungee">Bungee</option>
+          <option value="'Monoton', sans-serif" data-family="Monoton">Monoton</option>
+          <option value="'Cinzel', serif" data-family="Cinzel">Cinzel</option>
+          <option value="'Playfair Display', serif" data-family="Playfair Display">Playfair</option>
+          <option value="'IBM Plex Serif', serif" data-family="IBM Plex Serif">Plex Serif</option>
+          <option value="'Cormorant Garamond', serif" data-family="Cormorant Garamond">Cormorant</option>
+          <option value="'Libre Baskerville', serif" data-family="Libre Baskerville">Baskerville</option>
+          <option value="'Crimson Pro', serif" data-family="Crimson Pro">Crimson Pro</option>
+          <option value="'IBM Plex Mono', monospace" data-family="IBM Plex Mono">Plex Mono</option>
+          <option value="'JetBrains Mono', monospace" data-family="JetBrains Mono">JetBrains</option>
+          <option value="'Chivo Mono', monospace" data-family="Chivo Mono">Chivo Mono</option>
+          <option value="'VT323', monospace" data-family="VT323">VT323</option>
+          <option value="'Courier Prime', monospace" data-family="Courier Prime">Courier</option>
+        </optgroup>
+        <optgroup label="中文 / CJK">
+          <option value="'Noto Sans SC', 'PingFang SC', 'Microsoft YaHei', sans-serif" data-family="Noto Sans SC">Noto Sans SC</option>
+          <option value="'Noto Serif SC', 'Songti SC', 'STSong', serif" data-family="Noto Serif SC">Noto Serif SC</option>
+          <option value="'Noto Sans TC', 'PingFang TC', 'Microsoft JhengHei', sans-serif" data-family="Noto Sans TC">Noto Sans TC</option>
+          <option value="'Noto Serif TC', 'Songti TC', 'Hiragino Mincho ProN', serif" data-family="Noto Serif TC">Noto Serif TC</option>
+          <option value="'Noto Sans HK', 'PingFang HK', 'Noto Sans TC', sans-serif" data-family="Noto Sans HK">Noto Sans HK</option>
+          <option value="'Noto Serif HK', 'Songti TC', 'Noto Serif TC', serif" data-family="Noto Serif HK">Noto Serif HK</option>
+          <option value="'Noto Sans JP', 'Hiragino Sans', 'Noto Sans SC', sans-serif" data-family="Noto Sans JP">Noto Sans JP</option>
+          <option value="'Noto Serif JP', 'Hiragino Mincho ProN', 'Noto Serif SC', serif" data-family="Noto Serif JP">Noto Serif JP</option>
+          <option value="'Noto Sans KR', 'Apple SD Gothic Neo', 'Noto Sans SC', sans-serif" data-family="Noto Sans KR">Noto Sans KR</option>
+          <option value="'Noto Serif KR', 'Noto Serif SC', serif" data-family="Noto Serif KR">Noto Serif KR</option>
+          <option value="'LXGW WenKai', 'Noto Serif SC', serif" data-family="LXGW WenKai">霞鹜文楷</option>
+          <option value="'ZCOOL QingKe HuangYou', 'Noto Sans SC', sans-serif" data-family="ZCOOL QingKe HuangYou">青橙黄油</option>
+          <option value="'ZCOOL XiaoWei', 'Noto Serif SC', serif" data-family="ZCOOL XiaoWei">小薇</option>
+          <option value="'ZCOOL KuaiLe', 'Noto Sans SC', sans-serif" data-family="ZCOOL KuaiLe">快乐</option>
+          <option value="'Ma Shan Zheng', 'Noto Serif SC', cursive" data-family="Ma Shan Zheng">马善政</option>
+          <option value="'Long Cang', 'Noto Serif SC', cursive" data-family="Long Cang">龙藏</option>
+          <option value="'Zhi Mang Xing', 'Noto Serif SC', cursive" data-family="Zhi Mang Xing">志芒星</option>
+          <option value="'Liu Jian Mao Cao', 'Noto Serif SC', cursive" data-family="Liu Jian Mao Cao">刘建毛草</option>
+          <option value="'Zen Kaku Gothic New', 'Noto Sans SC', sans-serif" data-family="Zen Kaku Gothic New">Zen Gothic</option>
+          <option value="'Zen Old Mincho', 'Noto Serif SC', serif" data-family="Zen Old Mincho">Zen Mincho</option>
+          <option value="'Shippori Mincho', 'Noto Serif SC', serif" data-family="Shippori Mincho">Shippori</option>
+          <option value="'Dela Gothic One', 'Noto Sans SC', sans-serif" data-family="Dela Gothic One">Dela Gothic</option>
+          <option value="'Sawarabi Gothic', 'Noto Sans SC', sans-serif" data-family="Sawarabi Gothic">Sawarabi Gothic</option>
+          <option value="'Sawarabi Mincho', 'Noto Serif SC', serif" data-family="Sawarabi Mincho">Sawarabi Mincho</option>
+          <option value="'Kosugi Maru', 'Noto Sans SC', sans-serif" data-family="Kosugi Maru">Kosugi Maru</option>
+          <option value="'Kaisei Decol', 'Noto Serif SC', serif" data-family="Kaisei Decol">Kaisei Decol</option>
+        </optgroup>
+      </select>
+
+          <button id="btnBold" data-action="toggleBold" class="active">粗体</button>
+          <input type="range" id="rngSpace" min="-5" max="10" step="0.5" value="-2" aria-label="字距">
+          <span id="titleSizeValue" class="control-value" aria-hidden="true">标题 100%</span>
+          <input type="range" id="rngTitleSize" min="60" max="160" step="1" value="100" aria-label="标题字号">
+          <span id="artistSizeValue" class="control-value" aria-hidden="true">艺人 100%</span>
+          <input type="range" id="rngArtistSize" min="60" max="160" step="1" value="100" aria-label="艺人字号">
+          <span id="metaSizeValue" class="control-value" aria-hidden="true">信息 100%</span>
+          <input type="range" id="rngMetaSize" min="60" max="160" step="1" value="100" aria-label="信息字号">
+          <button id="btnLayout" data-action="cycleLayout">位置: 右侧</button>
+        </div>
+
+        <div class="control-section">
+          <span class="section-label">背景裁切</span>
+          <span id="bgZoomValue" class="control-value" aria-hidden="true">背景 100%</span>
+          <input type="range" id="rngBgZoom" min="80" max="180" step="1" value="100" aria-label="背景缩放">
+          <span id="bgXValue" class="control-value" aria-hidden="true">X 50%</span>
+          <input type="range" id="rngBgX" min="0" max="100" step="1" value="50" aria-label="背景水平位置">
+          <span id="bgYValue" class="control-value" aria-hidden="true">Y 50%</span>
+          <input type="range" id="rngBgY" min="0" max="100" step="1" value="50" aria-label="背景垂直位置">
+          <span id="bgRotValue" class="control-value" aria-hidden="true">旋转 0</span>
+          <input type="range" id="rngBgRot" min="-20" max="20" step="1" value="0" aria-label="背景旋转">
+        </div>
+
+        <div class="control-section">
+          <span class="section-label">安全区与检查</span>
+          <button id="btnSafe" data-action="toggleSafe">安全区</button>
+        </div>
+
+        <div class="control-section">
+          <span class="section-label">项目文件</span>
+          <button id="btnDownloadProject" data-action="downloadProjectJson">下载项目 JSON</button>
+          <button id="btnTelemetry" data-action="toggleTelemetry" title="开启后会发送使用分析事件；本地自动保存不受影响。">分析: 关</button>
+        </div>
+      </div>
+    </details>
+  </div>
+
+  <div id="preview-wrapper">
+    <div id="artwork-canvas">
+      <div class="layer bg-layer" id="bgLayer">
+        <img id="main-bg"
+             src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='3000' height='3000' viewBox='0 0 1000 1000'%3E%3Crect width='1000' height='1000' fill='%23101217'/%3E%3Ccircle cx='750' cy='230' r='170' fill='%23eef1df' opacity='0.32'/%3E%3Cpath d='M0 740 C260 600 390 790 620 660 C780 570 890 600 1000 640 L1000 1000 L0 1000 Z' fill='%23c9d6c4' opacity='0.36'/%3E%3C/svg%3E"
+             crossorigin="anonymous"
+             alt="封面背景">
+      </div>
+
+      <div id="texNoise" class="layer texture-layer noise"></div>
+
+      <div class="layer layout-layer" id="layoutLayer">
+        <div class="top-meta" id="topMeta">
+          <div class="meta-item" contenteditable="true" role="textbox" aria-label="发行信息一" spellcheck="false" autocapitalize="off">openFAD</div>
+          <div class="meta-item" contenteditable="true" role="textbox" aria-label="发行信息二" spellcheck="false" autocapitalize="off">示例项目</div>
+          <div class="meta-item" contenteditable="true" role="textbox" aria-label="顶部信息三" spellcheck="false" autocapitalize="off">2026</div>
+        </div>
+
+        <div class="bottom-content" id="layoutContainer">
+          <div class="logo-box" id="logoBox" role="button" tabindex="0" aria-label="选择 logo 图片">
+            <img id="logo-img" alt="openFAD 示例 logo">
+          </div>
+
+          <div class="text-group" id="textGroup">
+            <div class="artist" id="artistText" contenteditable="true" role="textbox" aria-label="艺人名称" spellcheck="false" autocapitalize="off">示例艺人</div>
+            <div class="song" id="songText" contenteditable="true" role="textbox" aria-label="作品标题" spellcheck="false" autocapitalize="off">示例标题</div>
+          </div>
+        </div>
+      </div>
+      <div id="safeZone" class="layer safe-zone"></div>
+    </div>
+  </div>
+
+  <div id="toast" class="toast" role="status" aria-live="polite"></div>
+
+  <script>
+    'use strict';
+
+    const CONFIG = {
+      exportSize: 3840,
+      songMax: 82,
+      songMin: 36,
+      songFloor: 22,
+      artistBase: 32,
+      songHeightRatio: 0.34,
+      minSongBlockHeight: 120,
+      imageWaitTimeoutMs: 15000,
+      html2canvasWaitTimeoutMs: 8000,
+      maxBackgroundFileBytes: 32 * 1024 * 1024,
+      maxLogoFileBytes: 8 * 1024 * 1024,
+      maxAutosaveDataUrlChars: 1_500_000
+    };
+
+    const LAYER_MODES = new Set(['full', 'text', 'meta']);
+    const CASE_LABELS = ['大小写: 大写', '大小写: 原样', '大小写: 小写'];
+    const STORAGE_KEY = 'openfad-cover-project-v1';
+    const PRESET_STORAGE_KEY = 'openfad-cover-presets-v1';
+    const TELEMETRY_ENABLED_KEY = 'openfad-cover-telemetry-enabled-v1';
+    const svgDataUrl = (svg) => `data:image/svg+xml;charset=utf-8,${encodeURIComponent(svg)}`;
+    const DEFAULT_BACKGROUND_SRC = svgDataUrl(`
+      <svg xmlns="http://www.w3.org/2000/svg" width="3000" height="3000" viewBox="0 0 1000 1000">
+        <defs>
+          <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
+            <stop offset="0" stop-color="#101217"/>
+            <stop offset="0.48" stop-color="#304553"/>
+            <stop offset="1" stop-color="#c9d6c4"/>
+          </linearGradient>
+          <radialGradient id="glow" cx="72%" cy="30%" r="48%">
+            <stop offset="0" stop-color="#f2f7e9" stop-opacity="0.78"/>
+            <stop offset="1" stop-color="#f2f7e9" stop-opacity="0"/>
+          </radialGradient>
+        </defs>
+        <rect width="1000" height="1000" fill="url(#bg)"/>
+        <rect width="1000" height="1000" fill="url(#glow)"/>
+        <path d="M0 710 C210 600 350 770 540 650 S800 470 1000 620 L1000 1000 L0 1000 Z" fill="#11151a" opacity="0.72"/>
+        <path d="M0 835 C260 745 410 880 660 760 C780 702 900 690 1000 725 L1000 1000 L0 1000 Z" fill="#eef1df" opacity="0.22"/>
+        <circle cx="786" cy="214" r="118" fill="#f6f0df" opacity="0.24"/>
+        <text x="72" y="132" fill="#ffffff" opacity="0.56" font-family="Inter, Arial, sans-serif" font-size="34" font-weight="700" letter-spacing="6">DEMO RELEASE</text>
+      </svg>
+    `);
+    const DEFAULT_LOGO_SRC = svgDataUrl(`
+      <svg xmlns="http://www.w3.org/2000/svg" width="512" height="512" viewBox="0 0 512 512">
+        <rect width="512" height="512" rx="52" fill="#f5f5f5"/>
+        <rect x="42" y="42" width="428" height="428" rx="28" fill="none" stroke="#111" stroke-width="20"/>
+        <text x="256" y="304" text-anchor="middle" fill="#111" font-family="Inter, Arial, sans-serif" font-size="78" font-weight="900">openFAD</text>
+      </svg>
+    `);
+    const DEFAULT_LOGO_FILE_RE = /(?:^|\/)logo\.png(?:[?#].*)?$/i;
+
+    const EXPORT_TARGETS = {
+      'dsp-3000': {
+        id: 'dsp-3000',
+        label: 'DSP 方形封面 3000 JPG',
+        optionLabel: 'DSP 方形封面 3000',
+        buttonLabel: '导出封面 JPG',
+        width: 3000,
+        height: 3000,
+        mime: 'image/jpeg',
+        quality: 0.92
+      },
+      'dsp-3840': {
+        id: 'dsp-3840',
+        label: 'DSP 方形封面 3840 JPG',
+        optionLabel: 'DSP 方形封面 3840',
+        buttonLabel: '导出封面 JPG',
+        width: 3840,
+        height: 3840,
+        mime: 'image/jpeg',
+        quality: 0.92
+      },
+      'dsp-4000': {
+        id: 'dsp-4000',
+        label: 'DSP 方形封面 4000 JPG',
+        optionLabel: 'DSP 方形封面 4000',
+        buttonLabel: '导出封面 JPG',
+        width: 4000,
+        height: 4000,
+        mime: 'image/jpeg',
+        quality: 0.92
+      },
+      'social-4x5': {
+        id: 'social-4x5',
+        label: '社媒竖图 4:5 JPG',
+        optionLabel: '社媒竖图 4:5',
+        buttonLabel: '导出封面 JPG',
+        width: 1080,
+        height: 1350,
+        mime: 'image/jpeg',
+        quality: 0.92
+      },
+      'story-9x16': {
+        id: 'story-9x16',
+        label: '社媒竖图 9:16 JPG',
+        optionLabel: '社媒竖图 9:16',
+        buttonLabel: '导出封面 JPG',
+        width: 1080,
+        height: 1920,
+        mime: 'image/jpeg',
+        quality: 0.92
+      }
+    };
+    const DEFAULT_EXPORT_TARGET = EXPORT_TARGETS['dsp-3840'];
+    const getExportTarget = (id) => EXPORT_TARGETS[id] || DEFAULT_EXPORT_TARGET;
+
+    const BUILT_IN_PRESETS = {
+      'builtin:openfad-right': {
+        name: '右侧发行封面',
+        project: {
+          controls: {
+            layoutMode: 0,
+            titleSizePercent: 100,
+            artistSizePercent: 100,
+            metaSizePercent: 100,
+            bgZoom: 100,
+            bgX: 50,
+            bgY: 50,
+            bgRot: 0,
+            textColor: '#ffffff',
+            letterSpacing: -2,
+            isBold: true,
+            hasShadow: false,
+            blendOn: true,
+            metaOn: true,
+            layerMode: 'full',
+            exportTarget: 'dsp-3840',
+            hasLogo: true,
+            logoFilter: 0
+          },
+          assets: {
+            logoSrc: DEFAULT_LOGO_SRC
+          }
+        }
+      },
+      'builtin:cjk-center': {
+        name: '中文居中封面',
+        project: {
+          controls: {
+            layoutMode: 2,
+            titleSizePercent: 112,
+            artistSizePercent: 88,
+            metaSizePercent: 95,
+            letterSpacing: 0,
+            bgZoom: 112,
+            bgX: 50,
+            bgY: 50,
+            bgRot: 0,
+            isBold: true,
+            hasShadow: true,
+            blendOn: false,
+            metaOn: true,
+            exportTarget: 'dsp-3840',
+            hasLogo: true,
+            logoFilter: 0
+          },
+          assets: {
+            logoSrc: DEFAULT_LOGO_SRC
+          }
+        }
+      },
+      'builtin:left-shadow': {
+        name: '左侧阴影封面',
+        project: {
+          controls: {
+            layoutMode: 1,
+            titleSizePercent: 105,
+            artistSizePercent: 95,
+            metaSizePercent: 100,
+            letterSpacing: -1,
+            bgZoom: 118,
+            bgX: 45,
+            bgY: 52,
+            bgRot: 0,
+            isBold: true,
+            hasShadow: true,
+            blendOn: true,
+            metaOn: true,
+            exportTarget: 'dsp-3840',
+            hasLogo: true,
+            logoFilter: 0
+          },
+          assets: {
+            logoSrc: DEFAULT_LOGO_SRC
+          }
+        }
+      }
+    };
+
+    const Logger = (() => {
+      const levels = { debug: 10, info: 20, warn: 30, error: 40 };
+      let level = levels.info;
+
+      if (typeof localStorage !== 'undefined' && localStorage.getItem('OPENFAD_DEBUG') === '1') {
+        level = levels.debug;
+      }
+
+      const can = (l) => l >= level;
+      const fmt = (tag, args) => [`[openFAD][${tag}]`, ...args];
+
+      return {
+        debug: (...a) => can(levels.debug) && console.debug(...fmt('D', a)),
+        info: (...a) => can(levels.info) && console.info(...fmt('I', a)),
+        warn: (...a) => can(levels.warn) && console.warn(...fmt('W', a)),
+        error: (...a) => can(levels.error) && console.error(...fmt('E', a))
+      };
+    })();
+
+    const isTelemetryEnabled = () => {
+      try {
+        return localStorage.getItem(TELEMETRY_ENABLED_KEY) === '1';
+      } catch (_) {
+        return false;
+      }
+    };
+
+    const setTelemetryEnabled = (enabled) => {
+      try {
+        if (enabled) localStorage.setItem(TELEMETRY_ENABLED_KEY, '1');
+        else localStorage.removeItem(TELEMETRY_ENABLED_KEY);
+      } catch (_) {}
+    };
+
+    const isLargeDataUrlForAutosave = (src) => (
+      typeof src === 'string' &&
+      src.startsWith('data:') &&
+      src.length > CONFIG.maxAutosaveDataUrlChars
+    );
+
+    const Telemetry = (() => {
+      const SESSION_KEY = 'openfad-cover-telemetry-session-v1';
+      const ENDPOINT = '/creator/events';
+
+      const getSessionId = () => {
+        try {
+          const existing = localStorage.getItem(SESSION_KEY);
+          if (existing) return existing;
+          const id = (crypto?.randomUUID?.() || `openfad-${Date.now().toString(36)}-${Math.random().toString(36).slice(2)}`);
+          localStorage.setItem(SESSION_KEY, id);
+          return id;
+        } catch (_) {
+          return `openfad-${Date.now().toString(36)}`;
+        }
+      };
+
+      const getRoute = () => {
+        const ctx = window.OPENFAD_CREATOR_CONTEXT || {};
+        if (ctx.slug) return ctx.slug;
+        return location.pathname.split('/').filter(Boolean).pop() || 'app';
+      };
+
+      const track = (event, details = {}) => {
+        try {
+          if (!isTelemetryEnabled()) return;
+          const ctx = window.OPENFAD_CREATOR_CONTEXT || {};
+          const payload = {
+            event,
+            sessionId: getSessionId(),
+            route: getRoute(),
+            source: ctx.source || 'openfad-cover-v1',
+            details: {
+              ...details,
+              viewportWidth: window.innerWidth || 0,
+              viewportHeight: window.innerHeight || 0
+            }
+          };
+          const body = JSON.stringify(payload);
+
+          if (navigator.sendBeacon && typeof Blob === 'function') {
+            const blob = new Blob([body], { type: 'application/json' });
+            if (navigator.sendBeacon(ENDPOINT, blob)) return;
+          }
+
+          fetch(ENDPOINT, {
+            method: 'POST',
+            headers: { 'content-type': 'application/json' },
+            body,
+            credentials: 'same-origin',
+            keepalive: true
+          }).catch(() => {});
+        } catch (err) {
+          Logger.debug('Telemetry skipped:', err);
+        }
+      };
+
+      return { track };
+    })();
+
+    const Toast = {
+      el: null,
+      t: null,
+      init() { this.el = document.getElementById('toast'); },
+      show(message, kind = 'warn', ms = 3500) {
+        if (!this.el) return;
+        if (this.t) clearTimeout(this.t);
+        this.el.className = `toast show ${kind}`;
+        this.el.textContent = String(message || '');
+        this.t = setTimeout(() => {
+          this.el.className = 'toast';
+          this.el.textContent = '';
+          this.t = null;
+        }, ms);
+      }
+    };
+
+    const FONT_URLS = {
+      'Space Grotesk': 'https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;700&display=swap',
+      'Syne': 'https://fonts.googleapis.com/css2?family=Syne:wght@400;800&display=swap',
+      'Oswald': 'https://fonts.googleapis.com/css2?family=Oswald:wght@400;700&display=swap',
+      'Montserrat': 'https://fonts.googleapis.com/css2?family=Montserrat:wght@400;700;800&display=swap',
+      'Archivo Black': 'https://fonts.googleapis.com/css2?family=Archivo+Black&display=swap',
+      'Anton': 'https://fonts.googleapis.com/css2?family=Anton&display=swap',
+      'Bebas Neue': 'https://fonts.googleapis.com/css2?family=Bebas+Neue&display=swap',
+      'Michroma': 'https://fonts.googleapis.com/css2?family=Michroma&display=swap',
+      'Cinzel': 'https://fonts.googleapis.com/css2?family=Cinzel:wght@400;700&display=swap',
+      'Playfair Display': 'https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;700&display=swap',
+      'IBM Plex Mono': 'https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;700&display=swap',
+      'JetBrains Mono': 'https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;700;800&display=swap',
+      'Chivo Mono': 'https://fonts.googleapis.com/css2?family=Chivo+Mono:wght@400;700;800&display=swap',
+      'VT323': 'https://fonts.googleapis.com/css2?family=VT323&display=swap',
+      'Courier Prime': 'https://fonts.googleapis.com/css2?family=Courier+Prime:wght@400;700&display=swap',
+      'Orbitron': 'https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&display=swap',
+      'Rajdhani': 'https://fonts.googleapis.com/css2?family=Rajdhani:wght@400;500;700&display=swap',
+      'Saira Condensed': 'https://fonts.googleapis.com/css2?family=Saira+Condensed:wght@400;500;700;800&display=swap',
+      'Barlow Condensed': 'https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@400;500;700;800&display=swap',
+      'Unbounded': 'https://fonts.googleapis.com/css2?family=Unbounded:wght@400;700;900&display=swap',
+      'Manrope': 'https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;700;800&display=swap',
+      'DM Sans': 'https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;700;800&display=swap',
+      'IBM Plex Sans': 'https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;700;800&display=swap',
+      'Roboto Condensed': 'https://fonts.googleapis.com/css2?family=Roboto+Condensed:wght@400;500;700;800&display=swap',
+      'Work Sans': 'https://fonts.googleapis.com/css2?family=Work+Sans:wght@400;500;700;800&display=swap',
+      'Public Sans': 'https://fonts.googleapis.com/css2?family=Public+Sans:wght@400;500;700;800&display=swap',
+      'Rubik': 'https://fonts.googleapis.com/css2?family=Rubik:wght@400;500;700;800&display=swap',
+      'Urbanist': 'https://fonts.googleapis.com/css2?family=Urbanist:wght@400;500;700;800&display=swap',
+      'Red Hat Display': 'https://fonts.googleapis.com/css2?family=Red+Hat+Display:wght@400;500;700;800&display=swap',
+      'League Spartan': 'https://fonts.googleapis.com/css2?family=League+Spartan:wght@400;500;700;800&display=swap',
+      'Exo 2': 'https://fonts.googleapis.com/css2?family=Exo+2:wght@400;500;700;800&display=swap',
+      'Oxanium': 'https://fonts.googleapis.com/css2?family=Oxanium:wght@400;500;700;800&display=swap',
+      'Audiowide': 'https://fonts.googleapis.com/css2?family=Audiowide&display=swap',
+      'Russo One': 'https://fonts.googleapis.com/css2?family=Russo+One&display=swap',
+      'Kanit': 'https://fonts.googleapis.com/css2?family=Kanit:wght@400;500;700;800&display=swap',
+      'Teko': 'https://fonts.googleapis.com/css2?family=Teko:wght@400;500;700&display=swap',
+      'Big Shoulders Display': 'https://fonts.googleapis.com/css2?family=Big+Shoulders+Display:wght@400;500;700;800&display=swap',
+      'Fjalla One': 'https://fonts.googleapis.com/css2?family=Fjalla+One&display=swap',
+      'Raleway': 'https://fonts.googleapis.com/css2?family=Raleway:wght@400;500;700;800&display=swap',
+      'Poppins': 'https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;700;800&display=swap',
+      'Figtree': 'https://fonts.googleapis.com/css2?family=Figtree:wght@400;500;700;800&display=swap',
+      'Outfit': 'https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;700;800&display=swap',
+      'Staatliches': 'https://fonts.googleapis.com/css2?family=Staatliches&display=swap',
+      'Bungee': 'https://fonts.googleapis.com/css2?family=Bungee&display=swap',
+      'Monoton': 'https://fonts.googleapis.com/css2?family=Monoton&display=swap',
+      'Noto Sans SC': 'https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@400;500;700;900&display=swap',
+      'Noto Serif SC': 'https://fonts.googleapis.com/css2?family=Noto+Serif+SC:wght@400;500;700;900&display=swap',
+      'Noto Sans TC': 'https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700;900&display=swap',
+      'Noto Serif TC': 'https://fonts.googleapis.com/css2?family=Noto+Serif+TC:wght@400;500;700;900&display=swap',
+      'Noto Sans HK': 'https://fonts.googleapis.com/css2?family=Noto+Sans+HK:wght@400;500;700;900&display=swap',
+      'Noto Serif HK': 'https://fonts.googleapis.com/css2?family=Noto+Serif+HK:wght@400;500;700;900&display=swap',
+      'Noto Sans JP': 'https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;500;700;900&display=swap',
+      'Noto Serif JP': 'https://fonts.googleapis.com/css2?family=Noto+Serif+JP:wght@400;500;700;900&display=swap',
+      'Noto Sans KR': 'https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;700;900&display=swap',
+      'Noto Serif KR': 'https://fonts.googleapis.com/css2?family=Noto+Serif+KR:wght@400;500;700;900&display=swap',
+      'LXGW WenKai': 'https://fonts.googleapis.com/css2?family=LXGW+WenKai&display=swap',
+      'ZCOOL QingKe HuangYou': 'https://fonts.googleapis.com/css2?family=ZCOOL+QingKe+HuangYou&display=swap',
+      'ZCOOL XiaoWei': 'https://fonts.googleapis.com/css2?family=ZCOOL+XiaoWei&display=swap',
+      'ZCOOL KuaiLe': 'https://fonts.googleapis.com/css2?family=ZCOOL+KuaiLe&display=swap',
+      'Ma Shan Zheng': 'https://fonts.googleapis.com/css2?family=Ma+Shan+Zheng&display=swap',
+      'Long Cang': 'https://fonts.googleapis.com/css2?family=Long+Cang&display=swap',
+      'Zhi Mang Xing': 'https://fonts.googleapis.com/css2?family=Zhi+Mang+Xing&display=swap',
+      'Liu Jian Mao Cao': 'https://fonts.googleapis.com/css2?family=Liu+Jian+Mao+Cao&display=swap',
+      'Zen Kaku Gothic New': 'https://fonts.googleapis.com/css2?family=Zen+Kaku+Gothic+New:wght@400;500;700;900&display=swap',
+      'Zen Old Mincho': 'https://fonts.googleapis.com/css2?family=Zen+Old+Mincho:wght@400;700;900&display=swap',
+      'Shippori Mincho': 'https://fonts.googleapis.com/css2?family=Shippori+Mincho:wght@400;700;800&display=swap',
+      'Dela Gothic One': 'https://fonts.googleapis.com/css2?family=Dela+Gothic+One&display=swap',
+      'Sawarabi Gothic': 'https://fonts.googleapis.com/css2?family=Sawarabi+Gothic&display=swap',
+      'Sawarabi Mincho': 'https://fonts.googleapis.com/css2?family=Sawarabi+Mincho&display=swap',
+      'Kosugi Maru': 'https://fonts.googleapis.com/css2?family=Kosugi+Maru&display=swap',
+      'Kaisei Decol': 'https://fonts.googleapis.com/css2?family=Kaisei+Decol:wght@400;700&display=swap'
+    };
+
+    const loadedFonts = new Set(['Inter']);
+
+    const getSelectedFontFamily = (sel) => {
+      const opt = sel?.selectedOptions?.[0];
+      return opt?.dataset?.family || null;
+    };
+
+    const setRootVar = (name, value) => {
+      document.documentElement.style.setProperty(name, value);
+    };
+
+    const clamp = (value, min, max, fallback) => {
+      const n = Number.parseFloat(value);
+      if (!Number.isFinite(n)) return fallback;
+      return Math.max(min, Math.min(max, n));
+    };
+
+    const safeJsonParse = (raw, fallback) => {
+      if (!raw) return fallback;
+      try { return JSON.parse(raw); } catch (_) { return fallback; }
+    };
+
+    const mergeDeep = (base, patch) => {
+      if (!patch || typeof patch !== 'object') return base;
+      const out = Array.isArray(base) ? base.slice() : { ...(base || {}) };
+      Object.entries(patch).forEach(([key, value]) => {
+        if (value && typeof value === 'object' && !Array.isArray(value)) {
+          out[key] = mergeDeep(out[key] || {}, value);
+        } else {
+          out[key] = value;
+        }
+      });
+      return out;
+    };
+
+    const escAttr = (value) => {
+      if (window.CSS && typeof CSS.escape === 'function') return CSS.escape(value);
+      return String(value).replace(/"/g, '\\"');
+    };
+
+    const normalizeLogoSrc = (src) => {
+      if (!src || typeof src !== 'string') return '';
+      const trimmed = src.trim();
+      if (!trimmed) return '';
+
+      try {
+        const decoded = decodeURIComponent(trimmed);
+        if (decoded === 'logo.png' || DEFAULT_LOGO_FILE_RE.test(decoded)) return DEFAULT_LOGO_SRC;
+      } catch (_) {
+        if (trimmed === 'logo.png' || DEFAULT_LOGO_FILE_RE.test(trimmed)) return DEFAULT_LOGO_SRC;
+      }
+
+      return trimmed;
+    };
+
+    const FontManager = (() => {
+      const pending = new Map();
+      const FONT_LOAD_TIMEOUT_MS = 5000;
+
+      const ensureFont = (family) => {
+        try {
+          if (!family || loadedFonts.has(family)) return;
+
+          const href = FONT_URLS[family];
+          if (!href) return;
+
+          if (pending.has(family)) return;
+
+          const attr = escAttr(family);
+          const existing = document.querySelector(`link[data-dyn-font="${attr}"]`);
+          if (existing) {
+            pending.set(family, Promise.resolve().then(() => loadedFonts.add(family)));
+            return;
+          }
+
+          const link = document.createElement('link');
+          link.rel = 'stylesheet';
+          link.href = href;
+          link.dataset.dynFont = family;
+          link.setAttribute('data-dyn-font', family);
+
+          const p = new Promise((resolve) => {
+            let settled = false;
+            const finish = (ok) => {
+              if (settled) return;
+              settled = true;
+              if (ok) loadedFonts.add(family);
+              resolve();
+            };
+
+            link.onload = () => finish(true);
+            link.onerror = () => {
+              Toast.show(`Font load failed: ${family}`, 'warn');
+              finish(false);
+            };
+
+            setTimeout(() => finish(false), FONT_LOAD_TIMEOUT_MS);
+          });
+
+          pending.set(family, p);
+          document.head.appendChild(link);
+        } catch (err) {
+          Logger.warn('ensureFont failed:', err);
+        }
+      };
+
+      const waitForFont = async (family) => {
+        if (!family) return;
+        ensureFont(family);
+
+        const p = pending.get(family);
+        if (p) {
+          try { await p; } catch (_) {}
+        }
+
+        if (document.fonts?.load) {
+          try {
+            await document.fonts.load(`16px "${family}"`, 'openFAD 中文测试 123');
+          } catch (_) {}
+        }
+      };
+
+      const waitAll = async () => {
+        if (document.fonts?.ready) {
+          try { await document.fonts.ready; } catch (_) {}
+        }
+      };
+
+      return { ensureFont, waitForFont, waitAll };
+    })();
+
+    const ensureFont = (family) => FontManager.ensureFont(family);
+
+    const getBaseSizePx = () => {
+      const raw = getComputedStyle(document.documentElement).getPropertyValue('--base-size').trim();
+      const v = parseFloat(raw);
+      return Number.isFinite(v) && v > 0 ? v : 1000;
+    };
+
+    const waitForImages = async (root, timeoutMs = CONFIG.imageWaitTimeoutMs) => {
+      const imgs = Array.from(root.querySelectorAll('img'));
+      if (!imgs.length) return [];
+
+      const settleOne = (img) => {
+        const done = () => ({ img, ok: img.naturalWidth > 0 });
+
+        if (img.complete) return Promise.resolve(done());
+
+        const eventPromise = new Promise((resolve) => {
+          let settled = false;
+          const onEnd = () => {
+            if (settled) return;
+            settled = true;
+            img.removeEventListener('load', onEnd);
+            img.removeEventListener('error', onEnd);
+            resolve(done());
+          };
+
+          img.addEventListener('load', onEnd);
+          img.addEventListener('error', onEnd);
+        });
+
+        const decodePromise = typeof img.decode === 'function'
+          ? img.decode().then(done).catch(done)
+          : eventPromise;
+
+        return Promise.race([
+          decodePromise,
+          eventPromise,
+          new Promise((resolve) => setTimeout(() => resolve(done()), timeoutMs))
+        ]);
+      };
+
+      return Promise.all(imgs.map(settleOne));
+    };
+
+    const objectUrlMap = new Map();
+
+    const revokeImgUrl = (img) => {
+      const prev = objectUrlMap.get(img);
+      if (!prev) return;
+      try { URL.revokeObjectURL(prev); } catch (_) {}
+      objectUrlMap.delete(img);
+    };
+
+    const revokeAllObjectUrls = () => {
+      for (const [, url] of objectUrlMap) {
+        try { URL.revokeObjectURL(url); } catch (_) {}
+      }
+      objectUrlMap.clear();
+    };
+
+    const setImgFromFile = (img, file, { onOk, onFail } = {}) => {
+      try {
+        revokeImgUrl(img);
+
+        // Use FileReader.readAsDataURL instead of URL.createObjectURL
+        // so the img.src is a data: URL that html2canvas can access
+        // in its cloned iframe document (blob: URLs are not portable).
+        const reader = new FileReader();
+
+        reader.onload = () => {
+          const dataUrl = reader.result;
+
+          const cleanupHandlers = () => {
+            img.onload = null;
+            img.onerror = null;
+          };
+
+          img.onload = () => {
+            cleanupHandlers();
+            if (onOk) onOk();
+          };
+
+          img.onerror = () => {
+            cleanupHandlers();
+            if (onFail) onFail();
+          };
+
+          img.src = dataUrl;
+        };
+
+        reader.onerror = () => {
+          Logger.error('FileReader failed for image');
+          if (onFail) onFail();
+        };
+
+        reader.readAsDataURL(file);
+      } catch (err) {
+        Logger.error('setImgFromFile failed:', err);
+        if (onFail) onFail();
+      }
+    };
+
+    const formatBytes = (bytes) => {
+      if (!Number.isFinite(bytes) || bytes < 0) return '未知大小';
+      if (bytes < 1024) return `${bytes} B`;
+      if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`;
+      return `${(bytes / 1024 / 1024).toFixed(2)} MB`;
+    };
+
+    const toUserErrorMessage = (err) => {
+      const raw = String(err?.message || err || '未知原因');
+      if (/tainted|SecurityError|cross.?origin|CORS/i.test(raw)) {
+        return '浏览器无法读取部分图片资源。请重新上传本地图片，或换用允许导出的图片后重试。';
+      }
+      const localHomePath = new RegExp('/' + 'Users' + '/[^\\s)]+', 'g');
+      return raw
+        .replace(/file:\/\/[^\s)]+/g, '本地文件')
+        .replace(localHomePath, '本地文件')
+        .replace(/\s+/g, ' ')
+        .slice(0, 180);
+    };
+
+    const dispatchDownload = (blob, filename) => {
+      let objectUrl = null;
+      try {
+        objectUrl = URL.createObjectURL(blob);
+        const link = document.createElement('a');
+        link.href = objectUrl;
+        link.download = filename;
+        document.body.appendChild(link);
+        link.click();
+        link.remove();
+        return {
+          fileName: filename,
+          sizeBytes: blob.size,
+          saveDispatched: true
+        };
+      } finally {
+        if (objectUrl) {
+          try { URL.revokeObjectURL(objectUrl); } catch (_) {}
+        }
+      }
+    };
+
+    const downloadCanvas = async (canvas, filename, mime, quality) => {
+      const blob = await new Promise((resolve) => {
+        try {
+          canvas.toBlob(resolve, mime, quality);
+        } catch (err) {
+          Logger.error('canvas.toBlob threw:', err);
+          resolve(null);
+        }
+      });
+
+      if (!blob) throw new Error('浏览器没有成功生成导出文件。');
+      return dispatchDownload(blob, filename);
+    };
+
+    const downloadTextFile = (text, filename, mime = 'application/json;charset=utf-8') => (
+      dispatchDownload(new Blob([text], { type: mime }), filename)
+    );
+
+    const getSelectionOffsets = (el) => {
+      const sel = window.getSelection();
+      if (!sel || sel.rangeCount === 0) return null;
+
+      const range = sel.getRangeAt(0);
+      if (!el.contains(range.startContainer) || !el.contains(range.endContainer)) return null;
+
+      const startRange = range.cloneRange();
+      startRange.selectNodeContents(el);
+      startRange.setEnd(range.startContainer, range.startOffset);
+      const start = startRange.toString().length;
+
+      const endRange = range.cloneRange();
+      endRange.selectNodeContents(el);
+      endRange.setEnd(range.endContainer, range.endOffset);
+      const end = endRange.toString().length;
+
+      return { start, end };
+    };
+
+    const setSelectionOffsets = (el, start, end) => {
+      const safeStart = Math.max(0, start | 0);
+      const safeEnd = Math.max(safeStart, end | 0);
+      const range = document.createRange();
+      const sel = window.getSelection();
+
+      let cursor = 0;
+      let startNode = null;
+      let startOffset = 0;
+      let endNode = null;
+      let endOffset = 0;
+
+      const walker = document.createTreeWalker(el, NodeFilter.SHOW_TEXT);
+      while (walker.nextNode()) {
+        const node = walker.currentNode;
+        const len = node.textContent ? node.textContent.length : 0;
+        const next = cursor + len;
+
+        if (!startNode && safeStart <= next) {
+          startNode = node;
+          startOffset = Math.min(len, safeStart - cursor);
+        }
+
+        if (!endNode && safeEnd <= next) {
+          endNode = node;
+          endOffset = Math.min(len, safeEnd - cursor);
+          break;
+        }
+
+        cursor = next;
+      }
+
+      if (!startNode) {
+        if (el.firstChild && el.firstChild.nodeType === Node.TEXT_NODE) {
+          startNode = el.firstChild;
+          startOffset = el.firstChild.textContent ? el.firstChild.textContent.length : 0;
+        } else {
+          const textNode = document.createTextNode('');
+          el.appendChild(textNode);
+          startNode = textNode;
+          startOffset = 0;
+        }
+      }
+
+      if (!endNode) {
+        endNode = startNode;
+        endOffset = startOffset;
+      }
+
+      range.setStart(startNode, startOffset);
+      range.setEnd(endNode, endOffset);
+      sel.removeAllRanges();
+      sel.addRange(range);
+    };
+
+    const sanitizeEditableText = (el, preserveCaret = false) => {
+      try {
+        const offsets = preserveCaret ? getSelectionOffsets(el) : null;
+        const txt = (el.textContent || '')
+          .replace(/\r?\n+/g, ' ')
+          .replace(/\u00A0/g, ' ');
+        if (el.textContent !== txt) {
+          el.textContent = txt;
+          if (offsets) {
+            const max = txt.length;
+            setSelectionOffsets(el, Math.min(offsets.start, max), Math.min(offsets.end, max));
+          }
+        }
+      } catch (_) {}
+    };
+
+    const setButtonsDisabled = (btns, disabled) => {
+      btns.forEach((btn) => {
+        if (btn) btn.disabled = !!disabled;
+      });
+    };
+
+    const isSafariBrowser = () => {
+      const ua = navigator.userAgent || '';
+      const isSafari = /Safari\//.test(ua);
+      const isOtherWebkitShell = /Chrome\/|Chromium\/|CriOS\/|Edg\/|EdgiOS\/|OPR\/|FxiOS\/|Android/.test(ua);
+      return isSafari && !isOtherWebkitShell;
+    };
+
+    const isFirefoxBrowser = () => /Firefox\//.test(navigator.userAgent || '');
+
+    const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
+
+    const waitFrames = async (count = 2) => {
+      for (let i = 0; i < count; i += 1) {
+        await new Promise((resolve) => requestAnimationFrame(() => resolve()));
+      }
+    };
+
+    const App = {
+      state: {
+        layoutMode: 0,
+        logoFilter: 0,
+        isBold: true,
+        hasShadow: false,
+        hasLogo: false,
+        caseMode: 0,
+        blendOn: true,
+        metaOn: true,
+        layerMode: 'full',
+        isBW: false,
+        hasNoise: false,
+        safeOn: false,
+        titleScale: 1,
+        artistScale: 1,
+        metaScale: 1,
+        bgZoom: 1,
+        bgX: 50,
+        bgY: 50,
+        bgRot: 0,
+        exportTarget: 'dsp-3840',
+        isExporting: false,
+        lastExportMode: null
+      },
+
+      _resizeRaf: null,
+      _fitRaf: null,
+      _willChangeTimer: null,
+      _resizeObserver: null,
+      _autosaveTimer: null,
+      _isApplyingProject: false,
+      _autosaveLargeAssetWarned: false,
+
+      init() {
+        try {
+          Toast.init();
+          this.cacheDom();
+          this.applyBrandAssets();
+          this.setupPresetMenus();
+          this.setupExportTargets();
+          this.setupFontPicker();
+          this.setupEventListeners();
+          this.setupPasteHandler();
+          this.updateTelemetryUI();
+          const restored = this.restoreAutosave();
+          if (!restored) {
+            this.applyProject(this.createDefaultProject(), { skipAutosave: true });
+          }
+          this.updateValidation();
+          this.handleResize();
+          this.fitSongText();
+          this.scheduleAutosave();
+
+          this._onResize = () => {
+            if (this._resizeRaf) cancelAnimationFrame(this._resizeRaf);
+            this._resizeRaf = requestAnimationFrame(() => {
+              this._resizeRaf = null;
+              this.handleResize();
+            });
+          };
+
+          window.addEventListener('resize', this._onResize);
+
+          if ('ResizeObserver' in window) {
+            this._resizeObserver = new ResizeObserver(() => this.handleResize());
+            this._resizeObserver.observe(this.dom.controls);
+          }
+
+          if (document.fonts?.ready) {
+            document.fonts.ready.then(() => this.requestFitSongText()).catch(() => {});
+          }
+
+          this._onBeforeUnload = () => this.teardown();
+          window.addEventListener('beforeunload', this._onBeforeUnload);
+
+          Logger.info('App initialized');
+          Telemetry.track('app_ready', {
+            exportTarget: this.state.exportTarget,
+            hasLogo: this.state.hasLogo,
+            font: getSelectedFontFamily(this.dom.selSongFont)
+          });
+        } catch (err) {
+          Logger.error('App init failed:', err);
+          Toast.show(`初始化失败: ${toUserErrorMessage(err)} 请刷新页面后重试。`, 'error', 6000);
+        }
+      },
+
+      teardown() {
+        if (this._resizeRaf) cancelAnimationFrame(this._resizeRaf);
+        if (this._fitRaf) cancelAnimationFrame(this._fitRaf);
+        if (this._willChangeTimer) clearTimeout(this._willChangeTimer);
+        if (this._autosaveTimer) clearTimeout(this._autosaveTimer);
+        if (this._resizeObserver) this._resizeObserver.disconnect();
+        if (this._onResize) window.removeEventListener('resize', this._onResize);
+        if (this._onDocumentClick) document.removeEventListener('click', this._onDocumentClick);
+        if (this._onBeforeUnload) window.removeEventListener('beforeunload', this._onBeforeUnload);
+        revokeAllObjectUrls();
+      },
+
+      cacheDom() {
+        this.dom = {
+          controls: document.getElementById('controls'),
+          brandLogo: document.getElementById('brandLogo'),
+          previewWrapper: document.getElementById('preview-wrapper'),
+          artworkCanvas: document.getElementById('artwork-canvas'),
+
+          bgInput: document.getElementById('bgInput'),
+          logoInput: document.getElementById('logoInput'),
+          mainBg: document.getElementById('main-bg'),
+          bgLayer: document.getElementById('bgLayer'),
+          texNoise: document.getElementById('texNoise'),
+
+          topMeta: document.getElementById('topMeta'),
+          layoutLayer: document.getElementById('layoutLayer'),
+          layoutContainer: document.getElementById('layoutContainer'),
+
+          logoBox: document.getElementById('logoBox'),
+          logoImg: document.getElementById('logo-img'),
+          btnLogoColor: document.getElementById('btnLogoColor'),
+          btnOpenDemo: document.getElementById('btnOpenDemo'),
+          btnResetProject: document.getElementById('btnResetProject'),
+          selPreset: document.getElementById('selPreset'),
+          btnSavePreset: document.getElementById('btnSavePreset'),
+
+          btnShadow: document.getElementById('btnShadow'),
+          btnBlend: document.getElementById('btnBlend'),
+          btnMeta: document.getElementById('btnMeta'),
+          btnBW: document.getElementById('btnBW'),
+          btnNoise: document.getElementById('btnNoise'),
+          btnSafe: document.getElementById('btnSafe'),
+          btnLayout: document.getElementById('btnLayout'),
+          btnCase: document.getElementById('btnCase'),
+
+          selSongFont: document.getElementById('selSongFont'),
+          fontPicker: document.getElementById('fontPicker'),
+          fontPickerButton: document.getElementById('fontPickerButton'),
+          fontPickerMenu: document.getElementById('fontPickerMenu'),
+          btnFontPrev: document.getElementById('btnFontPrev'),
+          btnFontNext: document.getElementById('btnFontNext'),
+          rngSpace: document.getElementById('rngSpace'),
+          rngTitleSize: document.getElementById('rngTitleSize'),
+          rngArtistSize: document.getElementById('rngArtistSize'),
+          rngMetaSize: document.getElementById('rngMetaSize'),
+          titleSizeValue: document.getElementById('titleSizeValue'),
+          artistSizeValue: document.getElementById('artistSizeValue'),
+          metaSizeValue: document.getElementById('metaSizeValue'),
+          rngBgZoom: document.getElementById('rngBgZoom'),
+          rngBgX: document.getElementById('rngBgX'),
+          rngBgY: document.getElementById('rngBgY'),
+          rngBgRot: document.getElementById('rngBgRot'),
+          bgZoomValue: document.getElementById('bgZoomValue'),
+          bgXValue: document.getElementById('bgXValue'),
+          bgYValue: document.getElementById('bgYValue'),
+          bgRotValue: document.getElementById('bgRotValue'),
+          btnBold: document.getElementById('btnBold'),
+
+          selLayerMode: document.getElementById('selLayerMode'),
+          selExportTarget: document.getElementById('selExportTarget'),
+          colorPicker: document.getElementById('colorPicker'),
+
+          saveBtnPng: document.getElementById('saveBtnPng'),
+          saveBtnJpg: document.getElementById('saveBtnJpg'),
+          btnRetryExport: document.getElementById('btnRetryExport'),
+          btnDownloadProject: document.getElementById('btnDownloadProject'),
+          validationPanel: document.getElementById('validationPanel'),
+          exportStatus: document.getElementById('exportStatus'),
+          btnTelemetry: document.getElementById('btnTelemetry'),
+          safeZone: document.getElementById('safeZone'),
+
+          artistText: document.getElementById('artistText'),
+          songText: document.getElementById('songText'),
+          textGroup: document.getElementById('textGroup')
+        };
+      },
+
+      applyBrandAssets() {
+        if (!this.dom?.brandLogo) return;
+        this.dom.brandLogo.src = DEFAULT_LOGO_SRC;
+        this.dom.brandLogo.addEventListener('error', () => {
+          this.dom.brandLogo.style.display = 'none';
+        }, { once: true });
+      },
+
+      readCustomPresets() {
+        const parsed = safeJsonParse(localStorage.getItem(PRESET_STORAGE_KEY), {});
+        return parsed && typeof parsed === 'object' && !Array.isArray(parsed) ? parsed : {};
+      },
+
+      writeCustomPresets(presets) {
+        try {
+          localStorage.setItem(PRESET_STORAGE_KEY, JSON.stringify(presets || {}));
+        } catch (err) {
+          Logger.warn('writeCustomPresets failed:', err);
+          Toast.show('预设保存失败，浏览器存储空间可能已满。', 'warn', 3500);
+        }
+      },
+
+      setupPresetMenus() {
+        if (!this.dom?.selPreset) return;
+        const customPresets = this.readCustomPresets();
+        this.dom.selPreset.innerHTML = '';
+
+        Object.entries(BUILT_IN_PRESETS).forEach(([value, preset]) => {
+          const opt = document.createElement('option');
+          opt.value = value;
+          opt.textContent = `预设: ${preset.name}`;
+          this.dom.selPreset.appendChild(opt);
+        });
+
+        Object.keys(customPresets).sort().forEach((name) => {
+          const opt = document.createElement('option');
+          opt.value = `custom:${name}`;
+          opt.textContent = `自定义: ${name}`;
+          this.dom.selPreset.appendChild(opt);
+        });
+      },
+
+      setupExportTargets() {
+        if (!this.dom?.selExportTarget) return;
+        const current = this.dom.selExportTarget.value || DEFAULT_EXPORT_TARGET.id;
+        this.dom.selExportTarget.innerHTML = '';
+
+        Object.values(EXPORT_TARGETS).forEach((target) => {
+          const opt = document.createElement('option');
+          opt.value = target.id;
+          opt.textContent = target.optionLabel;
+          this.dom.selExportTarget.appendChild(opt);
+        });
+
+        this.dom.selExportTarget.value = getExportTarget(current).id;
+      },
+
+      getFontOptions() {
+        return Array.from(this.dom.selSongFont.options).map((opt, index) => ({
+          index,
+          value: opt.value,
+          label: (opt.textContent || '').trim(),
+          family: opt.dataset.family || '',
+          group: opt.parentElement?.label || ''
+        }));
+      },
+
+      getFontOptionByValue(value) {
+        return this.getFontOptions().find((item) => item.value === value) || null;
+      },
+
+      getCurrentFontIndex() {
+        const opts = this.getFontOptions();
+        const idx = opts.findIndex((item) => item.value === this.dom.selSongFont.value);
+        return idx >= 0 ? idx : 0;
+      },
+
+      setupFontPicker() {
+        if (!this.dom?.fontPickerMenu || !this.dom?.selSongFont) return;
+
+        const menu = this.dom.fontPickerMenu;
+        menu.innerHTML = '';
+
+        let lastGroup = '';
+        this.getFontOptions().forEach((item) => {
+          if (item.group !== lastGroup) {
+            lastGroup = item.group;
+            const group = document.createElement('div');
+            group.className = 'font-menu-group';
+            group.textContent = item.group || 'Fonts';
+            menu.appendChild(group);
+          }
+
+          const btn = document.createElement('button');
+          btn.type = 'button';
+          btn.className = 'font-option';
+          btn.setAttribute('role', 'option');
+          btn.dataset.value = item.value;
+          btn.dataset.family = item.family;
+          btn.dataset.index = String(item.index);
+          btn.style.fontFamily = item.value;
+
+          const sample = document.createElement('span');
+          sample.className = 'font-sample';
+          sample.textContent = 'openFAD 中文 123';
+
+          const name = document.createElement('span');
+          name.className = 'font-name';
+          name.textContent = item.label;
+
+          btn.appendChild(sample);
+          btn.appendChild(name);
+          menu.appendChild(btn);
+        });
+
+        this.updateFontPickerUI();
+      },
+
+      isFontMenuOpen() {
+        return !!this.dom.fontPickerMenu?.classList.contains('open');
+      },
+
+      openFontMenu() {
+        this._fontPreviewValue = null;
+        this.dom.fontPickerMenu.classList.add('open');
+        this.dom.fontPickerButton.setAttribute('aria-expanded', 'true');
+        this.updateFontOptionStates();
+        this.scrollActiveFontIntoView();
+      },
+
+      closeFontMenu({ restore = true } = {}) {
+        if (!this.dom?.fontPickerMenu) return;
+        this.dom.fontPickerMenu.classList.remove('open');
+        this.dom.fontPickerButton.setAttribute('aria-expanded', 'false');
+        this._fontPreviewValue = null;
+        this.updateFontOptionStates();
+        if (restore) this.restoreCommittedFontPreview();
+      },
+
+      toggleFontMenu() {
+        if (this.isFontMenuOpen()) this.closeFontMenu({ restore: true });
+        else this.openFontMenu();
+      },
+
+      previewFontValue(value, family) {
+        if (!value) return;
+        ensureFont(family || this.getFontOptionByValue(value)?.family);
+        setRootVar('--song-font', value);
+        setRootVar('--artist-font', value);
+        this.requestFitSongText();
+      },
+
+      restoreCommittedFontPreview() {
+        const selected = this.getFontOptionByValue(this.dom.selSongFont.value);
+        if (!selected) return;
+        this.previewFontValue(selected.value, selected.family);
+      },
+
+      setFontValue(value, { close = false } = {}) {
+        const selected = this.getFontOptionByValue(value);
+        if (!selected) return;
+        this.dom.selSongFont.value = selected.value;
+        this.updateTypography();
+        this.updateFontPickerUI();
+        if (close) this.closeFontMenu({ restore: false });
+      },
+
+      stepFont(direction) {
+        const opts = this.getFontOptions();
+        if (!opts.length) return;
+        const current = this.getCurrentFontIndex();
+        const next = (current + direction + opts.length) % opts.length;
+        this.setFontValue(opts[next].value);
+        if (this.isFontMenuOpen()) this.scrollActiveFontIntoView();
+      },
+
+      stepFontPrev() {
+        this.stepFont(-1);
+      },
+
+      stepFontNext() {
+        this.stepFont(1);
+      },
+
+      moveFontPreview(direction) {
+        const opts = this.getFontOptions();
+        if (!opts.length) return;
+        const currentValue = this._fontPreviewValue || this.dom.selSongFont.value;
+        const current = Math.max(0, opts.findIndex((item) => item.value === currentValue));
+        const next = (current + direction + opts.length) % opts.length;
+        const item = opts[next];
+        this._fontPreviewValue = item.value;
+        this.previewFontValue(item.value, item.family);
+        this.updateFontOptionStates(item.value);
+        this.scrollFontOptionIntoView(item.value);
+      },
+
+      scrollFontOptionIntoView(value) {
+        const option = Array.from(this.dom.fontPickerMenu.querySelectorAll('.font-option'))
+          .find((btn) => btn.dataset.value === value);
+        if (option) option.scrollIntoView({ block: 'nearest' });
+      },
+
+      scrollActiveFontIntoView() {
+        this.scrollFontOptionIntoView(this.dom.selSongFont.value);
+      },
+
+      updateFontOptionStates(previewValue = null) {
+        if (!this.dom?.fontPickerMenu) return;
+        const selectedValue = this.dom.selSongFont.value;
+        this.dom.fontPickerMenu.querySelectorAll('.font-option').forEach((btn) => {
+          const isActive = btn.dataset.value === selectedValue;
+          const isPreview = !!previewValue && btn.dataset.value === previewValue && !isActive;
+          btn.classList.toggle('is-active', isActive);
+          btn.classList.toggle('is-preview', isPreview);
+          btn.setAttribute('aria-selected', isActive ? 'true' : 'false');
+        });
+      },
+
+      updateFontPickerUI() {
+        if (!this.dom?.fontPickerButton) return;
+        const selected = this.getFontOptionByValue(this.dom.selSongFont.value);
+        if (!selected) return;
+        this.dom.fontPickerButton.textContent = `字体: ${selected.label}`;
+        this.dom.fontPickerButton.style.fontFamily = selected.value;
+        this.updateFontOptionStates();
+      },
+
+      setupEventListeners() {
+        this.dom.bgInput.addEventListener('change', (e) => this.handleFile(e.target, this.dom.mainBg, false));
+        this.dom.logoInput.addEventListener('change', (e) => this.handleFile(e.target, this.dom.logoImg, true));
+        this.dom.mainBg.addEventListener('load', () => this.updateValidation());
+        this.dom.mainBg.addEventListener('error', () => this.updateValidation());
+        this.dom.logoImg.addEventListener('load', () => this.updateValidation());
+        this.dom.logoImg.addEventListener('error', () => this.updateValidation());
+
+        const onActivateByKeyboard = (e, handler) => {
+          if (e.key !== 'Enter' && e.key !== ' ') return;
+          e.preventDefault();
+          handler();
+        };
+
+        document.querySelectorAll('.file-btn').forEach((el) => {
+          el.addEventListener('keydown', (e) => {
+            const input = el.querySelector('input[type="file"]');
+            onActivateByKeyboard(e, () => {
+              if (input) input.click();
+              else el.click();
+            });
+          });
+        });
+
+        this.dom.logoBox.addEventListener('click', () => this.dom.logoInput.click());
+        this.dom.logoBox.addEventListener('keydown', (e) => {
+          onActivateByKeyboard(e, () => this.dom.logoInput.click());
+        });
+
+        this.dom.controls.addEventListener('click', (e) => {
+          const btn = e.target.closest('button[data-action]');
+          if (!btn) return;
+
+          const action = btn.dataset.action;
+          if (this.state.isExporting) return;
+
+          if (action === 'exportPng') {
+            Exporter.save('png');
+            return;
+          }
+
+          if (action === 'exportJpg') {
+            Exporter.save('jpg');
+            return;
+          }
+
+          const fn = this[action];
+          if (typeof fn !== 'function') return;
+
+          try {
+            fn.call(this);
+            Telemetry.track('control_used', {
+              action,
+              exportTarget: this.state.exportTarget,
+              layoutMode: this.state.layoutMode,
+              hasLogo: this.state.hasLogo,
+              hasShadow: this.state.hasShadow,
+              font: getSelectedFontFamily(this.dom.selSongFont)
+            });
+            this.noteChanged();
+          } catch (err) {
+            Logger.error('Action failed:', action, err);
+            Toast.show('操作失败：请重试该按钮，或刷新页面后再次操作。', 'error', 3500);
+          }
+        });
+
+        this._onDocumentClick = (e) => {
+          if (!this.dom?.fontPicker) return;
+          if (this.dom.fontPicker.contains(e.target)) return;
+          this.closeFontMenu({ restore: true });
+        };
+        document.addEventListener('click', this._onDocumentClick);
+
+        this.dom.selPreset.addEventListener('change', (e) => this.applyPreset(e.target.value));
+        this.dom.selSongFont.addEventListener('change', () => { this.updateTypography(); this.noteChanged(); });
+        this.dom.rngSpace.addEventListener('input', () => { this.updateTypography(); this.noteChanged(); });
+        this.dom.rngTitleSize.addEventListener('input', () => { this.updateTextScale(); this.noteChanged(); });
+        this.dom.rngArtistSize.addEventListener('input', () => { this.updateArtistScale(); this.noteChanged(); });
+        this.dom.rngMetaSize.addEventListener('input', () => { this.updateMetaScale(); this.noteChanged(); });
+        [this.dom.rngBgZoom, this.dom.rngBgX, this.dom.rngBgY, this.dom.rngBgRot].forEach((el) => {
+          el.addEventListener('input', () => { this.updateBackgroundCrop(); this.noteChanged(); });
+        });
+        this.dom.selLayerMode.addEventListener('change', (e) => { this.setLayerMode(e.target.value); this.noteChanged(); });
+        this.dom.selExportTarget.addEventListener('change', (e) => { this.setExportTarget(e.target.value); this.noteChanged(); });
+        this.dom.colorPicker.addEventListener('input', (e) => { this.setColor(e.target.value); this.noteChanged(); });
+
+        this.dom.fontPickerButton.addEventListener('keydown', (e) => {
+          if (e.key === 'ArrowDown') {
+            e.preventDefault();
+            if (this.isFontMenuOpen()) this.moveFontPreview(1);
+            else this.stepFont(1);
+            return;
+          }
+          if (e.key === 'ArrowUp') {
+            e.preventDefault();
+            if (this.isFontMenuOpen()) this.moveFontPreview(-1);
+            else this.stepFont(-1);
+            return;
+          }
+          if (e.key === 'Escape' && this.isFontMenuOpen()) {
+            e.preventDefault();
+            this.closeFontMenu({ restore: true });
+          }
+        });
+
+        this.dom.fontPickerMenu.addEventListener('pointerover', (e) => {
+          const option = e.target.closest('.font-option');
+          if (!option) return;
+          const value = option.dataset.value;
+          const family = option.dataset.family;
+          this._fontPreviewValue = value;
+          this.previewFontValue(value, family);
+          this.updateFontOptionStates(value);
+        });
+        this.dom.fontPickerMenu.addEventListener('pointerleave', () => {
+          if (!this.isFontMenuOpen()) return;
+          this._fontPreviewValue = null;
+          this.restoreCommittedFontPreview();
+          this.updateFontOptionStates();
+        });
+        this.dom.fontPickerMenu.addEventListener('click', (e) => {
+          const option = e.target.closest('.font-option');
+          if (!option) return;
+          e.preventDefault();
+          e.stopPropagation();
+          this.setFontValue(option.dataset.value, { close: true });
+          this.noteChanged();
+        });
+        this.dom.fontPickerMenu.addEventListener('keydown', (e) => {
+          if (e.key === 'ArrowDown') {
+            e.preventDefault();
+            this.moveFontPreview(1);
+          } else if (e.key === 'ArrowUp') {
+            e.preventDefault();
+            this.moveFontPreview(-1);
+          } else if (e.key === 'Enter') {
+            e.preventDefault();
+            const value = this._fontPreviewValue || this.dom.selSongFont.value;
+            this.setFontValue(value, { close: true });
+            this.noteChanged();
+          } else if (e.key === 'Escape') {
+            e.preventDefault();
+            this.closeFontMenu({ restore: true });
+          }
+        });
+
+        this.attachEditableRefit(this.dom.songText, { isSong: true });
+        this.attachEditableRefit(this.dom.artistText, { isSong: false });
+        this.dom.topMeta.querySelectorAll('.meta-item').forEach((el) => {
+          el.addEventListener('input', () => {
+            sanitizeEditableText(el, true);
+            this.noteChanged();
+          });
+          el.addEventListener('blur', () => {
+            sanitizeEditableText(el, false);
+            this.noteChanged();
+          });
+        });
+      },
+
+      attachEditableRefit(el, { isSong }) {
+        let composing = false;
+
+        const normalizeAndFit = (hardFit = false) => {
+          sanitizeEditableText(el, !hardFit);
+          if (isSong) this.updateCaseUI();
+          if (hardFit) this.fitSongText();
+          else this.requestFitSongText();
+          this.noteChanged();
+        };
+
+        el.addEventListener('compositionstart', () => { composing = true; });
+        el.addEventListener('compositionend', () => {
+          composing = false;
+          normalizeAndFit(false);
+        });
+
+        el.addEventListener('input', () => {
+          if (composing) return;
+          normalizeAndFit(false);
+        });
+
+        el.addEventListener('blur', () => normalizeAndFit(true));
+
+        el.addEventListener('keydown', (e) => {
+          if (e.key !== 'Enter') return;
+          e.preventDefault();
+          el.blur();
+        });
+      },
+
+      setupPasteHandler() {
+        document.querySelectorAll('[contenteditable]').forEach((el) => {
+          el.addEventListener('paste', (e) => {
+            e.preventDefault();
+
+            const cd = e.clipboardData || window.clipboardData;
+            if (!cd || typeof cd.getData !== 'function') return;
+
+            const text = cd.getData('text/plain');
+            const sel = window.getSelection();
+            if (!sel || !sel.rangeCount) return;
+
+            try {
+              sel.deleteFromDocument();
+              sel.getRangeAt(0).insertNode(document.createTextNode(text));
+              sel.collapseToEnd();
+            } catch (_) {}
+
+            sanitizeEditableText(el, true);
+            if (el.id === 'songText') this.updateCaseUI();
+            if (el.id === 'songText' || el.id === 'artistText') this.requestFitSongText();
+            this.noteChanged();
+          });
+        });
+      },
+
+      getMetaTexts() {
+        return Array.from(this.dom.topMeta.querySelectorAll('.meta-item')).map((el) => el.textContent || '');
+      },
+
+      setMetaTexts(values) {
+        const items = Array.from(this.dom.topMeta.querySelectorAll('.meta-item'));
+        items.forEach((el, idx) => {
+          if (typeof values?.[idx] === 'string') el.textContent = values[idx];
+        });
+      },
+
+      getCurrentProject({ forStorage = false } = {}) {
+        const skippedLargeAssets = [];
+        const prepareAssetSrc = (src, label) => {
+          const value = src || '';
+          if (forStorage && isLargeDataUrlForAutosave(value)) {
+            skippedLargeAssets.push(label);
+            return '';
+          }
+          return value;
+        };
+
+        const project = {
+          schemaVersion: 1,
+          updatedAt: new Date().toISOString(),
+          text: {
+            artist: this.dom.artistText.textContent || '',
+            song: this.dom.songText.textContent || '',
+            meta: this.getMetaTexts()
+          },
+          controls: {
+            fontValue: this.dom.selSongFont.value,
+            fontFamily: getSelectedFontFamily(this.dom.selSongFont),
+            letterSpacing: Number.parseFloat(this.dom.rngSpace.value) || 0,
+            titleSizePercent: Number.parseInt(this.dom.rngTitleSize.value, 10) || 100,
+            artistSizePercent: Number.parseInt(this.dom.rngArtistSize.value, 10) || 100,
+            metaSizePercent: Number.parseInt(this.dom.rngMetaSize.value, 10) || 100,
+            bgZoom: Number.parseInt(this.dom.rngBgZoom.value, 10) || 100,
+            bgX: Number.parseInt(this.dom.rngBgX.value, 10) || 50,
+            bgY: Number.parseInt(this.dom.rngBgY.value, 10) || 50,
+            bgRot: Number.parseInt(this.dom.rngBgRot.value, 10) || 0,
+            textColor: this.dom.colorPicker.value || '#ffffff',
+            layoutMode: this.state.layoutMode,
+            logoFilter: this.state.logoFilter,
+            isBold: this.state.isBold,
+            hasShadow: this.state.hasShadow,
+            hasLogo: this.state.hasLogo,
+            caseMode: this.state.caseMode,
+            blendOn: this.state.blendOn,
+            metaOn: this.state.metaOn,
+            layerMode: this.state.layerMode,
+            exportTarget: this.state.exportTarget,
+            isBW: this.state.isBW,
+            hasNoise: this.state.hasNoise,
+            safeOn: this.state.safeOn
+          },
+          assets: {
+            backgroundSrc: prepareAssetSrc(this.dom.mainBg.getAttribute('src'), '背景图'),
+            logoSrc: this.state.hasLogo
+              ? prepareAssetSrc(this.dom.logoImg.getAttribute('src'), 'Logo')
+              : ''
+          }
+        };
+
+        if (forStorage && skippedLargeAssets.length) {
+          project.storageWarnings = { skippedLargeAssets };
+        }
+
+        return project;
+      },
+
+      restoreAutosave() {
+        const project = safeJsonParse(localStorage.getItem(STORAGE_KEY), null);
+        if (!project || typeof project !== 'object') return false;
+        this.applyProject(project, { skipAutosave: true });
+        Toast.show('已恢复上次自动保存。', 'ok', 1600);
+        return true;
+      },
+
+      scheduleAutosave() {
+        if (this._isApplyingProject || this.state.isExporting) return;
+        if (this._autosaveTimer) clearTimeout(this._autosaveTimer);
+        this._autosaveTimer = setTimeout(() => {
+          this._autosaveTimer = null;
+          this.saveAutosave();
+        }, 250);
+      },
+
+      saveAutosave() {
+        if (this._isApplyingProject) return;
+        try {
+          const project = this.getCurrentProject({ forStorage: true });
+          localStorage.setItem(STORAGE_KEY, JSON.stringify(project));
+          const skipped = project.storageWarnings?.skippedLargeAssets || [];
+          if (skipped.length && !this._autosaveLargeAssetWarned) {
+            this._autosaveLargeAssetWarned = true;
+            Toast.show(`${skipped.join('、')}已载入并可导出；因文件较大，未写入自动保存。`, 'warn', 5200);
+          }
+        } catch (err) {
+          Logger.warn('autosave failed:', err);
+          Toast.show('自动保存失败，浏览器存储空间可能已满。', 'warn', 3000);
+        }
+      },
+
+      noteChanged() {
+        this.updateValidation();
+        this.scheduleAutosave();
+      },
+
+      createDefaultProject() {
+        return {
+          text: {
+            artist: '示例艺人',
+            song: '示例标题',
+            meta: ['openFAD', '示例项目', '2026']
+          },
+          controls: {
+            fontValue: "'Inter', sans-serif",
+            letterSpacing: -2,
+            titleSizePercent: 100,
+            artistSizePercent: 100,
+            metaSizePercent: 100,
+            bgZoom: 100,
+            bgX: 50,
+            bgY: 50,
+            bgRot: 0,
+            textColor: '#ffffff',
+            layoutMode: 0,
+            logoFilter: 0,
+            isBold: true,
+            hasShadow: false,
+            hasLogo: true,
+            caseMode: 0,
+            blendOn: true,
+            metaOn: true,
+            layerMode: 'full',
+            exportTarget: 'dsp-3840',
+            isBW: false,
+            hasNoise: false,
+            safeOn: false
+          },
+          assets: {
+            backgroundSrc: DEFAULT_BACKGROUND_SRC,
+            logoSrc: DEFAULT_LOGO_SRC
+          }
+        };
+      },
+
+      applyPreset(value) {
+        if (!value) return;
+        const current = this.getCurrentProject();
+        let presetProject = null;
+
+        if (BUILT_IN_PRESETS[value]) {
+          presetProject = BUILT_IN_PRESETS[value].project;
+        } else if (value.startsWith('custom:')) {
+          const name = value.slice('custom:'.length);
+          presetProject = this.readCustomPresets()[name];
+        }
+
+        if (!presetProject) return;
+        this.applyProject(mergeDeep(current, presetProject));
+        Toast.show(`已载入预设: ${value.replace(/^builtin:|^custom:/, '')}`, 'ok', 1400);
+        Telemetry.track('preset_selected', {
+          presetType: BUILT_IN_PRESETS[value] ? 'built-in' : 'custom'
+        });
+      },
+
+      updateTelemetryUI() {
+        if (!this.dom?.btnTelemetry) return;
+        const enabled = isTelemetryEnabled();
+        this.dom.btnTelemetry.textContent = enabled ? '分析: 开' : '分析: 关';
+        this.dom.btnTelemetry.classList.toggle('active', enabled);
+        this.dom.btnTelemetry.setAttribute('aria-pressed', enabled ? 'true' : 'false');
+      },
+
+      toggleTelemetry() {
+        const next = !isTelemetryEnabled();
+        setTelemetryEnabled(next);
+        this.updateTelemetryUI();
+        Toast.show(next ? '使用分析已开启。' : '使用分析已关闭。', next ? 'ok' : 'warn', 1800);
+      },
+
+      updateExportStatus(message, tone = '') {
+        if (!this.dom?.exportStatus) return;
+        this.dom.exportStatus.textContent = message;
+        this.dom.exportStatus.classList.toggle('ready', tone === 'ready');
+        this.dom.exportStatus.classList.toggle('warn', tone === 'warn');
+      },
+
+      openDemoProject() {
+        try { localStorage.removeItem(STORAGE_KEY); } catch (_) {}
+        this.applyProject(this.createDefaultProject());
+        if (this.dom.selPreset) this.dom.selPreset.value = 'builtin:openfad-right';
+        this.updateExportStatus('导出状态: 示例已载入，可编辑后导出。', 'warn');
+        Toast.show('已打开公开安全示例。', 'ok', 1800);
+      },
+
+      buildProjectExportPayload() {
+        const project = this.getCurrentProject({ forStorage: true });
+        const target = getExportTarget(this.state.exportTarget);
+        return {
+          ...project,
+          app: {
+            project: 'openFAD',
+            tool: 'cover-machine',
+            version: '0.1.0-draft',
+            language: 'zh-CN',
+            renderer: navigator.userAgent || 'unknown',
+            html2canvas: window.html2canvas?.version || '1.4.1'
+          },
+          exportPlan: {
+            target: {
+              id: target.id,
+              label: target.label,
+              width: target.width,
+              height: target.height,
+              mime: target.mime
+            },
+            transparentLayer: this.state.layerMode,
+            lastExportMode: this.state.lastExportMode
+          },
+          knownLimits: [
+            '浏览器导出结果可能因渲染器和字体加载状态略有差异。',
+            '如果浏览器拦截下载，请点击重试下载，或改用 Chrome / Edge 再次导出。',
+            '示例 Logo 是 openFAD 占位素材，不授权使用 FAD Records 品牌资产。'
+          ]
+        };
+      },
+
+      downloadProjectJson() {
+        const timestamp = new Date().toISOString().slice(0, 19).replace(/[T:.]/g, '-');
+        const filename = `openfad-cover-project-${timestamp}.json`;
+        const payload = this.buildProjectExportPayload();
+        const result = downloadTextFile(JSON.stringify(payload, null, 2), filename);
+        this.updateExportStatus(`项目 JSON 已发送: ${result.fileName} (${formatBytes(result.sizeBytes)})。`, 'ready');
+        Toast.show('项目 JSON 下载请求已发送。', 'ok', 1800);
+      },
+
+      retryLastExport() {
+        if (!this.state.lastExportMode) {
+          this.updateExportStatus('导出状态: 暂无可重试的导出，请先导出一次。', 'warn');
+          Toast.show('暂无可重试的导出。', 'warn', 1800);
+          return;
+        }
+        Exporter.save(this.state.lastExportMode);
+      },
+
+      savePreset() {
+        const rawName = window.prompt('预设名称', 'openFAD 自定义');
+        if (rawName === null) return;
+        const name = rawName.trim().replace(/\s+/g, ' ');
+        if (!name) {
+          Toast.show('预设未保存：名称为空。', 'warn', 2000);
+          return;
+        }
+
+        const presets = this.readCustomPresets();
+        const project = this.getCurrentProject({ forStorage: true });
+        presets[name] = project;
+        this.writeCustomPresets(presets);
+        this.setupPresetMenus();
+        this.dom.selPreset.value = `custom:${name}`;
+        const skipped = project.storageWarnings?.skippedLargeAssets || [];
+        Toast.show(skipped.length
+          ? `预设已保存，但${skipped.join('、')}太大未写入预设。`
+          : `预设已保存: ${name}`, skipped.length ? 'warn' : 'ok', 2600);
+      },
+
+      resetProject() {
+        if (!window.confirm('重置会清除当前自动保存并恢复默认模板，继续吗？')) return;
+        try { localStorage.removeItem(STORAGE_KEY); } catch (_) {}
+        this.applyProject(this.createDefaultProject());
+        Toast.show('已重置为 openFAD 默认模板。', 'ok', 1600);
+      },
+
+      applyProject(project, { skipAutosave = false } = {}) {
+        if (!project || typeof project !== 'object') return;
+        this._isApplyingProject = true;
+
+        const controls = project.controls || {};
+        const assets = project.assets || {};
+        const text = project.text || {};
+
+        if (typeof text.artist === 'string') this.dom.artistText.textContent = text.artist;
+        if (typeof text.song === 'string') this.dom.songText.textContent = text.song;
+        if (Array.isArray(text.meta)) this.setMetaTexts(text.meta);
+
+        if (typeof controls.fontValue === 'string') {
+          const hasFont = Array.from(this.dom.selSongFont.options).some((opt) => opt.value === controls.fontValue);
+          if (hasFont) this.dom.selSongFont.value = controls.fontValue;
+        }
+
+        this.dom.rngSpace.value = String(clamp(controls.letterSpacing, -5, 10, -2));
+        this.dom.rngTitleSize.value = String(clamp(controls.titleSizePercent, 60, 160, 100));
+        this.dom.rngArtistSize.value = String(clamp(controls.artistSizePercent, 60, 160, 100));
+        this.dom.rngMetaSize.value = String(clamp(controls.metaSizePercent, 60, 160, 100));
+        this.dom.rngBgZoom.value = String(clamp(controls.bgZoom, 80, 180, 100));
+        this.dom.rngBgX.value = String(clamp(controls.bgX, 0, 100, 50));
+        this.dom.rngBgY.value = String(clamp(controls.bgY, 0, 100, 50));
+        this.dom.rngBgRot.value = String(clamp(controls.bgRot, -20, 20, 0));
+        this.dom.colorPicker.value = typeof controls.textColor === 'string' ? controls.textColor : '#ffffff';
+
+        this.state.layoutMode = Number.isInteger(controls.layoutMode) ? controls.layoutMode : 0;
+        this.state.logoFilter = Number.isInteger(controls.logoFilter) ? controls.logoFilter : 0;
+        this.state.isBold = controls.isBold !== false;
+        this.state.hasShadow = !!controls.hasShadow;
+        const logoSrc = normalizeLogoSrc(assets.logoSrc);
+        this.state.hasLogo = !!controls.hasLogo && !!logoSrc;
+        this.state.caseMode = Number.isInteger(controls.caseMode) ? controls.caseMode : 0;
+        this.state.blendOn = controls.blendOn !== false;
+        this.state.metaOn = controls.metaOn !== false;
+        this.state.layerMode = LAYER_MODES.has(controls.layerMode) ? controls.layerMode : 'full';
+        this.state.exportTarget = getExportTarget(controls.exportTarget).id;
+        this.state.isBW = !!controls.isBW;
+        this.state.hasNoise = !!controls.hasNoise;
+        this.state.safeOn = !!controls.safeOn;
+
+        if (assets.backgroundSrc) this.dom.mainBg.src = assets.backgroundSrc;
+        if (this.state.hasLogo && logoSrc) {
+          this.dom.logoImg.src = logoSrc;
+          this.dom.logoImg.style.display = 'block';
+          this.dom.logoBox.classList.add('has-logo');
+          this.dom.btnLogoColor.disabled = false;
+        } else {
+          this.clearLogo();
+        }
+
+        this.updateLayoutUI();
+        this.updateLogoFilterUI();
+        this.dom.layoutLayer.classList.toggle('shadow-on', this.state.hasShadow);
+        this.dom.btnShadow.textContent = this.state.hasShadow ? '阴影: 开' : '阴影: 关';
+        this.dom.btnShadow.classList.toggle('active', this.state.hasShadow);
+        this.dom.bgLayer.classList.toggle('grayscale', this.state.isBW);
+        this.dom.btnBW.classList.toggle('active', this.state.isBW);
+        this.dom.texNoise.classList.toggle('active', this.state.hasNoise);
+        this.dom.btnNoise.classList.toggle('active', this.state.hasNoise);
+        this.dom.safeZone.classList.toggle('active', this.state.safeOn);
+        this.dom.btnSafe.classList.toggle('active', this.state.safeOn);
+        this.dom.btnBold.classList.toggle('active', this.state.isBold);
+        setRootVar('--song-weight', this.state.isBold ? '800' : '400');
+        setRootVar('--artist-weight', this.state.isBold ? '700' : '400');
+        this.dom.topMeta.style.display = this.state.metaOn ? '' : 'none';
+        this.dom.btnMeta.textContent = this.state.metaOn ? '发行信息: 开' : '发行信息: 关';
+        this.dom.btnMeta.classList.toggle('active', this.state.metaOn);
+        this.dom.selLayerMode.value = this.state.layerMode;
+        this.setExportTarget(this.state.exportTarget);
+
+        this.updateTypography();
+        this.updateTextScale();
+        this.updateArtistScale();
+        this.updateMetaScale();
+        this.updateBackgroundCrop();
+        this.updateBlendUI();
+        this.updateCaseUI();
+        this.updateValidation();
+        this.handleResize();
+        this.fitSongText();
+
+        this._isApplyingProject = false;
+        if (!skipAutosave) this.scheduleAutosave();
+      },
+
+      handleFile(input, imgElement, isLogo) {
+        const file = input?.files?.[0];
+        if (!file) return;
+
+        input.value = '';
+
+        if (!file.type || !file.type.startsWith('image/')) {
+          Toast.show('文件已拒绝：不是图片。', 'error');
+          return;
+        }
+
+        const maxBytes = isLogo ? CONFIG.maxLogoFileBytes : CONFIG.maxBackgroundFileBytes;
+        if (file.size > maxBytes) {
+          const maxMb = Math.round(maxBytes / 1024 / 1024);
+          Toast.show(`文件已拒绝：${isLogo ? 'Logo' : '背景图'}不能超过 ${maxMb}MB。`, 'error', 4200);
+          return;
+        }
+
+        Logger.debug('load file start', { name: file.name, isLogo, size: file.size });
+
+        const onOk = () => {
+          imgElement.style.display = 'block';
+
+          if (isLogo) {
+            this.dom.logoBox.classList.add('has-logo');
+            this.state.hasLogo = true;
+            this.resetLogoState(imgElement);
+            this.dom.btnLogoColor.disabled = false;
+          }
+
+          this.requestFitSongText();
+          if (isLargeDataUrlForAutosave(imgElement.getAttribute('src') || '')) {
+            this._autosaveLargeAssetWarned = true;
+            Toast.show(`${isLogo ? 'Logo' : '背景图'}已载入并可导出；因文件较大，未写入自动保存。`, 'warn', 5200);
+          }
+          this.noteChanged();
+          Logger.debug('load file success', { name: file.name, isLogo });
+          Telemetry.track('image_loaded', {
+            imageKind: isLogo ? 'logo' : 'background',
+            mime: file.type,
+            sizeBytes: file.size,
+            width: imgElement.naturalWidth,
+            height: imgElement.naturalHeight
+          });
+        };
+
+        const onFail = () => {
+          if (isLogo) this.clearLogo();
+          Toast.show('图片载入失败：文件损坏或格式不受支持。', 'error');
+          Logger.warn('load file failed', { name: file.name, isLogo });
+        };
+
+        setImgFromFile(imgElement, file, { onOk, onFail });
+      },
+
+      clearLogo() {
+        this.state.hasLogo = false;
+        this.state.logoFilter = 0;
+
+        this.dom.logoBox.classList.remove('has-logo');
+        revokeImgUrl(this.dom.logoImg);
+
+        this.dom.logoImg.removeAttribute('src');
+        this.dom.logoImg.style.display = 'none';
+        this.dom.logoImg.classList.remove('filter-white', 'filter-black');
+
+        this.dom.btnLogoColor.disabled = true;
+        this.dom.btnLogoColor.textContent = 'Logo: 原色';
+      },
+
+      resetLogoState(img) {
+        this.state.logoFilter = 0;
+        img.classList.remove('filter-white', 'filter-black');
+        this.dom.btnLogoColor.textContent = 'Logo: 原色';
+      },
+
+      updateLogoFilterUI() {
+        const img = this.dom.logoImg;
+        const btn = this.dom.btnLogoColor;
+
+        img.classList.remove('filter-white', 'filter-black');
+        if (!this.state.hasLogo) {
+          btn.disabled = true;
+          btn.textContent = 'Logo: 原色';
+          return;
+        }
+
+        btn.disabled = false;
+        if (this.state.logoFilter === 1) {
+          img.classList.add('filter-white');
+          btn.textContent = 'Logo: 白';
+        } else if (this.state.logoFilter === 2) {
+          img.classList.add('filter-black');
+          btn.textContent = 'Logo: 黑';
+        } else {
+          this.state.logoFilter = 0;
+          btn.textContent = 'Logo: 原色';
+        }
+      },
+
+      toggleLogoFilter() {
+        if (!this.state.hasLogo) return;
+
+        this.state.logoFilter = (this.state.logoFilter + 1) % 3;
+        this.updateLogoFilterUI();
+      },
+
+      toggleShadow() {
+        this.state.hasShadow = !this.state.hasShadow;
+        this.dom.layoutLayer.classList.toggle('shadow-on', this.state.hasShadow);
+        this.dom.btnShadow.textContent = this.state.hasShadow ? '阴影: 开' : '阴影: 关';
+        this.dom.btnShadow.classList.toggle('active', this.state.hasShadow);
+      },
+
+      toggleBlend() {
+        this.state.blendOn = !this.state.blendOn;
+        this.updateBlendUI();
+      },
+
+      updateBlendUI() {
+        if (this.state.blendOn) {
+          setRootVar('--meta-blend', 'exclusion');
+          setRootVar('--meta-opacity', '0.9');
+          this.dom.btnBlend.textContent = '混合: 开';
+          this.dom.btnBlend.classList.add('active');
+        } else {
+          setRootVar('--meta-blend', 'normal');
+          setRootVar('--meta-opacity', '1');
+          this.dom.btnBlend.textContent = '混合: 关';
+          this.dom.btnBlend.classList.remove('active');
+        }
+      },
+
+      toggleMeta() {
+        this.state.metaOn = !this.state.metaOn;
+        this.dom.topMeta.style.display = this.state.metaOn ? '' : 'none';
+        this.dom.btnMeta.textContent = this.state.metaOn ? '发行信息: 开' : '发行信息: 关';
+        this.dom.btnMeta.classList.toggle('active', this.state.metaOn);
+      },
+
+      toggleBW() {
+        this.state.isBW = !this.state.isBW;
+        this.dom.bgLayer.classList.toggle('grayscale', this.state.isBW);
+        this.dom.btnBW.classList.toggle('active', this.state.isBW);
+      },
+
+      toggleNoise() {
+        this.state.hasNoise = !this.state.hasNoise;
+        this.dom.texNoise.classList.toggle('active', this.state.hasNoise);
+        this.dom.btnNoise.classList.toggle('active', this.state.hasNoise);
+      },
+
+      toggleSafe() {
+        this.state.safeOn = !this.state.safeOn;
+        this.dom.safeZone.classList.toggle('active', this.state.safeOn);
+        this.dom.btnSafe.classList.toggle('active', this.state.safeOn);
+      },
+
+      updateTypography() {
+        const font = this.dom.selSongFont.value;
+        const space = this.dom.rngSpace.value;
+        const family = getSelectedFontFamily(this.dom.selSongFont);
+
+        ensureFont(family);
+        setRootVar('--song-font', font);
+        setRootVar('--artist-font', font);
+        setRootVar('--song-spacing', `${space}px`);
+
+        this.updateFontPickerUI();
+        this.requestFitSongText();
+      },
+
+      updateTextScale() {
+        const raw = Number.parseInt(this.dom.rngTitleSize.value, 10);
+        const percent = Number.isFinite(raw) ? raw : 100;
+        const scale = Math.max(0.6, Math.min(1.6, percent / 100));
+
+        this.state.titleScale = scale;
+        if (this.dom.titleSizeValue) this.dom.titleSizeValue.textContent = `标题 ${percent}%`;
+
+        this.requestFitSongText();
+      },
+
+      updateArtistScale() {
+        const raw = Number.parseInt(this.dom.rngArtistSize.value, 10);
+        const percent = Number.isFinite(raw) ? raw : 100;
+        const scale = Math.max(0.6, Math.min(1.6, percent / 100));
+        const artistSize = Math.max(18, Math.round(CONFIG.artistBase * scale));
+
+        this.state.artistScale = scale;
+        setRootVar('--artist-size', `${artistSize}px`);
+        if (this.dom.artistSizeValue) this.dom.artistSizeValue.textContent = `艺人 ${percent}%`;
+
+        this.requestFitSongText();
+      },
+
+      updateMetaScale() {
+        const raw = Number.parseInt(this.dom.rngMetaSize.value, 10);
+        const percent = Number.isFinite(raw) ? raw : 100;
+        const scale = Math.max(0.6, Math.min(1.6, percent / 100));
+        const metaSize = Math.max(9, Math.round(14 * scale));
+
+        this.state.metaScale = scale;
+        setRootVar('--meta-size', `${metaSize}px`);
+        if (this.dom.metaSizeValue) this.dom.metaSizeValue.textContent = `信息 ${percent}%`;
+
+        this.handleResize();
+      },
+
+      updateBackgroundCrop() {
+        const zoom = clamp(this.dom.rngBgZoom.value, 80, 180, 100);
+        const x = clamp(this.dom.rngBgX.value, 0, 100, 50);
+        const y = clamp(this.dom.rngBgY.value, 0, 100, 50);
+        const rot = clamp(this.dom.rngBgRot.value, -20, 20, 0);
+
+        this.state.bgZoom = zoom / 100;
+        this.state.bgX = x;
+        this.state.bgY = y;
+        this.state.bgRot = rot;
+
+        setRootVar('--bg-zoom', String(this.state.bgZoom));
+        setRootVar('--bg-x', `${x}%`);
+        setRootVar('--bg-y', `${y}%`);
+        setRootVar('--bg-rot', `${rot}deg`);
+
+        if (this.dom.bgZoomValue) this.dom.bgZoomValue.textContent = `背景 ${Math.round(zoom)}%`;
+        if (this.dom.bgXValue) this.dom.bgXValue.textContent = `X ${Math.round(x)}%`;
+        if (this.dom.bgYValue) this.dom.bgYValue.textContent = `Y ${Math.round(y)}%`;
+        if (this.dom.bgRotValue) this.dom.bgRotValue.textContent = `旋转 ${Math.round(rot)}`;
+      },
+
+      toggleBold() {
+        this.state.isBold = !this.state.isBold;
+        setRootVar('--song-weight', this.state.isBold ? '800' : '400');
+        setRootVar('--artist-weight', this.state.isBold ? '700' : '400');
+        this.dom.btnBold.classList.toggle('active', this.state.isBold);
+        this.requestFitSongText();
+      },
+
+      setColor(hex) {
+        setRootVar('--text-color', hex);
+      },
+
+      cycleLayout() {
+        this.state.layoutMode = (this.state.layoutMode + 1) % 3;
+        this.updateLayoutUI();
+        this.requestFitSongText();
+      },
+
+      updateLayoutUI() {
+        const container = this.dom.layoutContainer;
+        container.classList.remove('layout-left', 'layout-center');
+
+        if (this.state.layoutMode === 0) {
+          this.dom.btnLayout.textContent = '位置: 右侧';
+        } else if (this.state.layoutMode === 1) {
+          container.classList.add('layout-left');
+          this.dom.btnLayout.textContent = '位置: 左侧';
+        } else {
+          container.classList.add('layout-center');
+          this.dom.btnLayout.textContent = '位置: 居中';
+        }
+      },
+
+      toggleCase() {
+        this.state.caseMode = (this.state.caseMode + 1) % 3;
+        this.updateCaseUI();
+        this.requestFitSongText();
+      },
+
+      updateCaseUI() {
+        const btn = this.dom.btnCase;
+        const text = this.dom.songText.textContent || '';
+        const hasLatin = /[A-Za-z]/.test(text);
+
+        btn.disabled = !hasLatin;
+        if (!hasLatin) {
+          setRootVar('--song-transform', 'none');
+          btn.textContent = '大小写: 不适用';
+          return;
+        }
+
+        if (this.state.caseMode === 0) setRootVar('--song-transform', 'uppercase');
+        else if (this.state.caseMode === 1) setRootVar('--song-transform', 'none');
+        else setRootVar('--song-transform', 'lowercase');
+
+        btn.textContent = CASE_LABELS[this.state.caseMode] || CASE_LABELS[0];
+      },
+
+      setLayerMode(mode) {
+        this.state.layerMode = LAYER_MODES.has(mode) ? mode : 'full';
+      },
+
+      setExportTarget(targetId = DEFAULT_EXPORT_TARGET.id) {
+        const target = getExportTarget(targetId);
+        this.state.exportTarget = target.id;
+        if (this.dom.selExportTarget) this.dom.selExportTarget.value = target.id;
+        if (this.dom.saveBtnJpg) this.dom.saveBtnJpg.textContent = target.buttonLabel;
+        this.updateValidation();
+      },
+
+      updateValidation() {
+        if (!this.dom?.validationPanel) return;
+
+        const warnings = [];
+        const target = getExportTarget(this.state.exportTarget);
+        const title = (this.dom.songText.textContent || '').trim();
+        const artist = (this.dom.artistText.textContent || '').trim();
+        const bg = this.dom.mainBg;
+
+        if (!artist) warnings.push('缺少艺人名称');
+        if (!title) warnings.push('缺少作品标题');
+        if (!bg.complete || bg.naturalWidth <= 0) {
+          warnings.push('背景未载入');
+        } else if (target.width >= 3000 && Math.min(bg.naturalWidth, bg.naturalHeight) < 1400) {
+          warnings.push(`背景源尺寸为 ${bg.naturalWidth}x${bg.naturalHeight}`);
+        }
+        if (this.dom.songText.scrollWidth > Math.ceil(this.dom.textGroup.clientWidth)) warnings.push('标题宽度溢出');
+        if (target.width !== target.height) warnings.push(`${target.label} 会使用居中的方形封面源`);
+
+        const status = warnings.length
+          ? `导出检查 WARN: ${target.label}: ${warnings.join('; ')}`
+          : `导出检查 READY: ${target.label}`;
+
+        this.dom.validationPanel.textContent = status;
+        this.dom.validationPanel.classList.toggle('ready', warnings.length === 0);
+        this.dom.validationPanel.classList.toggle('warn', warnings.length > 0);
+      },
+
+      handleResize() {
+        const controlsH = this.dom.controls.offsetHeight;
+        this.dom.previewWrapper.style.marginTop = `${controlsH}px`;
+        this.dom.previewWrapper.style.height = `calc(100vh - ${controlsH}px)`;
+
+        const baseSize = getBaseSizePx();
+        const wrapper = this.dom.previewWrapper;
+
+        const scale = Math.max(0.2, Math.min(
+          (wrapper.clientWidth - 80) / baseSize,
+          (wrapper.clientHeight - 80) / baseSize
+        ));
+
+        this.dom.artworkCanvas.style.willChange = 'transform';
+        this.dom.artworkCanvas.style.transform = `translateZ(0) scale(${scale})`;
+
+        if (this._willChangeTimer) clearTimeout(this._willChangeTimer);
+        this._willChangeTimer = setTimeout(() => {
+          this.dom.artworkCanvas.style.willChange = 'auto';
+          this._willChangeTimer = null;
+        }, 250);
+      },
+
+      requestFitSongText() {
+        if (this._fitRaf) cancelAnimationFrame(this._fitRaf);
+        this._fitRaf = requestAnimationFrame(() => {
+          this._fitRaf = null;
+          this.fitSongText();
+        });
+      },
+
+      fitSongText() {
+        const song = this.dom.songText;
+        const group = this.dom.textGroup;
+        const text = (song.textContent || '').trim();
+        if (!text) return;
+
+        const scale = Number.isFinite(this.state.titleScale) ? this.state.titleScale : 1;
+        const maxFont = Math.max(CONFIG.songFloor, Math.round(CONFIG.songMax * scale));
+        const minFont = Math.max(
+          CONFIG.songFloor,
+          Math.min(maxFont, Math.round(CONFIG.songMin * Math.min(scale, 1)))
+        );
+        song.style.setProperty('--song-size', `${maxFont}px`);
+
+        const maxWidth = Math.max(1, group.clientWidth);
+        const canvasH = Math.max(1, this.dom.artworkCanvas.clientHeight || getBaseSizePx());
+        const maxHeight = Math.max(CONFIG.minSongBlockHeight, Math.floor(canvasH * CONFIG.songHeightRatio));
+
+        let lo = minFont;
+        let hi = maxFont;
+        let best = minFont;
+
+        while (lo <= hi) {
+          const mid = Math.floor((lo + hi) / 2);
+          song.style.setProperty('--song-size', `${mid}px`);
+
+          const wOk = song.scrollWidth <= maxWidth;
+          const hOk = song.scrollHeight <= maxHeight;
+
+          if (wOk && hOk) {
+            best = mid;
+            lo = mid + 1;
+          } else {
+            hi = mid - 1;
+          }
+        }
+
+        song.style.setProperty('--song-size', `${best}px`);
+        while (
+          best > minFont &&
+          (song.scrollWidth > maxWidth || song.scrollHeight > maxHeight)
+        ) {
+          best -= 1;
+          song.style.setProperty('--song-size', `${best}px`);
+        }
+      }
+    };
+
+    const Exporter = {
+      _restoreTimer: null,
+
+      setExportUiState({ activeBtn, activeText, activeDisabled, lockAll }) {
+        if (App.dom?.saveBtnPng) {
+          if (activeBtn === App.dom.saveBtnPng && typeof activeText === 'string') App.dom.saveBtnPng.textContent = activeText;
+          if (activeBtn === App.dom.saveBtnPng) App.dom.saveBtnPng.disabled = !!activeDisabled;
+        }
+
+        if (App.dom?.saveBtnJpg) {
+          if (activeBtn === App.dom.saveBtnJpg && typeof activeText === 'string') App.dom.saveBtnJpg.textContent = activeText;
+          if (activeBtn === App.dom.saveBtnJpg) App.dom.saveBtnJpg.disabled = !!activeDisabled;
+        }
+
+        if (lockAll) {
+          setButtonsDisabled([App.dom.saveBtnPng, App.dom.saveBtnJpg], true);
+        }
+      },
+
+      beginExport(btn, originalText) {
+        App.state.isExporting = true;
+        document.body.classList.add('is-exporting');
+        document.body.setAttribute('aria-busy', 'true');
+
+        if (this._restoreTimer) {
+          clearTimeout(this._restoreTimer);
+          this._restoreTimer = null;
+        }
+
+        this.setExportUiState({ activeBtn: btn, activeText: '导出中...', activeDisabled: true, lockAll: true });
+        App.updateExportStatus('导出状态: 正在渲染，请保持此页面打开。', 'warn');
+        return () => {
+          document.body.classList.remove('is-exporting');
+          document.body.removeAttribute('aria-busy');
+          App.state.isExporting = false;
+
+          this._restoreTimer = setTimeout(() => {
+            if (btn) btn.textContent = originalText;
+            setButtonsDisabled([App.dom.saveBtnPng, App.dom.saveBtnJpg], false);
+            this._restoreTimer = null;
+          }, 1200);
+        };
+      },
+
+      fitCanvasToTarget(canvas, target, backgroundColor) {
+        if (!target || target.width === target.height) return canvas;
+
+        const out = document.createElement('canvas');
+        out.width = target.width;
+        out.height = target.height;
+        const ctx = out.getContext('2d');
+        ctx.fillStyle = backgroundColor && backgroundColor !== 'transparent' ? backgroundColor : '#000000';
+        ctx.fillRect(0, 0, out.width, out.height);
+
+        const scale = Math.min(out.width / canvas.width, out.height / canvas.height);
+        const w = Math.round(canvas.width * scale);
+        const h = Math.round(canvas.height * scale);
+        const x = Math.round((out.width - w) / 2);
+        const y = Math.round((out.height - h) / 2);
+        ctx.drawImage(canvas, x, y, w, h);
+        return out;
+      },
+
+      async save(mode) {
+        const isPng = mode === 'png';
+        const btn = isPng ? App.dom.saveBtnPng : App.dom.saveBtnJpg;
+        const originalText = btn.textContent;
+        const element = App.dom.artworkCanvas;
+        const isSafari = isSafariBrowser();
+        const isFirefox = isFirefoxBrowser();
+
+        if (App.state.isExporting) {
+          Toast.show('正在导出，请稍等。', 'warn', 1800);
+          return;
+        }
+
+        App.state.lastExportMode = mode;
+        if (App.dom?.btnRetryExport) App.dom.btnRetryExport.disabled = false;
+        const endExport = this.beginExport(btn, originalText);
+
+        try {
+          if (window.OPENFAD_HTML2CANVAS_READY) {
+            await Promise.race([
+              window.OPENFAD_HTML2CANVAS_READY,
+              sleep(CONFIG.html2canvasWaitTimeoutMs)
+            ]);
+          }
+
+          if (typeof window.html2canvas !== 'function') {
+            throw new Error('html2canvas 未载入，请刷新页面后重试。');
+          }
+
+          const family = getSelectedFontFamily(App.dom.selSongFont);
+          ensureFont(family);
+          await FontManager.waitForFont(family);
+          await FontManager.waitAll();
+
+          const imgStates = await waitForImages(element);
+          const imgOkMap = new Map(imgStates.map((x) => [x.img, x.ok]));
+
+          const bgOk = imgOkMap.has(App.dom.mainBg)
+            ? imgOkMap.get(App.dom.mainBg)
+            : (App.dom.mainBg.complete && App.dom.mainBg.naturalWidth > 0);
+
+          if (!isPng && !bgOk) {
+            throw new Error('背景图未成功载入，无法导出 JPG。');
+          }
+
+          if (App.state.hasLogo) {
+            const logoOk = imgOkMap.has(App.dom.logoImg)
+              ? imgOkMap.get(App.dom.logoImg)
+              : (App.dom.logoImg.complete && App.dom.logoImg.naturalWidth > 0);
+
+            if (!logoOk) {
+              throw new Error('Logo 未成功载入，无法带 logo 导出。');
+            }
+
+            if (typeof App.dom.logoImg.decode === 'function') {
+              try {
+                await Promise.race([
+                  App.dom.logoImg.decode(),
+                  sleep(1200)
+                ]);
+              } catch (_) {}
+            }
+          }
+
+          App.fitSongText();
+          await waitFrames((isSafari || isFirefox) ? 3 : 1);
+
+          // Pre-render logo to data URL (html2canvas cannot access blob: URLs in cloned doc)
+          // Safari fallback: skip pre-render replacement to avoid cloned-image race/missing render.
+          let logoPreRenderUrl = null;
+          let logoPreRenderPadding = 0;
+          const useLogoPreRender = !isSafari;
+          if (useLogoPreRender && App.state.hasLogo && App.dom.logoImg.complete && App.dom.logoImg.naturalWidth > 0) {
+            try {
+              const nw = App.dom.logoImg.naturalWidth;
+              const nh = App.dom.logoImg.naturalHeight;
+              logoPreRenderPadding = App.state.hasShadow ? Math.ceil(Math.max(nw, nh) * 0.25) : 0;
+              const cw = nw + logoPreRenderPadding * 2;
+              const ch = nh + logoPreRenderPadding * 2;
+              const offscreen = document.createElement('canvas');
+              offscreen.width = cw;
+              offscreen.height = ch;
+              const octx = offscreen.getContext('2d');
+
+              let drawSrc = App.dom.logoImg;
+              if (App.state.logoFilter !== 0) {
+                const tmp = document.createElement('canvas');
+                tmp.width = nw; tmp.height = nh;
+                const tc = tmp.getContext('2d');
+                tc.drawImage(App.dom.logoImg, 0, 0);
+                tc.globalCompositeOperation = 'source-in';
+                tc.fillStyle = App.state.logoFilter === 1 ? '#ffffff' : '#000000';
+                tc.fillRect(0, 0, nw, nh);
+                drawSrc = tmp;
+              }
+
+              if (App.state.hasShadow) {
+                octx.shadowOffsetX = 0;
+                octx.shadowColor = 'rgba(0,0,0,0.4)';
+                octx.shadowBlur = 100; octx.shadowOffsetY = 30;
+                octx.drawImage(drawSrc, logoPreRenderPadding, logoPreRenderPadding);
+                octx.shadowColor = 'rgba(0,0,0,0.5)';
+                octx.shadowBlur = 40; octx.shadowOffsetY = 10;
+                octx.drawImage(drawSrc, logoPreRenderPadding, logoPreRenderPadding);
+                octx.shadowColor = 'rgba(0,0,0,0.8)';
+                octx.shadowBlur = 10; octx.shadowOffsetY = 4;
+                octx.drawImage(drawSrc, logoPreRenderPadding, logoPreRenderPadding);
+                octx.shadowColor = 'transparent';
+                octx.shadowBlur = 0; octx.shadowOffsetY = 0;
+              }
+              octx.drawImage(drawSrc, logoPreRenderPadding, logoPreRenderPadding);
+              logoPreRenderUrl = offscreen.toDataURL('image/png');
+            } catch (e) {
+              Logger.warn('Logo pre-render failed:', e);
+            }
+          }
+
+          const selectedTarget = getExportTarget(App.state.exportTarget);
+          Telemetry.track('export_started', {
+            format: isPng ? 'png' : 'jpg',
+            mode: App.state.layerMode,
+            exportTarget: selectedTarget.id,
+            hasLogo: App.state.hasLogo,
+            hasShadow: App.state.hasShadow,
+            font: getSelectedFontFamily(App.dom.selSongFont)
+          });
+          const targetSize = isPng ? CONFIG.exportSize : selectedTarget.width;
+          const elementSize = getBaseSizePx();
+          const exactScale = targetSize / elementSize;
+          if (!Number.isFinite(exactScale) || exactScale <= 0) {
+            throw new Error('导出比例计算失败。');
+          }
+
+          const layerMode = App.state.layerMode;
+          const computedBg = getComputedStyle(element).backgroundColor || '#000';
+          const bgForExport = isPng ? null : (computedBg === 'transparent' ? '#000' : computedBg);
+
+          Logger.info('Export start', { mode, scale: exactScale, size: elementSize, layerMode, target: selectedTarget.id });
+
+          const renderCanvas = () => html2canvas(element, {
+            scale: exactScale,
+            width: elementSize,
+            height: elementSize,
+            useCORS: true,
+            allowTaint: false,
+            backgroundColor: bgForExport,
+            logging: false,
+            imageTimeout: CONFIG.imageWaitTimeoutMs,
+            onclone: (clonedDoc) => {
+              try {
+                const clonedCanvas = clonedDoc.getElementById('artwork-canvas');
+                if (clonedCanvas) {
+                  clonedCanvas.style.transform = 'none';
+                  clonedCanvas.style.boxShadow = 'none';
+                }
+
+                const clonedBg = clonedDoc.getElementById('bgLayer');
+                const clonedNoise = clonedDoc.getElementById('texNoise');
+                const clonedMeta = clonedDoc.getElementById('topMeta');
+                const clonedTextGroup = clonedDoc.getElementById('textGroup');
+                const clonedArtist = clonedDoc.getElementById('artistText');
+                const clonedSong = clonedDoc.getElementById('songText');
+                const clonedLogoBox = clonedDoc.getElementById('logoBox');
+                const clonedLayoutLayer = clonedDoc.getElementById('layoutLayer');
+                const clonedLogoImg = clonedDoc.getElementById('logo-img');
+
+                if (clonedLayoutLayer) {
+                  clonedLayoutLayer.classList.toggle('shadow-on', App.state.hasShadow);
+                }
+
+                // Replace logo with pre-rendered data URL (blob: URLs are inaccessible in cloned doc)
+                if (logoPreRenderUrl && clonedLogoImg) {
+                  clonedLogoImg.src = logoPreRenderUrl;
+                  clonedLogoImg.style.filter = 'none';
+                  clonedLogoImg.className = '';
+                  if (logoPreRenderPadding > 0 && clonedLogoBox) {
+                    const origW = App.dom.logoImg.offsetWidth || 140;
+                    const nw = App.dom.logoImg.naturalWidth || 1;
+                    const displayPad = Math.round(logoPreRenderPadding * (origW / nw));
+                    clonedLogoImg.style.width = (origW + displayPad * 2) + 'px';
+                    clonedLogoImg.style.maxWidth = 'none';
+                    clonedLogoImg.style.maxHeight = 'none';
+                    clonedLogoImg.style.margin = -displayPad + 'px';
+                    clonedLogoBox.style.overflow = 'visible';
+                  }
+                }
+
+                // Export safety: force logo visible in cloned DOM when logo is enabled.
+                if (App.state.hasLogo && clonedLogoBox && clonedLogoImg) {
+                  clonedLogoBox.classList.add('has-logo');
+                  clonedLogoBox.style.display = 'flex';
+                  clonedLogoImg.style.display = 'block';
+                  clonedLogoImg.style.opacity = '1';
+
+                  if (!clonedLogoImg.src && App.dom.logoImg.src) {
+                    clonedLogoImg.src = App.dom.logoImg.src;
+                  }
+                }
+
+                if (App.state.hasShadow) {
+                  const shadowText = '0 2px 5px rgba(0,0,0,0.8), 0 5px 20px rgba(0,0,0,0.5), 0 15px 50px rgba(0,0,0,0.4)';
+                  if (clonedArtist) clonedArtist.style.textShadow = shadowText;
+                  if (clonedSong) {
+                    clonedSong.style.textShadow = shadowText;
+                    clonedSong.style.overflow = 'visible';
+                  }
+                  if (clonedMeta) clonedMeta.style.textShadow = shadowText;
+                } else {
+                  if (clonedArtist) clonedArtist.style.textShadow = 'none';
+                  if (clonedSong) {
+                    clonedSong.style.textShadow = 'none';
+                    clonedSong.style.overflow = '';
+                  }
+                  if (clonedMeta) clonedMeta.style.textShadow = 'none';
+                }
+
+                if (clonedMeta) {
+                  if (!App.state.metaOn) {
+                    clonedMeta.style.display = 'none';
+                  } else if (isPng) {
+                    clonedMeta.style.mixBlendMode = 'normal';
+                    clonedMeta.style.opacity = '1';
+                  } else if (App.state.blendOn) {
+                    clonedMeta.style.mixBlendMode = 'exclusion';
+                    clonedMeta.style.opacity = '0.9';
+                  } else {
+                    clonedMeta.style.mixBlendMode = 'normal';
+                    clonedMeta.style.opacity = '1';
+                  }
+                }
+
+                if (!isPng) return;
+
+                if (clonedCanvas) clonedCanvas.style.backgroundColor = 'transparent';
+                if (clonedBg) clonedBg.style.display = 'none';
+                if (clonedNoise) clonedNoise.style.display = 'none';
+
+                if (clonedLogoBox && !App.state.hasLogo) {
+                  clonedLogoBox.style.display = 'none';
+                }
+
+                if (layerMode === 'text') {
+                  if (clonedMeta) clonedMeta.style.display = 'none';
+                } else if (layerMode === 'meta') {
+                  if (clonedTextGroup) clonedTextGroup.style.display = 'none';
+                  if (clonedLogoBox) clonedLogoBox.style.display = 'none';
+                }
+              } catch (err) {
+                Logger.warn('onclone failed:', err);
+              }
+            }
+          });
+
+          const shouldRetryCapture = App.state.hasLogo && (isSafari || isFirefox);
+          let canvas;
+          try {
+            canvas = await renderCanvas();
+          } catch (firstErr) {
+            if (!shouldRetryCapture) throw firstErr;
+            Logger.warn('Export capture retrying once:', firstErr);
+            await sleep(250);
+            await waitFrames(2);
+            canvas = await renderCanvas();
+          }
+
+          if (!isPng) {
+            canvas = this.fitCanvasToTarget(canvas, selectedTarget, bgForExport);
+          }
+
+          const timestamp = new Date().toISOString().slice(0, 19).replace(/[T:.]/g, '-');
+          let filename;
+          let downloadResult;
+
+          if (isPng) {
+            filename = `openfad-cover-layer-${App.state.layerMode}-${timestamp}.png`;
+            downloadResult = await downloadCanvas(canvas, filename, 'image/png');
+          } else {
+            filename = `openfad-cover-${selectedTarget.id}-${timestamp}.jpg`;
+            downloadResult = await downloadCanvas(canvas, filename, selectedTarget.mime, selectedTarget.quality);
+          }
+
+          btn.textContent = '完成';
+          btn.disabled = true;
+          App.updateExportStatus(
+            `导出完成: ${downloadResult.fileName} / ${canvas.width}x${canvas.height} / ${formatBytes(downloadResult.sizeBytes)} / 保存请求: 已发送。`,
+            'ready'
+          );
+          Toast.show('导出完成。若浏览器没有保存文件，请点击“重试下载”。', 'ok', 2600);
+          Telemetry.track('export_completed', {
+            format: isPng ? 'png' : 'jpg',
+            mode: App.state.layerMode,
+            exportTarget: selectedTarget.id,
+            width: canvas.width,
+            height: canvas.height,
+            hasLogo: App.state.hasLogo,
+            hasShadow: App.state.hasShadow,
+            font: getSelectedFontFamily(App.dom.selSongFont)
+          });
+        } catch (err) {
+          Logger.error('Export Failed:', err);
+          btn.textContent = '错误';
+          btn.disabled = true;
+          const userMessage = toUserErrorMessage(err);
+          App.updateExportStatus(
+            `导出失败: ${userMessage} 请点击“重试下载”，或改用 Chrome / Edge 后再次导出。`,
+            'warn'
+          );
+          Toast.show(`导出失败: ${userMessage}\n请点击“重试下载”，或改用 Chrome / Edge 后再次导出。`, 'error', 5600);
+          const failedTarget = getExportTarget(App.state.exportTarget);
+          Telemetry.track('export_failed', {
+            format: isPng ? 'png' : 'jpg',
+            mode: App.state.layerMode,
+            exportTarget: failedTarget.id,
+            hasLogo: App.state.hasLogo,
+            hasShadow: App.state.hasShadow,
+            font: getSelectedFontFamily(App.dom.selSongFont)
+          });
+        } finally {
+          endExport();
+        }
+      }
+    };
+
+    App.init();
+  </script>
+</body>
+</html>

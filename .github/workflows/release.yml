@@ -1,0 +1,31 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - 'v*.*.*'
+
+permissions:
+  contents: write
+
+jobs:
+  web-artifacts:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+      - run: npm ci
+      - run: npm ci --prefix apps/motion-batch
+      - run: npm run scan:public
+      - run: npm test
+      - run: npm run release:prepare
+      - uses: softprops/action-gh-release@v2
+        with:
+          files: |
+            dist/openfad-*
+            dist/SHA256SUMS
+            dist/release-manifest.json
+          body_path: docs/release/v0.1.0.zh-CN.md

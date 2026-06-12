@@ -1,0 +1,240 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; base-uri 'none'; object-src 'none'; script-src 'self'; style-src 'self'; img-src 'self' data:; media-src 'self'; connect-src 'self'; form-action 'none'">
+  <title>openFAD 动态封面批处理</title>
+  <link rel="icon" href="/favicon.svg" type="image/svg+xml">
+  <link rel="stylesheet" href="/styles.css">
+</head>
+<body>
+  <main class="app-shell">
+    <header class="app-header">
+      <div class="brand-lockup">
+        <div class="brand-mark">open</div>
+        <div>
+          <h1>Apple 动态封面批处理</h1>
+          <p id="serverState">本地桥接服务</p>
+        </div>
+      </div>
+      <div class="header-metrics" aria-label="任务汇总">
+        <span class="metric"><strong id="metricTotal">0</strong><span>总数</span></span>
+        <span class="metric pass"><strong id="metricPass">0</strong><span>通过</span></span>
+        <span class="metric warn"><strong id="metricWarn">0</strong><span>警告</span></span>
+        <span class="metric fail"><strong id="metricFail">0</strong><span>失败</span></span>
+      </div>
+      <div class="header-actions">
+        <span id="jobBadge" class="status-chip idle">空闲</span>
+        <button id="startButton" class="button primary" type="button" data-icon="play">开始</button>
+        <button id="stopButton" class="button danger" type="button" data-icon="square" disabled>停止</button>
+      </div>
+    </header>
+
+    <section class="workspace-grid">
+      <aside class="panel setup-panel" aria-labelledby="setupTitle">
+        <div class="panel-heading">
+          <h2 id="setupTitle">任务设置</h2>
+          <button id="dryRunButton" class="icon-button" type="button" title="模拟运行" aria-label="模拟运行" data-icon="terminal"></button>
+        </div>
+
+        <div id="dropZone" class="drop-zone" role="button" tabindex="0" aria-label="选择或拖入输入视频">
+          <div class="drop-icon" data-icon="file-video"></div>
+          <div>
+            <strong>输入来源</strong>
+            <span>粘贴视频文件或文件夹路径</span>
+          </div>
+        </div>
+
+        <form id="jobForm" class="form-grid">
+          <label class="field">
+            <span>输入路径</span>
+            <span class="path-control">
+              <input id="inputPath" name="input" type="text" autocomplete="off" spellcheck="false" placeholder="/路径/视频或文件夹">
+              <button class="icon-button" type="button" data-picker="inputFile" data-target="inputPath" title="选择视频文件" aria-label="选择视频文件" data-icon="file-video"></button>
+              <button class="icon-button" type="button" data-picker="inputFolder" data-target="inputPath" title="选择输入文件夹" aria-label="选择输入文件夹" data-icon="folder"></button>
+            </span>
+          </label>
+
+          <label class="field">
+            <span>输出文件夹</span>
+            <span class="path-control">
+              <input id="outDir" name="outDir" type="text" autocomplete="off" spellcheck="false">
+              <button class="icon-button" type="button" data-picker="outputFolder" data-target="outDir" title="选择输出文件夹" aria-label="选择输出文件夹" data-icon="folder-open"></button>
+            </span>
+          </label>
+
+          <fieldset class="segmented-field">
+            <legend>3x4 构图模式</legend>
+            <label><input type="radio" name="mode" value="scale-fill" checked><span>填满裁切</span></label>
+            <label><input type="radio" name="mode" value="blur-extend"><span>模糊延展</span></label>
+          </fieldset>
+
+          <div class="two-col">
+            <label class="field">
+              <span>编码器</span>
+              <select id="encoder" name="encoder">
+                <option value="auto" selected>自动（按设备）</option>
+                <option value="x264">x264 软件</option>
+                <option value="nvenc">NVENC</option>
+                <option value="qsv">Intel QSV</option>
+              </select>
+            </label>
+            <label class="field">
+              <span>封装格式</span>
+              <select id="container" name="container">
+                <option value="mp4">MP4</option>
+                <option value="mov">MOV</option>
+              </select>
+            </label>
+          </div>
+
+          <div class="two-col">
+            <label class="field">
+              <span>帧率</span>
+              <input id="fps" name="fps" type="text" inputmode="decimal" value="auto">
+            </label>
+            <label class="field">
+              <span>码率</span>
+              <input id="bitrate" name="bitrate" type="text" value="50M">
+            </label>
+          </div>
+
+          <label class="toggle-row">
+            <input id="qcOnly" name="qcOnly" type="checkbox">
+            <span>只质检</span>
+          </label>
+
+          <label class="toggle-row">
+            <input id="previewOnly" name="previewOnly" type="checkbox">
+            <span>只生成预览</span>
+          </label>
+
+          <label class="toggle-row">
+            <input id="overwrite" name="overwrite" type="checkbox">
+            <span>允许覆盖已有输出</span>
+          </label>
+
+          <details class="advanced">
+            <summary>FFmpeg 路径</summary>
+            <label class="field">
+              <span>ffmpeg</span>
+              <input id="ffmpegPath" name="ffmpegPath" type="text" autocomplete="off" spellcheck="false">
+            </label>
+            <label class="field">
+              <span>ffprobe</span>
+              <input id="ffprobePath" name="ffprobePath" type="text" autocomplete="off" spellcheck="false">
+            </label>
+          </details>
+        </form>
+
+        <div class="spec-stack" aria-label="Apple 规格">
+          <div class="spec-row"><span>1x1</span><strong>3840 x 3840</strong></div>
+          <div class="spec-row"><span>3x4</span><strong>2048 x 2732</strong></div>
+          <div class="spec-row"><span>时长</span><strong>8-35s</strong></div>
+          <div class="spec-row"><span>码率</span><strong>45-100 Mbps</strong></div>
+          <div class="spec-row"><span>音频</span><strong>无</strong></div>
+        </div>
+      </aside>
+
+      <section class="panel queue-panel" aria-labelledby="queueTitle">
+        <div class="panel-heading">
+          <h2 id="queueTitle">批处理队列</h2>
+          <div class="queue-tools">
+            <div class="state-legend" aria-label="状态图例">
+              <span class="status-chip idle">空闲</span>
+              <span class="status-chip queued">排队中</span>
+              <span class="status-chip processing">处理中</span>
+              <span class="status-chip passed">通过</span>
+              <span class="status-chip previewed">预览完成</span>
+              <span class="status-chip warning">警告</span>
+              <span class="status-chip failed">失败</span>
+            </div>
+            <button id="clearHistoryButton" class="icon-button" type="button" title="清除历史任务记录，不删除输出文件" aria-label="清除历史任务记录，不删除输出文件" data-icon="trash-2"></button>
+          </div>
+        </div>
+
+        <div class="table-shell">
+          <table>
+            <thead>
+              <tr>
+                <th>状态</th>
+                <th>来源</th>
+                <th>问题</th>
+                <th>输出</th>
+                <th>操作</th>
+              </tr>
+            </thead>
+            <tbody id="queueBody">
+              <tr class="empty-row">
+                <td colspan="5">暂无批处理任务</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+
+        <section class="log-panel" aria-labelledby="logTitle">
+          <div class="panel-heading compact">
+            <h2 id="logTitle">任务日志</h2>
+            <button id="clearLogButton" class="icon-button" type="button" title="清空视图" aria-label="清空视图" data-icon="x"></button>
+          </div>
+          <p id="logRetentionNotice" class="log-retention-notice" aria-live="polite" hidden></p>
+          <pre id="jobLog" role="region" tabindex="0" aria-labelledby="logTitle"></pre>
+        </section>
+      </section>
+
+      <aside class="side-stack">
+        <section class="panel preview-panel" aria-labelledby="previewTitle">
+          <div class="panel-heading">
+            <h2 id="previewTitle">3x4 预览</h2>
+            <button id="revealPreviewButton" class="icon-button" type="button" title="显示预览文件" aria-label="显示预览文件" data-icon="external-link" disabled></button>
+          </div>
+          <div class="preview-frame">
+            <img id="previewImage" alt="">
+            <div class="safe-area"></div>
+            <div id="previewEmpty" class="preview-empty">2048 x 2732</div>
+          </div>
+        </section>
+
+        <section class="panel qc-panel" aria-labelledby="qcTitle">
+          <div class="panel-heading">
+            <h2 id="qcTitle">质检报告</h2>
+            <button id="revealReportButton" class="icon-button" type="button" title="显示报告文件" aria-label="显示报告文件" data-icon="file-text" disabled></button>
+          </div>
+          <div id="qcSummary" class="qc-summary">
+            <span class="status-chip idle">空闲</span>
+          </div>
+          <div id="qcIssues" class="issue-list"></div>
+        </section>
+      </aside>
+    </section>
+
+    <div id="errorPanel" class="error-panel" role="alert" aria-live="assertive" hidden></div>
+    <div id="jobStatusAnnouncer" class="sr-only" role="status" aria-live="polite" aria-atomic="true"></div>
+    <div id="toast" class="toast"></div>
+    <div id="overwriteDialog" class="modal-backdrop" role="dialog" aria-modal="true" aria-labelledby="overwriteDialogTitle" aria-describedby="overwriteDialogSummary overwriteDialogList overwriteDialogMore" hidden>
+      <div class="modal-panel">
+        <h2 id="overwriteDialogTitle">确认覆盖输出</h2>
+        <p id="overwriteDialogSummary"></p>
+        <ul id="overwriteDialogList" class="replacement-list"></ul>
+        <p id="overwriteDialogMore" class="modal-note"></p>
+        <div class="modal-actions">
+          <button id="overwriteCancelButton" class="button" type="button">取消</button>
+          <button id="overwriteConfirmButton" class="button danger" type="button">确认覆盖</button>
+        </div>
+      </div>
+    </div>
+    <div id="clearHistoryDialog" class="modal-backdrop" role="dialog" aria-modal="true" aria-labelledby="clearHistoryDialogTitle" aria-describedby="clearHistoryDialogSummary" hidden>
+      <div class="modal-panel">
+        <h2 id="clearHistoryDialogTitle">清除历史任务记录</h2>
+        <p id="clearHistoryDialogSummary">只会从队列中移除已完成的历史任务，不会删除任何输出文件。正在运行的任务会保留。</p>
+        <div class="modal-actions">
+          <button id="clearHistoryCancelButton" class="button" type="button">取消</button>
+          <button id="clearHistoryConfirmButton" class="button danger" type="button">清除历史</button>
+        </div>
+      </div>
+    </div>
+  </main>
+  <script type="module" src="/app.js"></script>
+</body>
+</html>

@@ -1,0 +1,43 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "openFAD release manifest",
+  "type": "object",
+  "required": ["schemaVersion", "project", "version", "releasedAt", "commit", "artifacts", "verification", "knownLimits"],
+  "properties": {
+    "schemaVersion": { "const": 1 },
+    "project": { "const": "openFAD" },
+    "version": { "type": "string", "pattern": "^\\d+\\.\\d+\\.\\d+$" },
+    "releasedAt": { "type": "string", "format": "date-time" },
+    "commit": { "type": "string", "pattern": "^[0-9a-f]{40}$" },
+    "license": { "type": "string" },
+    "artifacts": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "object",
+        "required": ["id", "tool", "platform", "stability", "trustScope", "fileName", "sizeBytes", "sha256", "url", "knownLimits"],
+        "properties": {
+          "id": { "type": "string" },
+          "tool": { "enum": ["cover-machine", "mv-studio", "motion-batch"] },
+          "platform": { "type": "string" },
+          "stability": { "enum": ["Preview", "Tested", "Stable"] },
+          "trustScope": { "type": "string", "minLength": 1 },
+          "fileName": { "type": "string" },
+          "sizeBytes": { "type": "integer", "minimum": 1 },
+          "sha256": { "type": "string", "pattern": "^[0-9a-f]{64}$" },
+          "url": { "type": "string" },
+          "knownLimits": { "type": "array", "items": { "type": "string" } }
+        }
+      }
+    },
+    "verification": {
+      "type": "object",
+      "required": ["ciRunUrl", "localEvidence"],
+      "properties": {
+        "ciRunUrl": { "type": "string" },
+        "localEvidence": { "type": "array", "items": { "type": "string" } }
+      }
+    },
+    "knownLimits": { "type": "array", "items": { "type": "string" } }
+  }
+}

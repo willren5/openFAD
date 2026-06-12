@@ -1,0 +1,14 @@
+node_modules/
+.worktrees/
+dist/
+tmp/
+coverage/
+.next/
+.DS_Store
+*.log
+.env
+.env.*
+release-artifacts/*.zip
+release-artifacts/*.exe
+release-artifacts/*.dmg
+release-artifacts/*.pkg

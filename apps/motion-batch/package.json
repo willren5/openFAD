@@ -1,0 +1,71 @@
+{
+  "name": "@openfad/motion-batch",
+  "version": "0.1.0",
+  "private": true,
+  "author": "openFAD",
+  "type": "module",
+  "description": "Cross-platform batch exporter and QC checker for Apple Music motion cover deliverables.",
+  "main": "desktop/main.cjs",
+  "bin": {
+    "openfad-motion": "./src/cli.mjs"
+  },
+  "scripts": {
+    "test": "node --test --test-concurrency=1",
+    "ui": "node ./ui/server.mjs",
+    "desktop": "electron .",
+    "icon:win": "node ./scripts/generate-win-icon.cjs",
+    "prepare:dist:win": "node ./scripts/prepare-win-nsis.cjs",
+    "verify:dist:win": "node ./scripts/verify-win-ffmpeg.cjs",
+    "dist:win": "node ./scripts/dist-win.cjs",
+    "smoke:dist:win": "node ./scripts/smoke-win-runtime.cjs",
+    "verify:smoke:win": "node ./scripts/verify-win-smoke-evidence.cjs"
+  },
+  "engines": {
+    "node": ">=20"
+  },
+  "devDependencies": {
+    "7zip-bin": "^5.2.0",
+    "electron": "^39.2.7",
+    "electron-builder": "^26.0.12"
+  },
+  "build": {
+    "appId": "org.openfad.motionbatch",
+    "productName": "openFAD Motion Batch",
+    "directories": {
+      "output": "dist/windows"
+    },
+    "files": [
+      "desktop/**/*",
+      "src/**/*",
+      "ui/**/*",
+      "README.md",
+      "DESIGN.md",
+      "package.json"
+    ],
+    "extraResources": [
+      {
+        "from": "vendor/ffmpeg/win/x64",
+        "to": "bin",
+        "filter": [
+          "ffmpeg.exe",
+          "ffprobe.exe"
+        ]
+      }
+    ],
+    "win": {
+      "icon": "build/icon.ico",
+      "signAndEditExecutable": false,
+      "forceCodeSigning": false,
+      "target": [
+        {
+          "target": "portable",
+          "arch": [
+            "x64"
+          ]
+        }
+      ],
+      "artifactName": "openFAD-Motion-Batch-${version}-${arch}.${ext}"
+    },
+    "asar": true
+  }
+}
