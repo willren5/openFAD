@@ -29,8 +29,8 @@ npm test
 Output summary from repository root:
 
 - Cover Machine: `tests 1`, `pass 1`, `fail 0`.
-- MV Studio: `tests 285`, `pass 285`, `fail 0`, `duration_ms 71121.350958`.
-- Motion Batch: `tests 488`, `pass 488`, `fail 0`, `duration_ms 68631.872208`.
+- MV Studio: `tests 285`, `pass 285`, `fail 0`, `duration_ms 67675.943625`.
+- Motion Batch: `tests 488`, `pass 488`, `fail 0`, `duration_ms 64827.562917`.
 - Root scanner tests: `tests 6`, `pass 6`, `fail 0`.
 - Motion Batch coverage included atomic outputs, batch recovery, render/QC failure paths, encoder selection, CLI formatting, desktop bridge security, UI state/recovery, source graph visibility, spec validation, single-stream enforcement, and local API hardening.
 
@@ -66,7 +66,7 @@ npm run package:web
 Output summary from repository root:
 
 - `openfad-cover-machine-0.1.0.zip` - 84909 bytes, 10 files.
-- `openfad-mv-studio-0.1.0.zip` - 101601 bytes, 11 files.
+- `openfad-mv-studio-0.1.0.zip` - 101674 bytes, 11 files.
 - `openfad-motion-batch-source-0.1.0.zip` - 256942 bytes, 57 files.
 - All web/source packages include root `LICENSE`, `NOTICE`, and `TRADEMARKS.md`.
 - Motion Batch source zip includes the Motion Batch `test/` suite.
@@ -80,7 +80,7 @@ Output summary from repository root:
 ```text
 86389f542d9679135c707d6463b546ebd0646ae9f601e8d325a8fe3ccc11556c  openfad-cover-machine-0.1.0.zip
 a3003d3e7524dff21192278d0d81841acfa68c90e8442bcdce2081cbfee8eed1  openfad-motion-batch-source-0.1.0.zip
-f4acbea5bfe9b2b49b9e3d14b5b2e5c4cfd1ce0c1c0587f8fb9a8ed8557da741  openfad-mv-studio-0.1.0.zip
+ce3511916f0cf75503a4499a2e29cb38d3b6b4be4a50a39084b6806fff53e618  openfad-mv-studio-0.1.0.zip
 ```
 
 ```bash

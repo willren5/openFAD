@@ -17,7 +17,7 @@ npm run test:mv
 
 Output summary:
 
-- `tests 285`, `pass 285`, `fail 0`, `skipped 0`, `duration_ms 71121.350958`.
+- `tests 285`, `pass 285`, `fail 0`, `skipped 0`, `duration_ms 67529.667291`.
 - Browser smoke covered Start Mode demo, visual systems, preflight, autosave, package import/export, render retry, batch render, performance guard, accessibility, and failure recovery paths.
 - Static validation covered embedded script parsing, public output filenames, preflight copy, mobile layout, performance warning copy, and public runtime facades.
 
@@ -48,9 +48,9 @@ Root release-gate summary:
 - `npm run scan:public`: `public safety scan passed`.
 - `git diff --check -- .`: no whitespace errors reported.
 - Root `npm test`: Cover `pass 1`, MV `pass 285`, Motion `pass 488`, root scanner `pass 6`, all `fail 0`.
-- `openfad-mv-studio-0.1.0.zip`: 101601 bytes, 11 files.
+- `openfad-mv-studio-0.1.0.zip`: 101674 bytes, 11 files.
 - MV web zip includes root `LICENSE`, `NOTICE`, and `TRADEMARKS.md`.
-- MV web zip SHA256: `f4acbea5bfe9b2b49b9e3d14b5b2e5c4cfd1ce0c1c0587f8fb9a8ed8557da741`.
+- MV web zip SHA256: `ce3511916f0cf75503a4499a2e29cb38d3b6b4be4a50a39084b6806fff53e618`.
 - `dist/release-manifest.json` written with 3 artifacts; MV entry uses `platform: web`, `stability: Tested`, and the SHA256 above.
 - Before upload, the release owner must verify the published manifest `commit` equals the clean release commit selected for the tag.
 
@@ -67,8 +67,8 @@ Root release-gate summary:
 
 ## Release Artifact Evidence
 
-- Web zip size: 101601 bytes.
-- Web zip SHA256: `f4acbea5bfe9b2b49b9e3d14b5b2e5c4cfd1ce0c1c0587f8fb9a8ed8557da741`.
+- Web zip size: 101674 bytes.
+- Web zip SHA256: `ce3511916f0cf75503a4499a2e29cb38d3b6b4be4a50a39084b6806fff53e618`.
 - Screenshot evidence is stored under `docs/verification/artifacts/`.
 - Browser smoke coverage verifies recording/export dispatch and recovery paths, but browser save behavior can still vary by renderer.
 

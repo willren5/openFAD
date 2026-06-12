@@ -1388,9 +1388,15 @@ const UI = {
       IDLE: previousState === 'PREVIEWING' ? 'btn-preview' : 'btn-rec'
     }[state];
     const target = targetId ? Dom[targetId] : null;
+    const isEditableFocus = (el) => {
+      if (!(el instanceof HTMLElement)) return false;
+      const tag = el.tagName.toLowerCase();
+      return tag === 'input' || tag === 'textarea' || tag === 'select' || el.isContentEditable;
+    };
     const shouldRestoreFocus = () => {
       const active = document.activeElement;
-      return !active || active === document.body || active === previousFocus || groups.some((group) => group.contains(active));
+      if (!active || active === document.body || active === previousFocus || groups.some((group) => group.contains(active))) return true;
+      return !isEditableFocus(active);
     };
     const focusTarget = () => {
       if (!shouldRestoreFocus()) return true;
