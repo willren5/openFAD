@@ -1388,8 +1388,24 @@ const UI = {
       IDLE: previousState === 'PREVIEWING' ? 'btn-preview' : 'btn-rec'
     }[state];
     const target = targetId ? Dom[targetId] : null;
-    if (!this.isVisibleFocusable(target)) return;
-    try { target.focus({ preventScroll: true }); } catch (_) {}
+    const shouldRestoreFocus = () => {
+      const active = document.activeElement;
+      return !active || active === document.body || active === previousFocus || groups.some((group) => group.contains(active));
+    };
+    const focusTarget = () => {
+      if (!shouldRestoreFocus()) return true;
+      if (!this.isVisibleFocusable(target)) return false;
+      try { target.focus({ preventScroll: true }); } catch (_) {}
+      return document.activeElement === target;
+    };
+    if (focusTarget()) return;
+    let attempts = 0;
+    const retryFocus = () => {
+      attempts += 1;
+      if (focusTarget() || attempts >= 6) return;
+      window.setTimeout(retryFocus, 50);
+    };
+    window.setTimeout(retryFocus, 0);
   },
   isVisibleFocusable(el) {
     if (!(el instanceof HTMLElement) || !el.isConnected) return false;
