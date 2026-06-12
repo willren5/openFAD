@@ -1395,13 +1395,18 @@ const UI = {
       const type = (el.getAttribute('type') || 'text').toLowerCase();
       return ['text', 'search', 'email', 'url', 'tel', 'password', 'number', 'date', 'datetime-local', 'month', 'time', 'week'].includes(type);
     };
+    const isInteractiveFocus = (el) => {
+      if (!(el instanceof HTMLElement)) return false;
+      return el.matches('a[href], button, input, select, textarea, [contenteditable="true"], [tabindex]:not([tabindex="-1"])');
+    };
     const previousFocusIsElement = previousFocus instanceof HTMLElement;
     const focusWasInActionGroup = previousFocusIsElement && groups.some((group) => group.contains(previousFocus));
     if (previousFocusIsElement && !focusWasInActionGroup && isEditableFocus(previousFocus)) return;
     const shouldRestoreFocus = () => {
       const active = document.activeElement;
       if (!active || active === document.body || active === previousFocus || groups.some((group) => group.contains(active))) return true;
-      return !isEditableFocus(active);
+      if (isEditableFocus(active)) return false;
+      return !isInteractiveFocus(active);
     };
     const focusTarget = () => {
       if (!shouldRestoreFocus()) return true;
@@ -1413,7 +1418,7 @@ const UI = {
     let attempts = 0;
     const retryFocus = () => {
       attempts += 1;
-      if (focusTarget() || attempts >= 6) return;
+      if (focusTarget() || attempts >= 120) return;
       window.setTimeout(retryFocus, 50);
     };
     window.setTimeout(retryFocus, 0);
