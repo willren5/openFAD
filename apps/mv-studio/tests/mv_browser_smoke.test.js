@@ -3523,8 +3523,22 @@ test('stopping preview returns keyboard focus to visible preview action', { skip
   await page.click('#btn-preview');
   await page.waitForFunction(() => window.Machine?.status === 'PREVIEWING');
   await page.evaluate(() => {
+    const activeDescriptor = Object.getOwnPropertyDescriptor(Document.prototype, 'activeElement');
+    const readActiveElement = activeDescriptor?.get ? activeDescriptor.get.bind(document) : () => null;
+    let forcedActiveElement = null;
+    Object.defineProperty(document, 'activeElement', {
+      configurable: true,
+      get() {
+        if (forcedActiveElement) {
+          const element = forcedActiveElement;
+          forcedActiveElement = null;
+          return element;
+        }
+        return readActiveElement();
+      }
+    });
     document.querySelector('#btn-stop-preview')?.addEventListener('click', () => {
-      if (document.activeElement instanceof HTMLElement) document.activeElement.blur();
+      forcedActiveElement = document.querySelector('#in-audio');
     }, { capture: true, once: true });
   });
   await page.click('#btn-stop-preview');
