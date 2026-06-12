@@ -790,6 +790,7 @@ test("multi-file batch keeps timed-out shared encoder probe as a hard stop", asy
   await mkdir(inputDir);
   await writeFile(inputA, "");
   await writeFile(inputB, "");
+  const encoderProbeTimeoutMs = 2000;
 
   await assert.rejects(() => runBatch({
     input: inputDir,
@@ -805,11 +806,11 @@ test("multi-file batch keeps timed-out shared encoder probe as a hard stop", asy
     previewOnly: false,
     ffmpegPath: fakeFfmpeg,
     ffprobePath: fakeFfprobe,
-    encoderProbeTimeoutMs: 500
+    encoderProbeTimeoutMs
   }), (error) => {
     assert.equal(error.fadAppleMotionErrorKind, "encoder-resolution");
     assert.equal(error.code, "PROCESS_TIMEOUT");
-    assert.equal(error.timeoutMs, 500);
+    assert.equal(error.timeoutMs, encoderProbeTimeoutMs);
     return true;
   });
 

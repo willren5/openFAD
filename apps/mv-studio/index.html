@@ -1407,10 +1407,16 @@ const UI = {
     const previousFocusIsElement = previousFocus instanceof HTMLElement;
     const focusWasInActionGroup = previousFocusIsElement && groups.some((group) => group.contains(previousFocus));
     if (previousFocusIsElement && !focusWasInActionGroup && isEditableFocus(previousFocus)) return;
+    const forceActionFocus = state === 'PREVIEWING' ||
+      state === 'WARMING' ||
+      state === 'RECORDING' ||
+      state === 'EXPORTING' ||
+      (state === 'IDLE' && previousState === 'PREVIEWING');
     const shouldRestoreFocus = () => {
       const active = document.activeElement;
       if (!active || active === document.body || active === previousFocus || groups.some((group) => group.contains(active))) return true;
       if (isEditableFocus(active)) return false;
+      if (forceActionFocus) return true;
       if (isNonEditingInputFocus(active)) return true;
       return !isInteractiveFocus(active);
     };

@@ -3398,20 +3398,25 @@ test('state transitions refresh readiness before moving keyboard focus', () => {
   assert.ok(checkReadyAt < moveFocusAt, 'render readiness must refresh before focus target selection');
 });
 
-test('state transition focus restore does not preserve non-editing file input focus', () => {
+test('state transition focus restore prioritizes visible action focus over stale controls', () => {
   const moveFocusBody = script.match(/moveFocusForState\(state, previousState\) \{([\s\S]*?)\n  \},\n  isVisibleFocusable/)?.[1] || '';
   assert.ok(moveFocusBody, 'UI.moveFocusForState body should be present');
   assert.match(moveFocusBody, /const isEditableFocus = \(el\) =>/);
   assert.match(moveFocusBody, /const isNonEditingInputFocus = \(el\) =>/);
+  assert.match(moveFocusBody, /const forceActionFocus = state === 'PREVIEWING'/);
+  assert.match(moveFocusBody, /\(state === 'IDLE' && previousState === 'PREVIEWING'\)/);
   assert.match(moveFocusBody, /\['button', 'checkbox', 'color', 'file', 'image', 'radio', 'range', 'reset', 'submit'\]\.includes\(type\)/);
 
   const protectEditableAt = moveFocusBody.indexOf('if (isEditableFocus(active)) return false;');
+  const forceActionAt = moveFocusBody.indexOf('if (forceActionFocus) return true;');
   const restoreNonEditingInputAt = moveFocusBody.indexOf('if (isNonEditingInputFocus(active)) return true;');
   const preserveInteractiveAt = moveFocusBody.indexOf('return !isInteractiveFocus(active);');
   assert.ok(protectEditableAt >= 0, 'editable text focus should still be protected');
+  assert.ok(forceActionAt >= 0, 'state action transitions should always restore visible action focus');
   assert.ok(restoreNonEditingInputAt >= 0, 'file/range/checkbox-like focus should be eligible for action focus restore');
   assert.ok(preserveInteractiveAt >= 0, 'other interactive controls should still be considered before stealing focus');
-  assert.ok(protectEditableAt < restoreNonEditingInputAt, 'editable focus protection should run before non-editing input restore');
+  assert.ok(protectEditableAt < forceActionAt, 'editable focus protection should run before action focus restore');
+  assert.ok(forceActionAt < restoreNonEditingInputAt, 'preview and render state changes should not fall through to broad interactive-focus preservation');
   assert.ok(restoreNonEditingInputAt < preserveInteractiveAt, 'non-editing inputs should not fall through to broad interactive-focus preservation');
 });
 
