@@ -7191,8 +7191,10 @@ const Preflight = {
     const valid = Store.flags.assetValid;
     const vReady = !!v && v.readyState >= 1 && v.videoWidth > 0;
     const vRecordReady = vReady && v.readyState >= 2;
-    const aPreviewReady = !!a && a.readyState >= 1;
-    const aRecordPlayable = aPreviewReady && a.readyState >= 2;
+    const aMetadataReady = !!a && a.readyState >= 1;
+    const aValidatedForPreview = !!valid.audio && !!a && !Store.assetErrors.audio;
+    const aPreviewReady = aMetadataReady || aValidatedForPreview;
+    const aRecordPlayable = !!a && a.readyState >= 2;
     let aRecordDurOk = Number.isFinite(durationSec) && durationSec > 0 && durationSec <= LIMITS.maxAudioSeconds;
     if (!aRecordDurOk && aPreviewReady && a?.seekable?.length) {
       try {

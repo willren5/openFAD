@@ -693,6 +693,10 @@ test('manual render readiness requires logo consistently with batch render', () 
   assert.match(renderBlockersBody, /return this\.getRenderReadiness\(durationSec\)\.blockers/);
   assert.match(preflightBody, /getRenderReadiness\(durationSec = this\.getAudioDuration\(\), opts = \{\}\) \{/);
   assert.match(preflightBody, /assetReason\(type, error = ''\)/);
+  assert.match(preflightBody, /const aMetadataReady = !!a && a\.readyState >= 1/);
+  assert.match(preflightBody, /const aValidatedForPreview = !!valid\.audio && !!a && !Store\.assetErrors\.audio/);
+  assert.match(preflightBody, /const aPreviewReady = aMetadataReady \|\| aValidatedForPreview/);
+  assert.match(preflightBody, /const aRecordPlayable = !!a && a\.readyState >= 2/);
   assert.match(preflightBody, /if \(!valid\.logo \|\| !lReady\) pushPreview\(this\.assetReason\('logo', Store\.assetErrors\.logo\), 'logo'\)/);
   assert.match(preflightBody, /else if \(!vRecordReady\) \{[\s\S]*?blockers\.push\('Center visual not ready to play'\)[\s\S]*?reasons\.push\('video-canplay'\)/);
   assert.match(preflightBody, /else if \(!aRecordPlayable\) pushRender\('Audio not ready to play', 'audio-canplay'\)/);
@@ -4167,7 +4171,9 @@ test('recording readiness waits for media canplay threshold before enabling rend
   const preflightBody = script.match(/const Preflight = \{([\s\S]*?)\n\};\n\nconst Engine/)?.[1] || '';
   assert.ok(preflightBody, 'Preflight body should be present');
   assert.match(preflightBody, /const vRecordReady = vReady && v\.readyState >= 2/);
-  assert.match(preflightBody, /const aRecordPlayable = aPreviewReady && a\.readyState >= 2/);
+  assert.match(preflightBody, /const aMetadataReady = !!a && a\.readyState >= 1/);
+  assert.match(preflightBody, /const aPreviewReady = aMetadataReady \|\| aValidatedForPreview/);
+  assert.match(preflightBody, /const aRecordPlayable = !!a && a\.readyState >= 2/);
   assert.match(preflightBody, /Center visual not ready to play/);
   assert.match(preflightBody, /Audio not ready to play/);
 

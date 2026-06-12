@@ -3526,6 +3526,10 @@ test('stopping preview returns keyboard focus to visible preview action', { skip
     const activeDescriptor = Object.getOwnPropertyDescriptor(Document.prototype, 'activeElement');
     const readActiveElement = activeDescriptor?.get ? activeDescriptor.get.bind(document) : () => null;
     let forcedActiveElement = null;
+    const audio = document.querySelector('#pool-audio');
+    const readyStateDescriptor = Object.getOwnPropertyDescriptor(HTMLMediaElement.prototype, 'readyState');
+    const readAudioReadyState = readyStateDescriptor?.get ? readyStateDescriptor.get.bind(audio) : () => audio?.readyState || 0;
+    let forceAudioMetadataDrop = false;
     Object.defineProperty(document, 'activeElement', {
       configurable: true,
       get() {
@@ -3537,8 +3541,17 @@ test('stopping preview returns keyboard focus to visible preview action', { skip
         return readActiveElement();
       }
     });
+    if (audio) {
+      Object.defineProperty(audio, 'readyState', {
+        configurable: true,
+        get() {
+          return forceAudioMetadataDrop ? 0 : readAudioReadyState();
+        }
+      });
+    }
     document.querySelector('#btn-stop-preview')?.addEventListener('click', () => {
       forcedActiveElement = document.querySelector('#in-audio');
+      forceAudioMetadataDrop = true;
     }, { capture: true, once: true });
   });
   await page.click('#btn-stop-preview');
@@ -3582,6 +3595,8 @@ test('stopping preview returns keyboard focus to visible preview action', { skip
   assert.equal(focusState.activeVisible, true);
   assert.equal(focusState.activeInsideStartControls, true);
   assert.equal(focusState.readiness.previewReady, true);
+  assert.equal(focusState.readiness.aPreviewReady, true);
+  assert.equal(focusState.readiness.aRecordPlayable, false);
   assert.deepEqual(pageErrors, []);
   assert.deepEqual(consoleErrors, []);
   await page.close();
