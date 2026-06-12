@@ -1426,13 +1426,17 @@ const UI = {
       try { target.focus({ preventScroll: true }); } catch (_) {}
       return document.activeElement === target;
     };
-    if (focusTarget()) return;
     let attempts = 0;
     const retryFocus = () => {
       attempts += 1;
       if (focusTarget() || attempts >= 120) return;
       window.setTimeout(retryFocus, 50);
     };
+    if (forceActionFocus) {
+      window.setTimeout(retryFocus, 0);
+      return;
+    }
+    if (focusTarget()) return;
     window.setTimeout(retryFocus, 0);
   },
   isVisibleFocusable(el) {

@@ -3405,18 +3405,27 @@ test('state transition focus restore prioritizes visible action focus over stale
   assert.match(moveFocusBody, /const isNonEditingInputFocus = \(el\) =>/);
   assert.match(moveFocusBody, /const forceActionFocus = state === 'PREVIEWING'/);
   assert.match(moveFocusBody, /\(state === 'IDLE' && previousState === 'PREVIEWING'\)/);
+  assert.match(moveFocusBody, /if \(forceActionFocus\) \{\s*window\.setTimeout\(retryFocus, 0\);\s*return;\s*\}/);
   assert.match(moveFocusBody, /\['button', 'checkbox', 'color', 'file', 'image', 'radio', 'range', 'reset', 'submit'\]\.includes\(type\)/);
 
   const protectEditableAt = moveFocusBody.indexOf('if (isEditableFocus(active)) return false;');
   const forceActionAt = moveFocusBody.indexOf('if (forceActionFocus) return true;');
+  const retryDefinitionAt = moveFocusBody.indexOf('const retryFocus = () =>');
+  const deferredActionFocusAt = moveFocusBody.indexOf('if (forceActionFocus) {');
+  const immediateFocusAt = moveFocusBody.indexOf('if (focusTarget()) return;');
   const restoreNonEditingInputAt = moveFocusBody.indexOf('if (isNonEditingInputFocus(active)) return true;');
   const preserveInteractiveAt = moveFocusBody.indexOf('return !isInteractiveFocus(active);');
   assert.ok(protectEditableAt >= 0, 'editable text focus should still be protected');
   assert.ok(forceActionAt >= 0, 'state action transitions should always restore visible action focus');
+  assert.ok(retryDefinitionAt >= 0, 'focus retry should be defined before deferred action focus scheduling');
+  assert.ok(deferredActionFocusAt >= 0, 'action state focus should be deferred until after click default focus settles');
+  assert.ok(immediateFocusAt >= 0, 'non-action state focus can still use the immediate fast path');
   assert.ok(restoreNonEditingInputAt >= 0, 'file/range/checkbox-like focus should be eligible for action focus restore');
   assert.ok(preserveInteractiveAt >= 0, 'other interactive controls should still be considered before stealing focus');
   assert.ok(protectEditableAt < forceActionAt, 'editable focus protection should run before action focus restore');
   assert.ok(forceActionAt < restoreNonEditingInputAt, 'preview and render state changes should not fall through to broad interactive-focus preservation');
+  assert.ok(retryDefinitionAt < deferredActionFocusAt, 'deferred action focus should reuse bounded retry logic');
+  assert.ok(deferredActionFocusAt < immediateFocusAt, 'action focus should not return after an in-click synchronous focus success');
   assert.ok(restoreNonEditingInputAt < preserveInteractiveAt, 'non-editing inputs should not fall through to broad interactive-focus preservation');
 });
 
