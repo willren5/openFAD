@@ -1,13 +1,22 @@
 import assert from 'node:assert/strict'
+import { execFile } from 'node:child_process'
 import { existsSync, readFileSync } from 'node:fs'
-import { test } from 'node:test'
+import { before, test } from 'node:test'
 import path from 'node:path'
 import { fileURLToPath } from 'node:url'
+import { promisify } from 'node:util'
 
 const repoRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..')
 const outRoot = path.join(repoRoot, 'dist', 'openfad-site')
 const rootPackage = JSON.parse(readFileSync(path.join(repoRoot, 'package.json'), 'utf8'))
 const motionDownloadName = `openfad-motion-batch-source-${rootPackage.version}.zip`
+const execFileAsync = promisify(execFile)
+
+before(async () => {
+  await execFileAsync(process.execPath, [path.join(repoRoot, 'scripts', 'build-site.mjs')], {
+    cwd: repoRoot,
+  })
+})
 
 test('openFAD static site build exposes direct user-facing entry points', () => {
   assert.equal(existsSync(path.join(outRoot, 'index.html')), true)
