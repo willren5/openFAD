@@ -402,6 +402,8 @@ test("Windows runtime smoke evidence verifier rejects partial, warning, and inco
   const oneByOnePath = path.join(tempDir, "one-by-one.mp4");
   const threeByFourPath = path.join(tempDir, "three-by-four.mp4");
   const previewPath = path.join(tempDir, "preview.png");
+  const capturedPreview = "preview";
+  const finalPreview = "overwritten-preview";
   const reportJsonPath = path.join(tempDir, "report.json");
   const reportHtmlPath = path.join(tempDir, "report.html");
   const screenshots = {
@@ -422,7 +424,7 @@ test("Windows runtime smoke evidence verifier rejects partial, warning, and inco
     writeFile(ffprobePath, "ffprobe"),
     writeFile(oneByOnePath, "one"),
     writeFile(threeByFourPath, "three"),
-    writeFile(previewPath, "preview"),
+    writeFile(previewPath, finalPreview),
     writeFile(reportJsonPath, "{}"),
     writeFile(reportHtmlPath, "<html></html>"),
     ...Object.values(screenshots).map((filePath) => writeFile(filePath, "png"))
@@ -440,6 +442,7 @@ test("Windows runtime smoke evidence verifier rejects partial, warning, and inco
     appSha256: sha256("app"),
     poisonedEnvironment: {
       OPENFAD_MOTION_USER_DATA_DIR: path.join(tempDir, "user-data"),
+      OPENFAD_MOTION_REVEAL_SMOKE_NOOP: "1",
       FFMPEG_PATH: path.join(tempDir, "broken", "missing-ffmpeg.exe"),
       FFPROBE_PATH: path.join(tempDir, "broken", "missing-ffprobe.exe"),
       PATH: path.join(tempDir, "broken")
@@ -459,14 +462,20 @@ test("Windows runtime smoke evidence verifier rejects partial, warning, and inco
     },
     screenshots,
     assets: {
-      preview: { path: previewPath, exists: true, size: 7, sha256: sha256("preview"), endpointSha256: sha256("preview") },
-      fullPreview: { assetId: "asset-preview", endpointSha256: sha256("preview") },
+      preview: {
+        path: previewPath,
+        exists: true,
+        size: capturedPreview.length,
+        sha256: sha256(capturedPreview),
+        endpointSha256: sha256(capturedPreview)
+      },
+      fullPreview: { assetId: "asset-preview", endpointSha256: sha256(finalPreview) },
       reportHtml: { assetId: "asset-report" }
     },
     outputs: {
       oneByOne: outputEvidence(oneByOnePath, "one", 3840, 3840),
       threeByFour: outputEvidence(threeByFourPath, "three", 2048, 2732),
-      preview: { path: previewPath, exists: true, size: 7, sha256: sha256("preview") },
+      preview: { path: previewPath, exists: true, size: finalPreview.length, sha256: sha256(finalPreview) },
       reportJson: {
         path: reportJsonPath,
         exists: true,
@@ -494,6 +503,24 @@ test("Windows runtime smoke evidence verifier rejects partial, warning, and inco
   assert.equal(verified.evidencePath, evidencePath);
   assert.equal(verified.outputs.length, 2);
   assert.equal(verified.screenshots.length, Object.keys(screenshots).length);
+
+  await writeFile(evidencePath, `${JSON.stringify({
+    ...passingEvidence,
+    assets: {
+      ...passingEvidence.assets,
+      preview: { ...passingEvidence.assets.preview, endpointSha256: sha256("stale-endpoint") }
+    }
+  }, null, 2)}\n`);
+  assert.throws(() => verifyWinSmokeEvidence({ evidencePath }), /preview asset endpoint sha256 must match captured file/);
+
+  await writeFile(evidencePath, `${JSON.stringify({
+    ...passingEvidence,
+    assets: {
+      ...passingEvidence.assets,
+      fullPreview: { ...passingEvidence.assets.fullPreview, endpointSha256: sha256("stale-full-preview") }
+    }
+  }, null, 2)}\n`);
+  assert.throws(() => verifyWinSmokeEvidence({ evidencePath }), /full preview endpoint sha256 must match full preview file/);
 
   await writeFile(evidencePath, `${JSON.stringify({ ...passingEvidence, passed: false, releaseGate: { ...passingEvidence.releaseGate, passed: false } }, null, 2)}\n`);
   assert.throws(() => verifyWinSmokeEvidence({ evidencePath }), /releaseGate\.passed must be true/);

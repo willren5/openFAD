@@ -1,6 +1,6 @@
 {
   "name": "openfad",
-  "version": "0.1.5",
+  "version": "0.1.6",
   "private": true,
   "description": "Chinese-first open-source creative tools for music cover art, visualizers, and motion-cover delivery.",
   "type": "module",

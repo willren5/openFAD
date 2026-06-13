@@ -84,8 +84,7 @@ function verifyWinSmokeEvidence({ evidencePath = DEFAULT_EVIDENCE_PATH } = {}) {
   assertEqual(evidence.jobs?.full?.status, "succeeded", "full job must finish with status succeeded.");
 
   const screenshots = verifyRequiredScreenshots(evidence.screenshots);
-  assertFileEvidence(evidence.assets?.preview, "preview asset");
-  assertPresent(evidence.assets?.preview?.endpointSha256, "preview asset endpointSha256 is required.");
+  assertCapturedAssetEvidence(evidence.assets?.preview, "preview asset");
   assertPresent(evidence.assets?.fullPreview?.endpointSha256, "full preview endpointSha256 is required.");
   assertPresent(evidence.assets?.reportHtml?.assetId, "report HTML asset id is required.");
 
@@ -94,6 +93,11 @@ function verifyWinSmokeEvidence({ evidencePath = DEFAULT_EVIDENCE_PATH } = {}) {
     assertVideoOnlyOutput("3x4 output", evidence.outputs?.threeByFour, { width: 2048, height: 2732 })
   ];
   assertFileEvidence(evidence.outputs?.preview, "full preview file");
+  assertEqual(
+    evidence.assets.fullPreview.endpointSha256,
+    evidence.outputs.preview.sha256,
+    "full preview endpoint sha256 must match full preview file."
+  );
   assertFileEvidence(evidence.outputs?.reportJson, "JSON report");
   assertFileEvidence(evidence.outputs?.reportHtml, "HTML report");
   assertReleaseReport(evidence.outputs?.reportJson?.parsed);
@@ -166,6 +170,7 @@ function assertProbeHasAudio(probe, label) {
 function assertPoisonedEnvironment(evidence) {
   const env = evidence.poisonedEnvironment ?? {};
   assertPresent(env.OPENFAD_MOTION_USER_DATA_DIR, "isolated userData env is required.");
+  assertEqual(env.OPENFAD_MOTION_REVEAL_SMOKE_NOOP, "1", "smoke reveal no-op env must be enabled.");
   assertPresent(env.FFMPEG_PATH, "poisoned FFMPEG_PATH is required.");
   assertPresent(env.FFPROBE_PATH, "poisoned FFPROBE_PATH is required.");
   assertPresent(env.PATH, "poisoned PATH is required.");
@@ -186,6 +191,20 @@ function assertFileEvidence(evidence, label) {
   if (Number.isFinite(evidence.size)) {
     const stat = fs.statSync(evidence.path);
     assertEqual(stat.size, evidence.size, `${label} size must match evidence.`);
+  }
+}
+
+function assertCapturedAssetEvidence(evidence, label) {
+  if (!evidence || typeof evidence !== "object") {
+    throw new Error(`${label} evidence is required.`);
+  }
+  assertEqual(evidence.exists, true, `${label} must exist when captured.`);
+  assertPresent(evidence.path, `${label} path is required.`);
+  assertPresent(evidence.sha256, `${label} sha256 is required.`);
+  assertPresent(evidence.endpointSha256, `${label} endpointSha256 is required.`);
+  assertEqual(evidence.endpointSha256, evidence.sha256, `${label} endpoint sha256 must match captured file.`);
+  if (Number.isFinite(evidence.size) && evidence.size <= 0) {
+    throw new Error(`${label} size must be positive.`);
   }
 }
 
