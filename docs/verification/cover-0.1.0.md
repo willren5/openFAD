@@ -1,10 +1,10 @@
 # Cover Machine v0.1.0 Verification
 
-Date: 2026-06-12
+Date: 2026-06-13
 
 ## Environment
 
-- Worktree: isolated `openfad-trusted-release` branch worktree
+- Worktree: `/tmp/openFAD-public-main`, branch `ci-focus-fix`
 - Base commit before Cover migration: `788a63b212e8260ca781e753bb43641d9b96511a`
 - Release artifact set: `openfad-cover-machine-0.1.0.zip`
 - Node: `v25.9.0`
@@ -44,7 +44,7 @@ npm test
 Output summary from repository root:
 
 - Cover Machine: `tests 1`, `pass 1`, `fail 0`.
-- MV Studio: `tests 286`, `pass 286`, `fail 0`.
+- MV Studio: `tests 288`, `pass 288`, `fail 0`.
 - Motion Batch: `tests 488`, `pass 488`, `fail 0`.
 - Root scanner tests: `tests 7`, `pass 7`, `fail 0`.
 

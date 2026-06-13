@@ -52,14 +52,14 @@ export function parseCliArgs(argv) {
     } else if (arg === "--ffprobe") {
       options.ffprobePath = requireValue(arg, args.shift());
     } else if (arg?.startsWith("--")) {
-      throw new Error(`Unknown option: ${arg}`);
+      throw new Error(`未知选项 / Unknown option: ${arg}`);
     } else {
       positional.push(arg);
     }
   }
 
   if (positional.length > 1) {
-    throw new Error("Only one input file or folder is accepted.");
+    throw new Error("只能选择一个输入文件或文件夹。/ Only one input file or folder is accepted.");
   }
 
   if (positional.length > 0) {
@@ -67,10 +67,10 @@ export function parseCliArgs(argv) {
   }
 
   if (!options.help && !options.input) {
-    throw new Error("Input file or folder is required.");
+    throw new Error("请提供输入文件或文件夹。/ Input file or folder is required.");
   }
   if (options.qcOnly && options.previewOnly) {
-    throw new Error("--qc-only and --preview-only cannot be used together.");
+    throw new Error("--qc-only 和 --preview-only 不能同时使用。/ --qc-only and --preview-only cannot be used together.");
   }
 
   return options;
@@ -90,22 +90,22 @@ export function buildOutputPlan({ inputPath, outDir, container }) {
 }
 
 export function usage() {
-  return `Usage:
+  return `用法 / Usage:
   openfad-motion <input-file-or-folder> [options]
 
-Options:
-  --out <dir>          Output folder. Default: apple-motion-output
-  --mode <mode>        3x4 composition mode: scale-fill or blur-extend. Default: scale-fill
-  --fps <rate>         Output frame rate, or auto to preserve Apple-allowed source rates. Default: auto
-  --bitrate <rate>     H.264 target bitrate. Default: 50M
+选项 / Options:
+  --out <dir>          输出文件夹 / Output folder. Default: apple-motion-output
+  --mode <mode>        3x4 构图模式 / 3x4 composition mode: scale-fill or blur-extend. Default: scale-fill
+  --fps <rate>         输出帧率，或 auto 保留 Apple 允许的源帧率 / Output frame rate. Default: auto
+  --bitrate <rate>     H.264 目标码率 / H.264 target bitrate. Default: 50M
   --encoder <name>     x264, nvenc, qsv, or auto. Default: x264
   --container <ext>    mp4 or mov. Default: mp4
-  --qc-only            Do not render; QC the input file only.
-  --preview-only       Generate 3x4 preview overlay only.
-  --dry-run            Print planned commands without running FFmpeg.
-  --overwrite          Replace existing output files.
-  --ffmpeg <path>      Custom FFmpeg executable path.
-  --ffprobe <path>     Custom FFprobe executable path.
+  --qc-only            只检查输入，不渲染 / Do not render; QC the input file only.
+  --preview-only       只生成 3x4 安全区预览 / Generate 3x4 preview overlay only.
+  --dry-run            只打印计划，不运行 FFmpeg / Print planned commands without running FFmpeg.
+  --overwrite          替换已有输出文件 / Replace existing output files.
+  --ffmpeg <path>      自定义 FFmpeg 路径 / Custom FFmpeg executable path.
+  --ffprobe <path>     自定义 FFprobe 路径 / Custom FFprobe executable path.
 `;
 }
 
@@ -113,7 +113,7 @@ export function formatResultLines(result, options) {
   if (result.error) {
     return [
       `FAIL: ${result.inputPath}`,
-      `  error: ${formatCliError(result.error)}`
+      `  错误 / error: ${formatCliError(result.error)}`
     ];
   }
 
@@ -129,7 +129,7 @@ export function formatResultLines(result, options) {
   }
 
   if (result.report) {
-    lines.push(`  report: ${result.outputPlan.reportHtml}`);
+    lines.push(`  报告 / report: ${result.outputPlan.reportHtml}`);
   }
 
   return lines;
@@ -139,11 +139,11 @@ export function formatDryRunLines(result, options) {
   if (result.error) {
     return [
       `FAIL: ${result.inputPath}`,
-      `  error: ${formatCliError(result.error)}`
+      `  错误 / error: ${formatCliError(result.error)}`
     ];
   }
 
-  const lines = [`Input: ${result.inputPath}`];
+  const lines = [`输入 / Input: ${result.inputPath}`];
   const commands = Array.isArray(result.commands) ? result.commands : [];
 
   if (commands.length) {
@@ -151,11 +151,11 @@ export function formatDryRunLines(result, options) {
       lines.push(`[${command.target}] ${command.command} ${command.args.map(quoteArg).join(" ")}`);
     }
   } else {
-    lines.push("  no FFmpeg render commands planned");
+    lines.push("  没有计划运行 FFmpeg 渲染命令 / no FFmpeg render commands planned");
   }
 
   if (options.qcOnly && result.outputPlan?.reportHtml) {
-    lines.push(`  planned report: ${result.outputPlan.reportHtml}`);
+    lines.push(`  计划报告 / planned report: ${result.outputPlan.reportHtml}`);
   }
 
   return lines;
@@ -163,16 +163,16 @@ export function formatDryRunLines(result, options) {
 
 export function formatCliError(error) {
   if (error?.fadAppleMotionErrorKind === "ambiguous-input-stream") {
-    return "Input video stream is ambiguous. Export a .mov or .mp4 with exactly one video track and try again.";
+    return "输入视频轨道不明确。请导出只包含一个视频轨的 .mov 或 .mp4 后重试。 / Input video stream is ambiguous. Export a .mov or .mp4 with exactly one video track and try again.";
   }
   if (isUnsupportedInputColorDiagnostic(error)) {
-    return "Input video color profile is unsafe. Export as Rec. 709/sRGB SDR, or as clearly tagged HDR BT.2020 footage, then retry.";
+    return "输入视频色彩配置不安全。请导出为 Rec. 709/sRGB SDR，或带清晰标签的 HDR BT.2020 素材后重试。 / Input video color profile is unsafe. Export as Rec. 709/sRGB SDR, or as clearly tagged HDR BT.2020 footage, then retry.";
   }
   if (error?.fadAppleMotionErrorKind === "invalid-input-spec") {
-    return "Input video does not meet Apple Motion source requirements. Confirm the source duration is 8-35 seconds, then export it again and retry.";
+    return "输入视频不符合 Apple Motion 源素材要求。请确认源视频时长为 8-35 秒，重新导出后再试。 / Input video does not meet Apple Motion source requirements. Confirm the source duration is 8-35 seconds, then export it again and retry.";
   }
   if (isOutputTransactionRecoveryDiagnostic(error)) {
-    return "Could not recover an interrupted output write. Inspect temporary files in the output folder, or choose a new output folder and try again.";
+    return "无法恢复中断的输出写入。请检查输出文件夹里的临时文件，或换新输出文件夹重试。 / Could not recover an interrupted output write. Inspect temporary files in the output folder, or choose a new output folder and try again.";
   }
   const localToolError = formatLocalToolCliError(error);
   if (localToolError) return localToolError;
@@ -205,7 +205,7 @@ async function main() {
 
 function requireValue(option, value) {
   if (!value || value.startsWith("--")) {
-    throw new Error(`${option} requires a value.`);
+    throw new Error(`${option} 需要一个值。/ ${option} requires a value.`);
   }
   return value;
 }
@@ -213,7 +213,7 @@ function requireValue(option, value) {
 function normalizeContainer(container) {
   const normalized = String(container).replace(/^\./, "").toLowerCase();
   if (normalized !== "mp4" && normalized !== "mov") {
-    throw new Error(`Container must be mp4 or mov, found ${container}.`);
+    throw new Error(`容器必须是 mp4 或 mov，当前是 ${container}。/ Container must be mp4 or mov, found ${container}.`);
   }
   return normalized;
 }
@@ -221,13 +221,13 @@ function normalizeContainer(container) {
 function normalizeEncoder(encoder) {
   const normalized = String(encoder).toLowerCase();
   if (!["x264", "nvenc", "qsv", "auto"].includes(normalized)) {
-    throw new Error(`Encoder must be x264, nvenc, qsv, or auto, found ${encoder}.`);
+    throw new Error(`编码器必须是 x264、nvenc、qsv 或 auto，当前是 ${encoder}。/ Encoder must be x264, nvenc, qsv, or auto, found ${encoder}.`);
   }
   return normalized;
 }
 
 export function normalizeFrameRate(frameRate, {
-  message = `Frame rate must be auto, 23.976, 24, 25, 29.97, 30, 24000/1001, or 30000/1001.`
+  message = `帧率必须是 auto、23.976、24、25、29.97、30、24000/1001 或 30000/1001。/ Frame rate must be auto, 23.976, 24, 25, 29.97, 30, 24000/1001, or 30000/1001.`
 } = {}) {
   const normalized = String(frameRate ?? "").trim();
   if (normalized.toLowerCase() === "auto") return "auto";
@@ -236,7 +236,7 @@ export function normalizeFrameRate(frameRate, {
 }
 
 export function normalizeBitrate(bitrate, {
-  message = "Bitrate must be between 45M and 100M."
+  message = "码率必须在 45M 到 100M 之间。/ Bitrate must be between 45M and 100M."
 } = {}) {
   const match = String(bitrate ?? "").trim().match(/^(\d+(?:\.\d+)?)m$/i);
   if (!match) throw new Error(message);

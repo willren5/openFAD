@@ -8,6 +8,8 @@ Last updated: 2026-06-13
 
 openFAD 是独立开源项目，不属于 FAD-Model-1。任何 openFAD 页面、构建脚本、下载入口、应用代码都必须位于 openFAD 仓库或独立静态部署面，不允许再添加到 FAD-Model-1 web 源码中。
 
+部署顺序、GitHub Release、checksum 与 fadrecords.com 静态同步细节见 `../deployment/openfad-on-fadrecords.zh-CN.md`。
+
 官网入口部署在：
 
 - `https://fadrecords.com/openfad/`

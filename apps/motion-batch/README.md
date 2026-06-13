@@ -7,7 +7,13 @@ openFAD Motion Batch 是中文优先的本地批处理工具，用于把已经�
 - 轻度用户：打开本地 UI，选择输入视频或文件夹，选择输出文件夹，点击开始。
 - 深度用户：用 CLI、批处理、QC-only、preview-only、Windows portable smoke 和 release evidence 验证交付质量。
 
-## 30 秒路径
+## 当前可信范围
+
+- 当前公开 artifact 是源码包和本地 UI，不是在线重渲染服务。
+- fadrecords.com 只展示下载、manifest、checksum 和使用说明，不在主站进程里跑 heavy render。
+- Windows runtime 只有在 `verify:smoke:win` 的 full-render evidence 通过后，才可以标成 `Stable`。
+
+## 立即使用
 
 ```bash
 cd apps/motion-batch
@@ -28,6 +34,8 @@ http://127.0.0.1:4387
 3. 保持默认 `auto` 帧率、`50M` 码率、`mp4` 容器。
 4. 点击“开始处理”。
 5. 查看队列状态、预览图、JSON / HTML QC 报告。
+
+成功标准：输出文件夹里出现 `1x1`、`3x4`、安全区预览 PNG、JSON 报告和 HTML 报告；报告里不应有阻塞性的 QC fail。
 
 ## 交付内容
 
@@ -122,6 +130,13 @@ npm run checksums
 ```
 
 验证记录见 `../../docs/verification/motion-batch-0.1.1.md`。
+
+## 失败恢复
+
+- UI 打不开：确认 `npm ci` 已完成，再重新运行 `npm run ui`。
+- 找不到 FFmpeg：安装 FFmpeg，或填写 `ffmpeg` 与 `ffprobe` 的完整路径。
+- 输出已存在：换空输出文件夹；只有确认替换时才打开 overwrite。
+- 报告失败：先看 HTML 报告的目标、失败项和恢复建议，不要把 failed/warning 输出当 release evidence。
 
 ## 品牌边界
 

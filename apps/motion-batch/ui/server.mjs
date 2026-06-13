@@ -1284,7 +1284,9 @@ function userFacingIssueMessage(message) {
 }
 
 function isQcSubprocessDiagnostic(message) {
-  return /^(blackdetect|blackframe|freezedetect) failed (with exit code|to run\b)/.test(String(message ?? ""));
+  return /^(blackdetect|blackframe|freezedetect) failed (with exit code|to run\b)/.test(String(message ?? ""))
+    || /^质检命令失败：(?:blackdetect|blackframe|freezedetect)\b/.test(String(message ?? ""))
+    || /^(?:blackdetect|blackframe|freezedetect) (?:无法启动质检|运行超时)/.test(String(message ?? ""));
 }
 
 function countItem(job, item) {

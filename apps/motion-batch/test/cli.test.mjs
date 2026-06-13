@@ -124,7 +124,7 @@ test("formats qc-only results without claiming rendered output files", () => {
 
   assert.equal(lines.includes("  1x1: out/one.mp4"), false);
   assert.equal(lines.includes("  3x4: out/three.mp4"), false);
-  assert.equal(lines.includes("  report: out/report.html"), true);
+  assert.equal(lines.includes("  报告 / report: out/report.html"), true);
 });
 
 test("formats qc-only dry runs with an explicit no-render plan", () => {
@@ -137,9 +137,9 @@ test("formats qc-only dry runs with an explicit no-render plan", () => {
   }, { qcOnly: true });
 
   assert.deepEqual(lines, [
-    "Input: input.mov",
-    "  no FFmpeg render commands planned",
-    "  planned report: out/report.html"
+    "输入 / Input: input.mov",
+    "  没有计划运行 FFmpeg 渲染命令 / no FFmpeg render commands planned",
+    "  计划报告 / planned report: out/report.html"
   ]);
 });
 
@@ -158,7 +158,7 @@ test("formats failed file results with sanitized CLI diagnostics", () => {
 
   assert.deepEqual(lines, [
     "FAIL: cover.mov",
-    "  error: FFmpeg could not generate the video output. Check the input file, output folder permissions, and local video tool installation, then try again."
+    "  错误 / error: FFmpeg 无法生成视频输出。请检查输入文件、输出文件夹权限和本地视频工具安装后重试。 / FFmpeg could not generate the video output. Check the input file, output folder permissions, and local video tool installation, then try again."
   ]);
   assert.doesNotMatch(lines.join("\n"), /\/Users|\.private-fixture|tool-bin|stderr token|spawn|cover\.mov:/i);
 });
