@@ -1069,7 +1069,8 @@ function findFreeTcpPort() {
 
 class CdpClient {
   static async connect(webSocketDebuggerUrl, { timeoutMs = DEFAULT_TRANSPORT_TIMEOUT_MS } = {}) {
-    const socket = new WebSocket(webSocketDebuggerUrl);
+    const WebSocketImpl = resolveCdpWebSocket();
+    const socket = new WebSocketImpl(webSocketDebuggerUrl);
     const boundedTimeoutMs = normalizeOperationTimeout(timeoutMs);
     await new Promise((resolve, reject) => {
       const timeout = setTimeout(() => {
@@ -1173,6 +1174,16 @@ class CdpClient {
       this.pending.delete(id);
     }
   }
+}
+
+function resolveCdpWebSocket({
+  globalObject = globalThis,
+  requireImpl = require
+} = {}) {
+  if (typeof globalObject.WebSocket === "function") return globalObject.WebSocket;
+  const { WebSocket: UndiciWebSocket } = requireImpl("undici");
+  if (typeof UndiciWebSocket === "function") return UndiciWebSocket;
+  throw new Error("CDP WebSocket client is unavailable. Install undici or use a Node runtime with WebSocket support.");
 }
 
 async function click(cdp, selector) {
@@ -1300,6 +1311,7 @@ module.exports = {
   parseArgs,
   prepareLaunchPlan,
   requestJson,
+  resolveCdpWebSocket,
   resolveRuntimePaths,
   usage
 };

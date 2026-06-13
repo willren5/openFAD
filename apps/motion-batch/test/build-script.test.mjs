@@ -553,6 +553,35 @@ test("Windows runtime smoke bounds HTTP and CDP transport calls", async () => {
   assert.equal(client.pending.size, 0);
 });
 
+test("Windows runtime smoke resolves a CDP WebSocket implementation on Node 20", () => {
+  const { resolveCdpWebSocket } = require("../scripts/smoke-win-runtime.cjs");
+  function GlobalWebSocket() {}
+  function UndiciWebSocket() {}
+  const calls = [];
+
+  assert.equal(
+    resolveCdpWebSocket({
+      globalObject: { WebSocket: GlobalWebSocket },
+      requireImpl: () => {
+        throw new Error("unexpected fallback");
+      }
+    }),
+    GlobalWebSocket
+  );
+
+  assert.equal(
+    resolveCdpWebSocket({
+      globalObject: {},
+      requireImpl: (name) => {
+        calls.push(name);
+        return { WebSocket: UndiciWebSocket };
+      }
+    }),
+    UndiciWebSocket
+  );
+  assert.deepEqual(calls, ["undici"]);
+});
+
 test("Windows NSIS preparer verifies explicit local toolchain paths", async () => {
   const { prepareWinNsisToolchain } = require("../scripts/prepare-win-nsis.cjs");
   const tempDir = await mkdtemp(path.join(os.tmpdir(), "apple-motion-nsis-"));
