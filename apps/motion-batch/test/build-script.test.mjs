@@ -582,6 +582,16 @@ test("Windows runtime smoke resolves a CDP WebSocket implementation on Node 20",
   assert.deepEqual(calls, ["undici"]);
 });
 
+test("Windows runtime smoke sample videos write complete Rec.709 VUI metadata", () => {
+  const { buildSampleVideoArgs } = require("../scripts/smoke-win-runtime.cjs");
+  const args = buildSampleVideoArgs();
+
+  assert.ok(hasAdjacentArgs(args, "-colorspace", "bt709"));
+  assert.ok(hasAdjacentArgs(args, "-color_primaries", "bt709"));
+  assert.ok(hasAdjacentArgs(args, "-color_trc", "bt709"));
+  assert.ok(hasAdjacentArgs(args, "-x264-params", "colorprim=bt709:transfer=bt709:colormatrix=bt709"));
+});
+
 test("Windows NSIS preparer verifies explicit local toolchain paths", async () => {
   const { prepareWinNsisToolchain } = require("../scripts/prepare-win-nsis.cjs");
   const tempDir = await mkdtemp(path.join(os.tmpdir(), "apple-motion-nsis-"));

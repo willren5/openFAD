@@ -660,6 +660,8 @@ function buildSampleVideoArgs({
     "format=yuv420p",
     "-c:v",
     "libx264",
+    "-x264-params",
+    "colorprim=bt709:transfer=bt709:colormatrix=bt709",
     "-pix_fmt",
     "yuv420p",
     "-colorspace",
