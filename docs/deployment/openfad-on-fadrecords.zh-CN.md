@@ -32,10 +32,12 @@ Release 必须上传：
 - `openfad-cover-machine-<version>.zip`
 - `openfad-mv-studio-<version>.zip`
 - `openfad-motion-batch-source-<version>.zip`
+- `openFAD-Motion-Batch-<version>-x64.exe`
+- `openFAD-Motion-Batch-<version>-arm64.dmg`
 - `SHA256SUMS`
 - `release-manifest.json`
 
-不要把 Motion Batch source zip 展示成 Windows 稳定可执行版。Windows runtime 只有在 full-render smoke evidence 通过后，才能拥有 `Stable` 标签。
+不要把 Motion Batch source zip 展示成 Windows 或 macOS 下载包。Windows runtime 只有在 full-render smoke evidence 通过后，才能拥有 `Stable` 标签；macOS runtime 需要独立 packaged-runtime smoke 后才能升为 `Stable`。
 
 ## fadrecords.com 路由
 

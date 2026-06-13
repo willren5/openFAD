@@ -22,11 +22,93 @@ jobs:
       - run: npx playwright install --with-deps chromium
       - run: npm run scan:public
       - run: npm test
-      - run: npm run release:prepare
+      - run: npm run package:web
+      - uses: actions/upload-artifact@v4
+        with:
+          name: openfad-web-artifacts
+          path: dist/openfad-*
+          if-no-files-found: error
+
+  motion-windows:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+      - run: npm ci
+      - run: npm ci --prefix apps/motion-batch
+      - run: npm run fetch:ffmpeg:win --prefix apps/motion-batch
+      - run: npm run dist:win --prefix apps/motion-batch
+      - run: npm run smoke:dist:win --prefix apps/motion-batch
+      - run: npm run verify:smoke:win --prefix apps/motion-batch
+      - run: node scripts/copy-motion-runtime.mjs --platform windows
+      - uses: actions/upload-artifact@v4
+        with:
+          name: openfad-motion-windows
+          path: dist/openFAD-Motion-Batch-*-x64.exe
+          if-no-files-found: error
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: openfad-motion-windows-smoke-evidence
+          path: apps/motion-batch/tmp/win-runtime-smoke/**
+          if-no-files-found: ignore
+
+  motion-macos:
+    runs-on: macos-14
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+      - run: npm ci
+      - run: npm ci --prefix apps/motion-batch
+      - run: npm run dist:mac --prefix apps/motion-batch
+      - run: hdiutil imageinfo apps/motion-batch/dist/macos/openFAD-Motion-Batch-*-arm64.dmg
+      - run: node scripts/copy-motion-runtime.mjs --platform macos
+      - uses: actions/upload-artifact@v4
+        with:
+          name: openfad-motion-macos
+          path: dist/openFAD-Motion-Batch-*-arm64.dmg
+          if-no-files-found: error
+
+  publish:
+    runs-on: ubuntu-latest
+    needs:
+      - web-artifacts
+      - motion-windows
+      - motion-macos
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+      - run: npm ci
+      - uses: actions/download-artifact@v4
+        with:
+          name: openfad-web-artifacts
+          path: dist
+      - uses: actions/download-artifact@v4
+        with:
+          name: openfad-motion-windows
+          path: dist
+      - uses: actions/download-artifact@v4
+        with:
+          name: openfad-motion-macos
+          path: dist
+      - run: npm run checksums
+      - run: npm run release:manifest
+        env:
+          OPENFAD_RELEASE_DOWNLOADS_VERIFIED: '0'
       - uses: softprops/action-gh-release@v2
         with:
           files: |
             dist/openfad-*
+            dist/openFAD-Motion-Batch-*
             dist/SHA256SUMS
             dist/release-manifest.json
-          body_path: docs/release/v0.1.1.zh-CN.md
+          body_path: docs/release/v0.1.2.zh-CN.md

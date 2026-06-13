@@ -2,6 +2,13 @@
   "version": 1,
   "label": "BtbN FFmpeg Windows x64 GPL build",
   "ffmpegVersion": "N-124795-gc27a3b12e3-20260604",
+  "archive": {
+    "name": "ffmpeg-N-124795-gc27a3b12e3-win64-gpl.zip",
+    "rootDir": "ffmpeg-N-124795-gc27a3b12e3-win64-gpl",
+    "url": "https://github.com/BtbN/FFmpeg-Builds/releases/download/autobuild-2026-06-04-14-00/ffmpeg-N-124795-gc27a3b12e3-win64-gpl.zip",
+    "size": 221625834,
+    "sha256": "8ca445727f2589e7af329cfdce067c2420eba1f663811ac19a1c71cef68c2ad7"
+  },
   "resources": [
     {
       "path": "vendor/ffmpeg/win/x64/ffmpeg.exe",

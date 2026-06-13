@@ -1,6 +1,6 @@
 {
   "name": "@openfad/motion-batch",
-  "version": "0.1.1",
+  "version": "0.1.2",
   "private": true,
   "author": "openFAD",
   "type": "module",
@@ -14,9 +14,11 @@
     "ui": "node ./ui/server.mjs",
     "desktop": "electron .",
     "icon:win": "node ./scripts/generate-win-icon.cjs",
+    "fetch:ffmpeg:win": "node ./scripts/fetch-win-ffmpeg.cjs",
     "prepare:dist:win": "node ./scripts/prepare-win-nsis.cjs",
     "verify:dist:win": "node ./scripts/verify-win-ffmpeg.cjs",
     "dist:win": "node ./scripts/dist-win.cjs",
+    "dist:mac": "node ./scripts/dist-mac.cjs",
     "smoke:dist:win": "node ./scripts/smoke-win-runtime.cjs",
     "verify:smoke:win": "node ./scripts/verify-win-smoke-evidence.cjs"
   },
@@ -42,25 +44,38 @@
       "DESIGN.md",
       "package.json"
     ],
-    "extraResources": [
-      {
-        "from": "vendor/ffmpeg/win/x64",
-        "to": "bin",
-        "filter": [
-          "ffmpeg.exe",
-          "ffprobe.exe"
-        ]
-      }
-    ],
     "win": {
       "icon": "build/icon.ico",
       "signAndEditExecutable": false,
       "forceCodeSigning": false,
+      "extraResources": [
+        {
+          "from": "vendor/ffmpeg/win/x64",
+          "to": "bin",
+          "filter": [
+            "ffmpeg.exe",
+            "ffprobe.exe"
+          ]
+        }
+      ],
       "target": [
         {
           "target": "portable",
           "arch": [
             "x64"
+          ]
+        }
+      ],
+      "artifactName": "openFAD-Motion-Batch-${version}-${arch}.${ext}"
+    },
+    "mac": {
+      "category": "public.app-category.video",
+      "identity": null,
+      "target": [
+        {
+          "target": "dmg",
+          "arch": [
+            "arm64"
           ]
         }
       ],

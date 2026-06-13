@@ -41,7 +41,7 @@ const artifactMeta = (fileName) => {
       trustScope: 'Browser web package. Open index.html locally after extracting the zip.',
       knownLimits: [
         'Browser download dispatch does not prove the operating system saved the file.',
-        'FAD Records brand assets are not included or licensed by this package.'
+        'FAD Records logo appears only as openFAD product identity; the code license does not grant separate brand-asset reuse.'
       ]
     };
   }
@@ -71,7 +71,7 @@ const artifactMeta = (fileName) => {
       ]
     };
   }
-  if (/motion-batch/.test(fileName)) {
+  if (/openFAD-Motion-Batch-.*-x64\.exe$/i.test(fileName)) {
     return {
       id: 'motion-batch-windows',
       tool: 'motion-batch',
@@ -81,6 +81,19 @@ const artifactMeta = (fileName) => {
       knownLimits: [
         'Do not mark Stable unless Windows full-render smoke evidence passed.',
         'Generated deliverables must be verified to contain exactly one video stream.'
+      ]
+    };
+  }
+  if (/openFAD-Motion-Batch-.*-arm64\.dmg$/i.test(fileName)) {
+    return {
+      id: 'motion-batch-macos',
+      tool: 'motion-batch',
+      platform: 'macos-arm64',
+      stability: process.env.OPENFAD_MOTION_MAC_STABLE === '1' ? 'Stable' : 'Preview',
+      trustScope: 'macOS arm64 DMG artifact. Preview until a macOS packaged-runtime smoke is recorded.',
+      knownLimits: [
+        'Unsigned macOS builds may require explicit user approval in System Settings.',
+        'Stable requires packaged-runtime smoke evidence on a clean macOS machine.'
       ]
     };
   }
@@ -143,7 +156,7 @@ const manifest = {
   knownLimits: [
     'Browser exports can vary by browser renderer.',
     'Motion Batch heavy rendering runs locally, not on fadrecords.com.',
-    'FAD Records brand assets are not granted by the code license.'
+    'FAD Records brand assets are shown only for openFAD product identity and are not granted by the code license.'
   ]
 };
 

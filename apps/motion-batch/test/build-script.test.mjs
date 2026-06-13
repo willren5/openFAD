@@ -15,8 +15,10 @@ const projectRoot = path.resolve(__dirname, "..");
 test("Windows package script uses the 7za-safe build wrapper", async () => {
   const pkg = require("../package.json");
   assert.equal(pkg.scripts["icon:win"], "node ./scripts/generate-win-icon.cjs");
+  assert.equal(pkg.scripts["fetch:ffmpeg:win"], "node ./scripts/fetch-win-ffmpeg.cjs");
   assert.equal(pkg.scripts["prepare:dist:win"], "node ./scripts/prepare-win-nsis.cjs");
   assert.equal(pkg.scripts["dist:win"], "node ./scripts/dist-win.cjs");
+  assert.equal(pkg.scripts["dist:mac"], "node ./scripts/dist-mac.cjs");
   assert.equal(pkg.scripts["verify:dist:win"], "node ./scripts/verify-win-ffmpeg.cjs");
   assert.equal(pkg.scripts["smoke:dist:win"], "node ./scripts/smoke-win-runtime.cjs");
   assert.equal(pkg.scripts["verify:smoke:win"], "node ./scripts/verify-win-smoke-evidence.cjs");
@@ -106,6 +108,29 @@ test("build wrapper launches electron-builder through node instead of the sheban
   ]);
 });
 
+test("macOS package wrapper launches an unsigned arm64 DMG build", async () => {
+  const {
+    buildMacElectronBuilderEnvironment,
+    buildMacElectronBuilderInvocation
+  } = require("../scripts/dist-mac.cjs");
+
+  const env = buildMacElectronBuilderEnvironment({ env: { PATH: "/usr/bin" } });
+  const invocation = buildMacElectronBuilderInvocation({
+    nodeExecutable: "/usr/local/bin/node",
+    cwd: projectRoot
+  });
+
+  assert.equal(env.CSC_IDENTITY_AUTO_DISCOVERY, "false");
+  assert.equal(invocation.command, "/usr/local/bin/node");
+  assert.deepEqual(invocation.args, [
+    path.join(projectRoot, "node_modules", "electron-builder", "out", "cli", "cli.js"),
+    "--mac",
+    "dmg",
+    "--arm64",
+    "--config.directories.output=dist/macos"
+  ]);
+});
+
 test("build wrapper stages app-builder helper through a short custom path on macOS", async () => {
   const { prepareAppBuilderBinary } = require("../scripts/dist-win.cjs");
   const tempDir = await mkdtemp(path.join(os.tmpdir(), "apple-motion-app-builder-"));
@@ -169,12 +194,15 @@ test("build wrapper prepares pinned NSIS tools before packaging", async () => {
 test("Windows FFmpeg manifest covers every packaged binary resource", async () => {
   const pkg = require("../package.json");
   const manifest = require("../scripts/win-ffmpeg-manifest.json");
-  const packaged = pkg.build.extraResources.flatMap((resource) => {
+  const packaged = pkg.build.win.extraResources.flatMap((resource) => {
     return resource.filter.map((fileName) => path.posix.join(resource.from, fileName));
   }).sort();
   const pinned = manifest.resources.map((resource) => resource.path).sort();
 
   assert.deepEqual(pinned, packaged);
+  assert.equal(pkg.build.extraResources, undefined);
+  assert.match(manifest.archive.url, /^https:\/\/github\.com\/BtbN\/FFmpeg-Builds\/releases\/download\/autobuild-2026-06-04-14-00\//);
+  assert.match(manifest.archive.sha256, /^[a-f0-9]{64}$/);
   for (const resource of manifest.resources) {
     assert.equal(Number.isInteger(resource.size) && resource.size > 0, true);
     assert.match(resource.sha256, /^[a-f0-9]{64}$/);
@@ -674,6 +702,55 @@ test("Windows FFmpeg verifier fails before packaging when resources are missing 
 
   await writeFile(ffmpegPath, "wrong bytes");
   assert.throws(() => verifyWinFfmpegResources({ projectRoot: project, manifestPath }), /checksum mismatch|size mismatch/);
+});
+
+test("Windows FFmpeg fetcher downloads, extracts, stages, and verifies pinned resources", async () => {
+  const { archiveMemberPath, prepareWinFfmpegResources } = require("../scripts/fetch-win-ffmpeg.cjs");
+  const tempDir = await mkdtemp(path.join(os.tmpdir(), "apple-motion-fetch-win-ffmpeg-"));
+  const project = path.join(tempDir, "project");
+  const manifestPath = path.join(tempDir, "manifest.json");
+  const archiveBytes = Buffer.from("fake archive");
+  const archive = {
+    name: "fake-ffmpeg.zip",
+    rootDir: "fake-ffmpeg",
+    url: "https://example.test/fake-ffmpeg.zip",
+    size: archiveBytes.length,
+    sha256: sha256(archiveBytes)
+  };
+  await writeFile(manifestPath, JSON.stringify({
+    version: 1,
+    label: "test ffmpeg",
+    archive,
+    resources: [
+      { path: "vendor/ffmpeg/win/x64/ffmpeg.exe", size: 11, sha256: sha256("fake ffmpeg") },
+      { path: "vendor/ffmpeg/win/x64/ffprobe.exe", size: 12, sha256: sha256("fake ffprobe") }
+    ]
+  }));
+
+  assert.equal(
+    archiveMemberPath(archive, { path: "vendor/ffmpeg/win/x64/ffmpeg.exe" }),
+    path.join("fake-ffmpeg", "bin", "ffmpeg.exe")
+  );
+
+  const result = await prepareWinFfmpegResources({
+    projectRoot: project,
+    manifestPath,
+    cacheRoot: path.join(tempDir, "cache"),
+    downloadFile: async (_url, destination) => {
+      await writeFile(destination, archiveBytes);
+    },
+    extractArchive: async (_archivePath, outputDir) => {
+      await mkdir(path.join(outputDir, "fake-ffmpeg", "bin"), { recursive: true });
+      await writeFile(path.join(outputDir, "fake-ffmpeg", "bin", "ffmpeg.exe"), "fake ffmpeg");
+      await writeFile(path.join(outputDir, "fake-ffmpeg", "bin", "ffprobe.exe"), "fake ffprobe");
+    }
+  });
+
+  assert.equal(result.source, "download");
+  assert.deepEqual(result.verified, [
+    "vendor/ffmpeg/win/x64/ffmpeg.exe",
+    "vendor/ffmpeg/win/x64/ffprobe.exe"
+  ]);
 });
 
 test("local 7za shim routes macOS arm64 builds to the working x64 binary", async () => {

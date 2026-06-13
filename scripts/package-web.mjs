@@ -15,13 +15,13 @@ const packages = [
     tool: 'cover-machine',
     source: path.join(root, 'apps/cover-machine'),
     fileName: `openfad-cover-machine-${version}.zip`,
-    include: ['index.html', 'README.md', 'docs', 'vendor']
+    include: ['index.html', 'README.md', 'docs', 'vendor', 'assets']
   },
   {
     tool: 'mv-studio',
     source: path.join(root, 'apps/mv-studio'),
     fileName: `openfad-mv-studio-${version}.zip`,
-    include: ['index.html', 'README.md', 'docs', 'package.json']
+    include: ['index.html', 'README.md', 'docs', 'package.json', 'assets']
   },
   {
     tool: 'motion-batch',

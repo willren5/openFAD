@@ -83,7 +83,7 @@ npm run release:manifest
 合格证据：
 
 - `npm test` 覆盖 Cover、MV、Motion、root scanner tests，且 `fail 0`。
-- `dist/` 有三个 artifact：Cover web zip、MV web zip、Motion source zip。
+- `dist/` 有五个 artifact：Cover web zip、MV web zip、Motion source zip、Motion Windows `.exe`、Motion macOS `.dmg`。
 - 每个 zip 包含根部 `LICENSE`、`NOTICE`、`TRADEMARKS.md`。
 - source zip 必须包含测试文件。
 - `dist/release-manifest.json` 的 commit 是当前 clean commit。
@@ -94,7 +94,7 @@ npm run release:manifest
 - 只跑了某个 app 的测试，就说 openFAD release ready。
 - manifest 是旧 commit。
 - 文档里写“可信发布完成”，但 verification 文件还有 pending evidence。
-- Windows runtime 没有 full-render smoke，却出现在官网下载主按钮里。
+- Motion runtime artifact 没有对应平台产物和下载验证，却出现在官网下载主按钮里。
 
 ## 团队交接顺序
 

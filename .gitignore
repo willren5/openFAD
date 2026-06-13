@@ -12,3 +12,4 @@ release-artifacts/*.zip
 release-artifacts/*.exe
 release-artifacts/*.dmg
 release-artifacts/*.pkg
+apps/motion-batch/vendor/ffmpeg/

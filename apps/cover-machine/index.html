@@ -810,7 +810,7 @@
   <div class="controls" id="controls">
     <section class="start-mode" aria-labelledby="coverStartTitle">
       <div class="brand-strip" aria-label="openFAD Cover Machine 信息">
-        <img class="brand-logo" id="brandLogo" alt="openFAD logo">
+        <img class="brand-logo" id="brandLogo" alt="FAD logo">
         <div class="brand-copy">
           <span class="brand-pill">openFAD 封面制作器</span>
           <strong id="coverStartTitle">制作一张发行封面</strong>
@@ -1083,6 +1083,7 @@
         <text x="72" y="132" fill="#ffffff" opacity="0.56" font-family="Inter, Arial, sans-serif" font-size="34" font-weight="700" letter-spacing="6">DEMO RELEASE</text>
       </svg>
     `);
+    const BRAND_LOGO_SRC = './assets/fad-logo.png';
     const DEFAULT_LOGO_SRC = svgDataUrl(`
       <svg xmlns="http://www.w3.org/2000/svg" width="512" height="512" viewBox="0 0 512 512">
         <rect width="512" height="512" rx="52" fill="#f5f5f5"/>
@@ -2006,7 +2007,7 @@
 
       applyBrandAssets() {
         if (!this.dom?.brandLogo) return;
-        this.dom.brandLogo.src = DEFAULT_LOGO_SRC;
+        this.dom.brandLogo.src = BRAND_LOGO_SRC;
         this.dom.brandLogo.addEventListener('error', () => {
           this.dom.brandLogo.style.display = 'none';
         }, { once: true });

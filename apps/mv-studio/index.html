@@ -74,9 +74,10 @@ body {
 @media (max-width: 800px) { .sidebar { width: 300px; } }
 
 .viewport { flex: 1; min-width: 0; background: transparent; display: flex; justify-content: center; align-items: center; position: relative; z-index: 1; padding: 12px; box-sizing: border-box; }
-h1 { margin: 0; color: #fff; font-family: var(--font-display); font-size: 18px; letter-spacing: 2px; display: flex; align-items: center; font-weight: 800; text-shadow: 0 0 10px var(--accent-glow); }
+h1 { margin: 0; color: #fff; font-family: var(--font-display); font-size: 18px; letter-spacing: 2px; display: flex; align-items: center; gap: 8px; font-weight: 800; text-shadow: 0 0 10px var(--accent-glow); }
+h1::before { content: ""; width: 22px; height: 22px; flex: 0 0 auto; border: 1px solid var(--panel-border); border-radius: 6px; background: #f7f5ee url("./assets/fad-logo.png") center / 82% 82% no-repeat; box-shadow: none; }
 .ver { font-size: 10px; color: #000; background: var(--accent-grad); padding: 2px 6px; border-radius: 4px; font-weight: bold; margin-left: 8px; box-shadow: 0 0 10px var(--accent-glow); font-family: var(--font); letter-spacing: 0; }
-.product-mark { color: var(--accent); font-size: 10px; letter-spacing: 0.8px; margin-left: 8px; text-shadow: none; }
+.product-mark { color: var(--accent); font-size: 10px; letter-spacing: 0.8px; margin-left: 0; text-shadow: none; }
 .app-subtitle { order: 0; margin: -8px 0 0; color: #9fb4b8; font-size: 12px; line-height: 1.45; user-select: text; -webkit-user-select: text; }
 .section { border-top: 1px solid var(--panel-border); padding-top: 14px; display: flex; flex-direction: column; gap: 12px; }
 .label { font-size: 11px; color: #aaa; font-weight: 700; margin-bottom: 2px; letter-spacing: 1px; font-family: var(--font-display); }

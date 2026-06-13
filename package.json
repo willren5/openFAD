@@ -1,6 +1,6 @@
 {
   "name": "openfad",
-  "version": "0.1.1",
+  "version": "0.1.2",
   "private": true,
   "description": "Chinese-first open-source creative tools for music cover art, visualizers, and motion-cover delivery.",
   "type": "module",
@@ -12,6 +12,8 @@
     "test:motion": "cd apps/motion-batch && npm test",
     "build:site": "node scripts/build-site.mjs",
     "package:web": "node scripts/package-web.mjs",
+    "package:motion:win": "npm run fetch:ffmpeg:win --prefix apps/motion-batch && npm run dist:win --prefix apps/motion-batch && node scripts/copy-motion-runtime.mjs --platform windows",
+    "package:motion:mac": "npm run dist:mac --prefix apps/motion-batch && node scripts/copy-motion-runtime.mjs --platform macos",
     "release:prepare": "npm run package:web && npm run checksums && npm run release:manifest",
     "release:manifest": "node scripts/generate-release-manifest.mjs",
     "checksums": "node scripts/checksums.mjs"
