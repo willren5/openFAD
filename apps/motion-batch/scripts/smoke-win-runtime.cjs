@@ -16,6 +16,7 @@ const DEFAULT_TRANSPORT_TIMEOUT_MS = 30 * 1000;
 const DEFAULT_APP_RELATIVE_PATH = path.join("dist", "windows", "win-unpacked", "openFAD Motion Batch.exe");
 const DYNAMIC_DEBUG_PORT = 0;
 const SMOKE_EVIDENCE_SCHEMA_VERSION = 1;
+const REVEAL_SMOKE_NOOP_ENV = "OPENFAD_MOTION_REVEAL_SMOKE_NOOP";
 
 function parseArgs(argv) {
   const options = {
@@ -142,6 +143,7 @@ function buildRuntimeSmokeEnvironment({
   return {
     ...smokeEnv,
     [USER_DATA_DIR_ENV]: paths.userDataDir,
+    [REVEAL_SMOKE_NOOP_ENV]: "1",
     FFMPEG_PATH: path.join(brokenToolDir, "missing-ffmpeg.exe"),
     FFPROBE_PATH: path.join(brokenToolDir, "missing-ffprobe.exe"),
     PATH: brokenToolDir
@@ -1014,6 +1016,7 @@ function assertUserFacingMessage(message, label) {
 function sanitizedRuntimeEnvironment(env) {
   return {
     [USER_DATA_DIR_ENV]: env[USER_DATA_DIR_ENV],
+    [REVEAL_SMOKE_NOOP_ENV]: env[REVEAL_SMOKE_NOOP_ENV],
     FFMPEG_PATH: env.FFMPEG_PATH,
     FFPROBE_PATH: env.FFPROBE_PATH,
     PATH: env.PATH

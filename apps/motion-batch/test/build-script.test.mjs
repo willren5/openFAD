@@ -252,11 +252,13 @@ test("Windows runtime smoke resolves packaged app, isolated user data, and bundl
   assert.equal(paths.ffmpegPath, path.join(path.dirname(appPath), "resources", "bin", "ffmpeg.exe"));
   assert.equal(paths.userDataDir, path.join(workDir, "user-data"));
   assert.equal(env.OPENFAD_MOTION_USER_DATA_DIR, paths.userDataDir);
+  assert.equal(env.OPENFAD_MOTION_REVEAL_SMOKE_NOOP, "1");
   assert.equal(env.FFMPEG_PATH, path.join(workDir, "broken", "missing-ffmpeg.exe"));
   assert.equal(env.FFPROBE_PATH, path.join(workDir, "broken", "missing-ffprobe.exe"));
   assert.equal(env.PATH, path.join(workDir, "broken"));
   assert.equal(plan.skipFullRender, true);
   assert.equal(plan.bundledFfmpeg, paths.ffmpegPath);
+  assert.equal(plan.poisonedEnv.OPENFAD_MOTION_REVEAL_SMOKE_NOOP, "1");
   assert.equal(plan.poisonedEnv.PATH, path.join(workDir, "broken-tools"));
 
   const audioSampleArgs = buildSampleVideoArgs({ inputPath: "out.mp4" });

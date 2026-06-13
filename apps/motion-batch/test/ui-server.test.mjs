@@ -10,7 +10,7 @@ import assert from "node:assert/strict";
 
 import { buildOutputPlan } from "../src/cli.mjs";
 import * as uiServer from "../ui/server.mjs";
-import { createUiServer, createUiState, defaultJobStorePath, flushUiState, isTrustedLocalHostRequest, normalizeJobOptions } from "../ui/server.mjs";
+import { createUiServer, createUiState, defaultJobStorePath, flushUiState, isTrustedLocalHostRequest, normalizeJobOptions, REVEAL_SMOKE_NOOP_ENV, resolveDefaultRevealLauncher } from "../ui/server.mjs";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -42,6 +42,16 @@ test("UI defaults to automatic device-aware encoder selection", () => {
   }, { toolRoot });
 
   assert.equal(options.encoder, "auto");
+});
+
+test("UI reveal uses a no-op launcher only for explicit packaged smoke runs", async () => {
+  const defaultLauncher = resolveDefaultRevealLauncher({});
+  const disabledLauncher = resolveDefaultRevealLauncher({ [REVEAL_SMOKE_NOOP_ENV]: "0" });
+  const smokeLauncher = resolveDefaultRevealLauncher({ [REVEAL_SMOKE_NOOP_ENV]: "1" });
+
+  assert.equal(disabledLauncher, defaultLauncher);
+  assert.notEqual(smokeLauncher, defaultLauncher);
+  await assert.doesNotReject(() => smokeLauncher(path.join(privateUserRoot, "missing-preview.png"), { isDirectory: false }));
 });
 
 test("UI defaults to automatic source frame-rate preservation", () => {

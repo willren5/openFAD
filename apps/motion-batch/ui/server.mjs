@@ -36,6 +36,7 @@ const HISTORY_CLEAR_CONFIRMATION = "clear-finished-history";
 const RESTORE_RESET_CONFIRMATION = "reset-restore-failure";
 const OVERWRITE_CONFIRMATION_TTL_MS = 5 * 60 * 1000;
 const REVEAL_LAUNCH_SETTLE_MS = 1000;
+export const REVEAL_SMOKE_NOOP_ENV = "OPENFAD_MOTION_REVEAL_SMOKE_NOOP";
 const SHUTDOWN_POLL_MS = 25;
 const USER_FACING_PERSISTENCE_ERROR = "任务恢复记录暂时无法写入。请确认应用数据目录可写后重试。";
 const USER_FACING_RESTORE_ERROR = "无法读取本地任务恢复记录。请重新开始任务。";
@@ -162,7 +163,7 @@ export function createUiServer({
   defaultOutDir = DEFAULT_OUT_DIR,
   state = null,
   jobStorePath = null,
-  revealLauncher = openPathInSystemShell,
+  revealLauncher = resolveDefaultRevealLauncher(),
   assetBeforeSendHook = null,
   revealBeforeLaunchHook = null,
   jobCreationBodyTimeoutMs = DEFAULT_JOB_CREATION_BODY_TIMEOUT_MS
@@ -2594,6 +2595,12 @@ async function openPathInSystemShell(normalized, { isDirectory }) {
     await spawnDetached("xdg-open", [target]);
   }
 }
+
+export function resolveDefaultRevealLauncher(env = process.env) {
+  return env[REVEAL_SMOKE_NOOP_ENV] === "1" ? smokeNoopRevealLauncher : openPathInSystemShell;
+}
+
+async function smokeNoopRevealLauncher() {}
 
 function spawnDetached(command, args) {
   return new Promise((resolve, reject) => {
