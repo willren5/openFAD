@@ -12,7 +12,7 @@ openFAD 是 FAD Records 发起的中文优先开源音乐视觉工具集，包�
 
 ## 下载离线工具
 
-v0.1.0 的 GitHub Release 会发布 `release-manifest.json`、SHA256 和各工具压缩包。官网 `/openfad/downloads/` 或静态下载目录只从 manifest / release artifact 同步下载信息，不手写 checksum。
+v0.1.1 的 GitHub Release 会发布 `release-manifest.json`、SHA256 和各工具压缩包。官网 `/openfad/downloads/` 或静态下载目录只从 manifest / release artifact 同步下载信息，不手写 checksum。
 
 - Cover Machine：下载后直接打开 `index.html`。
 - MV Studio：下载后直接打开 `index.html`。
@@ -59,7 +59,11 @@ npm run test:motion
 - `apps/mv-studio/DESIGN.md`
 - `apps/motion-batch/DESIGN.md`
 - `docs/release/trust-matrix.zh-CN.md`
+- `docs/release/v0.1.1.zh-CN.md`
 - `docs/release/v0.1.0.zh-CN.md`
+- `docs/verification/cover-0.1.1.md`
+- `docs/verification/mv-0.1.1.md`
+- `docs/verification/motion-batch-0.1.1.md`
 - `docs/verification/cover-0.1.0.md`
 - `docs/verification/mv-0.1.0.md`
 - `docs/verification/motion-batch-0.1.0.md`

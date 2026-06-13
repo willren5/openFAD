@@ -158,17 +158,17 @@ const tests = [
       layerLabels: Array.from(document.getElementById('selLayerMode').options).map((opt) => opt.textContent)
     }));
 
-    assert(/openFAD Cover Machine/.test(state.title), `Unexpected title: ${state.title}`);
+    assert(/openFAD 封面制作器/.test(state.title), `Unexpected title: ${state.title}`);
     assert(state.heading === '制作一张发行封面', `Unexpected heading: ${state.heading}`);
     assert(state.proOpen === false, 'Pro mode should be collapsed by default');
     assert(state.demoText === '打开示例', `Unexpected demo text: ${state.demoText}`);
     assert(state.jpgText === '导出封面 JPG', `Unexpected JPG button: ${state.jpgText}`);
     assert(state.pngText === '导出透明图层', `Unexpected PNG button: ${state.pngText}`);
     assert(state.retryDisabled === true, 'Retry download should start disabled');
-    assert(/尚未导出/.test(state.exportStatus), `Unexpected export status: ${state.exportStatus}`);
+    assert(/还没有导出/.test(state.exportStatus), `Unexpected export status: ${state.exportStatus}`);
     assert(state.telemetryText === '分析: 关', `Telemetry should default off: ${state.telemetryText}`);
     assert(state.telemetryPressed === 'false', `Telemetry aria state should start false: ${state.telemetryPressed}`);
-    assert(state.targetLabels.some((label) => /DSP 方形封面/.test(label)), `Missing Chinese target labels: ${state.targetLabels.join(', ')}`);
+    assert(state.targetLabels.some((label) => /流媒体方形封面/.test(label)), `Missing Chinese target labels: ${state.targetLabels.join(', ')}`);
     assert(state.targetLabels.some((label) => /社媒竖图/.test(label)), `Missing social target labels: ${state.targetLabels.join(', ')}`);
     assert(state.layerLabels.includes('透明图层: 完整封面'), `Missing full layer label: ${state.layerLabels.join(', ')}`);
   }],
@@ -199,7 +199,7 @@ const tests = [
     assert(state.bgWidth >= 3000 && state.bgHeight >= 3000, `Demo background should be export-ready: ${state.bgWidth}x${state.bgHeight}`);
     assert(state.logo.startsWith('data:image/svg+xml'), 'Demo logo should be an embedded public safe SVG');
     assert(/示例已载入/.test(state.status), `Unexpected status: ${state.status}`);
-    assert(/READY/.test(state.validation), `Demo project should pass validation: ${state.validation}`);
+    assert(/准备好了/.test(state.validation), `Demo project should pass validation: ${state.validation}`);
     assert(state.telemetrySession === null, 'Opening the demo should not create a telemetry session by default');
   }],
 
@@ -321,7 +321,7 @@ const tests = [
     await page.waitForTimeout(120);
     const state = await readComputedState(page);
     assert(state.exportValue === 'dsp-3000', `Unexpected export target: ${state.exportValue}`);
-    assert(/VALIDATION|READY|WARN/i.test(state.validationText), `Validation panel not populated: ${state.validationText}`);
+    assert(/准备好了|需要确认/.test(state.validationText), `Validation panel not populated: ${state.validationText}`);
   }],
 
   ['background upload accepts valid source images larger than 13MB', async (page) => {

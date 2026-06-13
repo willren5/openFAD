@@ -29,4 +29,4 @@ jobs:
             dist/openfad-*
             dist/SHA256SUMS
             dist/release-manifest.json
-          body_path: docs/release/v0.1.0.zh-CN.md
+          body_path: docs/release/v0.1.1.zh-CN.md

@@ -33,12 +33,9 @@
     body {
       min-height: 100vh;
       margin: 0;
+      overflow-x: hidden;
       color: var(--text);
-      background:
-        linear-gradient(rgba(255, 255, 255, 0.035) 1px, transparent 1px),
-        linear-gradient(90deg, rgba(255, 255, 255, 0.035) 1px, transparent 1px),
-        var(--bg);
-      background-size: 44px 44px;
+      background: var(--bg);
       font-family: var(--font);
       letter-spacing: 0;
       -webkit-font-smoothing: antialiased;
@@ -113,7 +110,7 @@
       padding: 7px 10px;
       color: #10120f;
       background: var(--green);
-      border-radius: 999px;
+      border-radius: 6px;
       font-size: 12px;
       font-weight: 850;
     }
@@ -149,7 +146,7 @@
       align-items: center;
       padding: 0 12px;
       border: 1px solid var(--line);
-      border-radius: 999px;
+      border-radius: 6px;
       color: var(--muted);
       background: rgba(21, 23, 21, 0.74);
       font-size: 13px;
@@ -203,7 +200,7 @@
       content: "";
       width: 9px;
       height: 9px;
-      border-radius: 999px;
+      border-radius: 4px;
       background: var(--green);
     }
 
@@ -243,7 +240,7 @@
       padding: 0 16px;
       color: #0c0d0c;
       background: var(--text);
-      border-radius: 999px;
+      border-radius: 8px;
       font-size: 14px;
       font-weight: 900;
       white-space: nowrap;
@@ -406,9 +403,9 @@
 
         <div class="preview-zone" aria-label="openFAD 工具预览">
           <div class="preview-frame">
-            <img src="./assets/mv-studio-preview-desktop.png" alt="openFAD Visualizer 的实际界面预览">
+            <img src="./assets/mv-studio-preview-desktop.png" alt="openFAD 音乐可视化工具的实际界面预览">
           </div>
-          <p class="preview-caption">Visualizer 实际界面预览</p>
+          <p class="preview-caption">可视化工具实际界面预览</p>
           <div class="format-preview" aria-label="常用输出方向">
             <div class="mini-format">
               <strong>封面</strong>
@@ -429,7 +426,7 @@
       <nav class="chooser" aria-label="选择 openFAD 工具">
         <a class="tool-link cover" href="./cover/">
           <span>
-            <span class="tool-kicker">Cover Machine</span>
+            <span class="tool-kicker">封面制作器</span>
             <strong class="tool-title">做封面</strong>
             <span class="tool-copy">在浏览器里排版单曲封面，调整文字、背景和导出尺寸。</span>
           </span>
@@ -438,14 +435,14 @@
 
         <a class="tool-link visualizer" href="./visualizer/">
           <span>
-            <span class="tool-kicker">Visualizer</span>
+            <span class="tool-kicker">音乐可视化工具</span>
             <strong class="tool-title">做音乐可视化</strong>
             <span class="tool-copy">上传音乐和图片，在浏览器里生成带律动反应的视频。</span>
           </span>
           <span class="tool-cta">开始制作</span>
         </a>
 
-        <a class="tool-link motion" href="./downloads/openfad-motion-batch-source-0.1.0.zip" download>
+        <a class="tool-link motion" href="./downloads/openfad-motion-batch-source-0.1.1.zip" download>
           <span>
             <span class="tool-kicker">动态封面批量裁切</span>
             <strong class="tool-title">裁切 Apple Music 动态封面</strong>

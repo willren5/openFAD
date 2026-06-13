@@ -36,7 +36,7 @@ npm run test:mv
 npm test
 ```
 
-验证记录见 `../../docs/verification/mv-0.1.0.md`。
+验证记录见 `../../docs/verification/mv-0.1.1.md`。
 
 ## 品牌边界
 

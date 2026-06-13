@@ -15,7 +15,7 @@ npm test
 - 移动端截图。
 - 一张封面导出样例。
 - 一张透明图层导出样例。
-- `docs/verification/cover-0.1.0.md` 中的日期化记录。
+- `docs/verification/cover-0.1.1.md` 中的日期化记录。
 
 验证边界：
 

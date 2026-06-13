@@ -135,11 +135,10 @@ Release owner：
 
 ## 完成定义
 
-openFAD v0.1.0 可以被称为可信开源首发候选，仅当：
+openFAD 当前公开版本可以被称为可信开源首发候选，仅当：
 
 - 代码、文档、示例 public-safe scan 通过。
 - 三个工具的测试全部通过。
 - release artifacts、checksums、manifest 来自同一个 clean commit。
 - 官网 `/openfad` 页面显示 artifact 类型、版本、commit、SHA256、验证状态和已知限制。
 - Motion Batch Windows executable 若未完成 full-render smoke，只能显示为“未开放可信下载”或“源码包可用”。
-
