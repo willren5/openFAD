@@ -1,8 +1,9 @@
 {
   "name": "@openfad/motion-batch",
-  "version": "0.1.6",
+  "version": "0.1.7",
   "private": true,
   "author": "openFAD",
+  "license": "AGPL-3.0-or-later",
   "type": "module",
   "description": "Cross-platform batch exporter and QC checker for Apple Music motion cover deliverables.",
   "main": "desktop/main.cjs",

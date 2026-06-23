@@ -104,6 +104,11 @@ jobs:
       - run: npm run release:manifest
         env:
           OPENFAD_RELEASE_DOWNLOADS_VERIFIED: '0'
+      - name: Select release notes
+        run: |
+          NOTES="docs/release/${GITHUB_REF_NAME}.zh-CN.md"
+          test -f "$NOTES"
+          echo "OPENFAD_RELEASE_NOTES=$NOTES" >> "$GITHUB_ENV"
       - uses: softprops/action-gh-release@v2
         with:
           files: |
@@ -111,4 +116,4 @@ jobs:
             dist/openFAD-Motion-Batch-*
             dist/SHA256SUMS
             dist/release-manifest.json
-          body_path: docs/release/v0.1.6.zh-CN.md
+          body_path: ${{ env.OPENFAD_RELEASE_NOTES }}
