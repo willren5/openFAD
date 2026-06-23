@@ -155,7 +155,9 @@ const tests = [
       telemetryText: document.getElementById('btnTelemetry')?.textContent?.trim(),
       telemetryPressed: document.getElementById('btnTelemetry')?.getAttribute('aria-pressed'),
       targetLabels: Array.from(document.getElementById('selExportTarget').options).map((opt) => opt.textContent),
-      layerLabels: Array.from(document.getElementById('selLayerMode').options).map((opt) => opt.textContent)
+      layerLabels: Array.from(document.getElementById('selLayerMode').options).map((opt) => opt.textContent),
+      bootFontLinks: Array.from(document.querySelectorAll('link[href*="fonts.googleapis.com"], link[href*="fonts.gstatic.com"]')).map((link) => link.href),
+      bodyFont: getComputedStyle(document.body).fontFamily
     }));
 
     assert(/openFAD 封面制作器/.test(state.title), `Unexpected title: ${state.title}`);
@@ -171,6 +173,8 @@ const tests = [
     assert(state.targetLabels.some((label) => /流媒体方形封面/.test(label)), `Missing Chinese target labels: ${state.targetLabels.join(', ')}`);
     assert(state.targetLabels.some((label) => /社媒竖图/.test(label)), `Missing social target labels: ${state.targetLabels.join(', ')}`);
     assert(state.layerLabels.includes('透明图层: 完整封面'), `Missing full layer label: ${state.layerLabels.join(', ')}`);
+    assert(state.bootFontLinks.length === 0, `Boot should not depend on Google Fonts: ${state.bootFontLinks.join(', ')}`);
+    assert(/-apple-system|BlinkMacSystemFont|PingFang SC|Microsoft YaHei|Arial/.test(state.bodyFont), `Expected local system font stack: ${state.bodyFont}`);
   }],
 
   ['open demo restores public safe example copy', async (page) => {
@@ -365,6 +369,77 @@ const tests = [
     assert(payload.app?.language === 'zh-CN', `Unexpected language metadata: ${JSON.stringify(payload.app)}`);
     assert(payload.exportPlan?.target?.id === 'dsp-3840', `Unexpected export target: ${JSON.stringify(payload.exportPlan)}`);
     assert(Array.isArray(payload.knownLimits) && payload.knownLimits.length >= 2, 'Expected known limits in project JSON');
+  }],
+
+  ['CJK title line box does not clip bold Chinese glyphs', async (page) => {
+    const metrics = await page.evaluate(() => {
+      const song = document.getElementById('songText');
+      const cjkFont = '"Noto Serif SC", "Songti SC", "STSong", serif';
+      document.documentElement.style.setProperty('--song-font', cjkFont);
+      document.documentElement.style.setProperty('--text-color', '#ffffff');
+      song.textContent = '示例标题';
+      song.style.setProperty('--song-size', '82px');
+      song.style.background = '#000000';
+      song.style.color = '#ffffff';
+      song.style.textShadow = 'none';
+
+      const style = getComputedStyle(song);
+      const canvas = document.createElement('canvas');
+      const ctx = canvas.getContext('2d');
+      ctx.font = `${style.fontWeight} ${style.fontSize} ${style.fontFamily}`;
+      const text = ctx.measureText(song.textContent || '');
+      const glyphHeight = text.actualBoundingBoxAscent + text.actualBoundingBoxDescent;
+
+      return {
+        fontSize: Number.parseFloat(style.fontSize),
+        lineHeight: Number.parseFloat(style.lineHeight),
+        overflow: style.overflow,
+        clientHeight: song.clientHeight,
+        glyphHeight
+      };
+    });
+
+    const png = await page.locator('#songText').screenshot({ type: 'png' });
+    const edges = await page.evaluate(async (src) => {
+      const img = new Image();
+      img.src = src;
+      await img.decode();
+
+      const canvas = document.createElement('canvas');
+      canvas.width = img.width;
+      canvas.height = img.height;
+      const ctx = canvas.getContext('2d');
+      ctx.drawImage(img, 0, 0);
+      const data = ctx.getImageData(0, 0, img.width, img.height).data;
+
+      let minY = img.height;
+      let maxY = -1;
+      for (let y = 0; y < img.height; y += 1) {
+        for (let x = 0; x < img.width; x += 1) {
+          const i = (y * img.width + x) * 4;
+          const r = data[i];
+          const g = data[i + 1];
+          const b = data[i + 2];
+          const a = data[i + 3];
+          if (a > 220 && r > 150 && g > 150 && b > 150) {
+            minY = Math.min(minY, y);
+            maxY = Math.max(maxY, y);
+          }
+        }
+      }
+
+      return {
+        height: img.height,
+        topWhiteMargin: minY,
+        bottomWhiteMargin: maxY >= 0 ? img.height - 1 - maxY : null
+      };
+    }, `data:image/png;base64,${png.toString('base64')}`);
+
+    assert(metrics.overflow === 'hidden', `Unexpected title overflow: ${metrics.overflow}`);
+    assert(metrics.lineHeight >= metrics.fontSize * 1.1, `CJK title line-height is too tight: ${JSON.stringify(metrics)}`);
+    assert(metrics.lineHeight + 1 >= metrics.glyphHeight, `CJK glyphs exceed title line box: ${JSON.stringify(metrics)}`);
+    assert(edges.topWhiteMargin >= 2, `CJK title touches the top edge: ${JSON.stringify({ metrics, edges })}`);
+    assert(edges.bottomWhiteMargin >= 2, `CJK title touches the bottom edge: ${JSON.stringify({ metrics, edges })}`);
   }],
 
   ['font picker expands fonts previews on hover and supports up down switching', async (page) => {

@@ -1,5 +1,7 @@
 # openFAD
 
+[English README](README.en.md)
+
 openFAD 是 FAD Records 发起的中文优先开源音乐视觉工具集，包含封面、音乐视觉和 motion cover 交付工具。
 
 ## 立即使用
@@ -35,6 +37,10 @@ v0.1.1 的 GitHub Release 会发布 `release-manifest.json`、SHA256 和各工�
 - Motion Batch heavy render 只在本地执行，不在 fadrecords.com 主站进程里跑。
 - 浏览器导出行为会随渲染器不同而变化。
 - FAD Records 品牌、Logo、艺人素材和真实发行资产不随代码授权。
+
+## 公开仓库范围
+
+本仓库会保留开源治理文件、`.gitignore`、`packages/` 里的公开接口说明、`examples/demo-release/` 占位素材说明，以及 `docs/` 下的公开验证和部署边界文档。这些文件是 release gate、公开安全审计和官网 manifest 对齐的一部分；生成产物、私有环境配置文件、真实素材、本机路径和 Motion Batch 的 `vendor/` 资源不进入公开源码仓库。
 
 ## 源码 / 验证
 
