@@ -201,7 +201,10 @@ test("Windows FFmpeg manifest covers every packaged binary resource", async () =
 
   assert.deepEqual(pinned, packaged);
   assert.equal(pkg.build.extraResources, undefined);
-  assert.match(manifest.archive.url, /^https:\/\/github\.com\/BtbN\/FFmpeg-Builds\/releases\/download\/autobuild-2026-06-04-14-00\//);
+  assert.match(
+    manifest.archive.url,
+    /^https:\/\/github\.com\/BtbN\/FFmpeg-Builds\/releases\/download\/autobuild-\d{4}-\d{2}-\d{2}-\d{2}-\d{2}\/ffmpeg-N-[a-z0-9-]+-win64-gpl\.zip$/
+  );
   assert.match(manifest.archive.sha256, /^[a-f0-9]{64}$/);
   for (const resource of manifest.resources) {
     assert.equal(Number.isInteger(resource.size) && resource.size > 0, true);

@@ -1,24 +1,24 @@
 {
   "version": 1,
   "label": "BtbN FFmpeg Windows x64 GPL build",
-  "ffmpegVersion": "N-124795-gc27a3b12e3-20260604",
+  "ffmpegVersion": "N-125157-gefa8b20987-20260622",
   "archive": {
-    "name": "ffmpeg-N-124795-gc27a3b12e3-win64-gpl.zip",
-    "rootDir": "ffmpeg-N-124795-gc27a3b12e3-win64-gpl",
-    "url": "https://github.com/BtbN/FFmpeg-Builds/releases/download/autobuild-2026-06-04-14-00/ffmpeg-N-124795-gc27a3b12e3-win64-gpl.zip",
-    "size": 221625834,
-    "sha256": "8ca445727f2589e7af329cfdce067c2420eba1f663811ac19a1c71cef68c2ad7"
+    "name": "ffmpeg-N-125157-gefa8b20987-win64-gpl.zip",
+    "rootDir": "ffmpeg-N-125157-gefa8b20987-win64-gpl",
+    "url": "https://github.com/BtbN/FFmpeg-Builds/releases/download/autobuild-2026-06-22-17-28/ffmpeg-N-125157-gefa8b20987-win64-gpl.zip",
+    "size": 167252475,
+    "sha256": "3301345f5b1cbdc0f371eb5a9cda5fb65530b6eb9ce5fa2cdce835aa672a932d"
   },
   "resources": [
     {
       "path": "vendor/ffmpeg/win/x64/ffmpeg.exe",
-      "size": 204200448,
-      "sha256": "0a5ecf46b68e11732093a56cda04e6072ba2c417fd4c9f7940e030f6c3dc6baa"
+      "size": 143323648,
+      "sha256": "390e6a3a464d3fc30ea937c77c8718f0121c8e942bcdf297160b3adf996eaf33"
     },
     {
       "path": "vendor/ffmpeg/win/x64/ffprobe.exe",
-      "size": 203993088,
-      "sha256": "d573f2cc85177d2e868781f4d7765d69f68d5340d0417a21766a28d1811206dd"
+      "size": 143116800,
+      "sha256": "b63c2f4ccc70e4ea88bda8522d8558da5f3e514435e2ff1c3c0887948169669e"
     }
   ]
 }
