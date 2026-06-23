@@ -1,8 +1,11 @@
-# Trademark Policy
+# Trademark And Brand Policy
 
-The code in this repository is open source. The FAD, FAD Records, openFAD names, logos, product marks, artist assets, and real release assets are not granted by the code license.
+The AGPL-3.0-or-later license for this repository covers source code only.
 
-You may use the code to make your own tools and creative outputs.
+It does not grant permission to use:
 
-You may not imply that your project, release, account, service, or distribution channel is operated, endorsed, or certified by FAD Records unless you have written permission.
+- FAD, FAD Records, openFAD, or related product marks as your own brand.
+- FAD Records logos, release artwork, artist images, catalog assets, or promotional assets.
+- Any name or presentation that implies you are FAD Records or an official FAD release channel.
 
+You may use the code to build your own tools, presets, and workflows. Public demo assets must be separately licensed and must not depend on private FAD Records material.

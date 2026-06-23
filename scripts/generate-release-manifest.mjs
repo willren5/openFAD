@@ -142,7 +142,7 @@ const manifest = {
   version,
   releasedAt: new Date().toISOString(),
   commit: gitCommit(),
-  license: 'Apache-2.0',
+  license: 'AGPL-3.0-or-later',
   artifacts,
   verification: {
     ciRunUrl,

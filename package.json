@@ -3,6 +3,7 @@
   "version": "0.1.6",
   "private": true,
   "description": "Chinese-first open-source creative tools for music cover art, visualizers, and motion-cover delivery.",
+  "license": "AGPL-3.0-or-later",
   "type": "module",
   "scripts": {
     "scan:public": "node scripts/scan-public-safety.mjs",
